@@ -7,6 +7,7 @@
 from .artifact import Artifact
 from .enums import ArtifactType, GenerationModule, GenerationStatus, StepStatus
 from .generation import Generation
+from .state_machine import GenerationStateMachine, InvalidGenerationTransitionError
 from .step import Step
 
 __all__ = [
@@ -19,5 +20,8 @@ __all__ = [
     "Generation",
     "Step",
     "Artifact",
+    # State Machine
+    "GenerationStateMachine",
+    "InvalidGenerationTransitionError",
 ]
 
