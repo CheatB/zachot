@@ -9,6 +9,12 @@ from .enums import ArtifactType, GenerationModule, GenerationStatus, StepStatus
 from .generation import Generation
 from .state_machine import GenerationStateMachine, InvalidGenerationTransitionError
 from .step import Step
+from .step_lifecycle import (
+    StepAlreadyFinishedError,
+    StepLifecycle,
+    InvalidStepTransitionError,
+    calculate_input_hash,
+)
 
 __all__ = [
     # Enums
@@ -23,5 +29,10 @@ __all__ = [
     # State Machine
     "GenerationStateMachine",
     "InvalidGenerationTransitionError",
+    # Step Lifecycle
+    "StepLifecycle",
+    "InvalidStepTransitionError",
+    "StepAlreadyFinishedError",
+    "calculate_input_hash",
 ]
 
