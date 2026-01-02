@@ -8,9 +8,10 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, status
 
-from ..schemas import GenerationCreateRequest, GenerationResponse, GenerationUpdateRequest
+from ..schemas import ActionRequest, GenerationCreateRequest, GenerationResponse, GenerationUpdateRequest
 from ..storage import generation_store
 from packages.core_domain import Generation
+from packages.core_domain import GenerationStateMachine, InvalidGenerationTransitionError
 from packages.core_domain.enums import GenerationStatus
 
 logger = logging.getLogger(__name__)
@@ -183,6 +184,109 @@ async def update_generation(
         )
     except Exception as e:
         logger.error(f"Unexpected error updating generation {generation_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error",
+        )
+
+
+@router.post("/{generation_id}/actions", response_model=GenerationResponse)
+async def execute_action(
+    generation_id: UUID,
+    request: ActionRequest,
+) -> GenerationResponse:
+    """
+    Выполняет действие над Generation.
+    
+    Поддерживаемые действия:
+    - "next": переход DRAFT → RUNNING
+    - "confirm": переход WAITING_USER → RUNNING
+    - "cancel": переход любого статуса → CANCELED
+    
+    Args:
+        generation_id: UUID генерации
+        request: Запрос с действием
+    
+    Returns:
+        Обновлённая Generation
+    
+    Raises:
+        HTTPException:
+            - 404 если Generation не найдена
+            - 400 если неизвестное действие
+            - 409 если переход недопустим
+    """
+    try:
+        # Загружаем Generation из store
+        generation = generation_store.get(generation_id)
+        
+        if generation is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Generation with id {generation_id} not found",
+            )
+        
+        # Определяем целевой статус в зависимости от действия
+        action = request.action
+        
+        if action == "next":
+            target_status = GenerationStatus.RUNNING
+            # Проверяем, что текущий статус DRAFT
+            if generation.status != GenerationStatus.DRAFT:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Cannot execute 'next' action: generation must be in DRAFT status, current status is {generation.status.value}",
+                )
+        
+        elif action == "confirm":
+            target_status = GenerationStatus.RUNNING
+            # Проверяем, что текущий статус WAITING_USER
+            if generation.status != GenerationStatus.WAITING_USER:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Cannot execute 'confirm' action: generation must be in WAITING_USER status, current status is {generation.status.value}",
+                )
+        
+        elif action == "cancel":
+            target_status = GenerationStatus.CANCELED
+            # cancel можно выполнить из любого статуса
+        
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unknown action: {action}. Supported actions: next, confirm, cancel",
+            )
+        
+        # Применяем transition через GenerationStateMachine
+        try:
+            updated_generation = GenerationStateMachine.transition(
+                generation,
+                target_status
+            )
+        except InvalidGenerationTransitionError as e:
+            logger.error(
+                f"Invalid transition for generation {generation_id}: "
+                f"{generation.status.value} → {target_status.value}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Cannot transition from {generation.status.value} to {target_status.value}: {str(e)}",
+            )
+        
+        # Сохраняем обновлённую Generation в store
+        saved_generation = generation_store.save(updated_generation)
+        
+        logger.info(
+            f"Executed action '{action}' on generation {generation_id}: "
+            f"{generation.status.value} → {saved_generation.status.value}"
+        )
+        
+        return GenerationResponse.model_validate(saved_generation)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error executing action on generation {generation_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",

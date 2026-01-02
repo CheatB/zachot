@@ -89,6 +89,21 @@ class InMemoryGenerationStore:
         # Сохраняем обновлённую версию
         self._storage[generation_id] = updated_generation
         return updated_generation
+    
+    def save(self, generation: Generation) -> Generation:
+        """
+        Сохраняет или обновляет Generation в хранилище.
+        
+        Используется для сохранения Generation после state transitions.
+        
+        Args:
+            generation: Объект Generation для сохранения
+        
+        Returns:
+            Сохранённый объект Generation
+        """
+        self._storage[generation.id] = generation
+        return generation
 
 
 # Глобальный экземпляр хранилища

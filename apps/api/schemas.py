@@ -3,7 +3,7 @@ Pydantic схемы для API запросов и ответов.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -40,6 +40,25 @@ class GenerationUpdateRequest(BaseModel):
     
     input_payload: Optional[dict] = Field(None, description="Входные данные для генерации")
     settings_payload: Optional[dict] = Field(None, description="Настройки генерации")
+
+
+class ActionRequest(BaseModel):
+    """
+    Запрос на выполнение действия над Generation.
+    
+    Поддерживаемые действия:
+    - "next": переход DRAFT → RUNNING
+    - "confirm": переход WAITING_USER → RUNNING
+    - "cancel": переход любого статуса → CANCELED
+    
+    Attributes:
+        action: Тип действия для выполнения
+    """
+    
+    action: Literal["next", "confirm", "cancel"] = Field(
+        ...,
+        description="Действие для выполнения над Generation"
+    )
 
 
 class GenerationResponse(BaseModel):
