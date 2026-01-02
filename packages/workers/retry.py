@@ -7,13 +7,21 @@ Retry механизм для выполнения задач.
 
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import Callable, Optional
 
 from packages.jobs import Job, JobResult
 from packages.jobs.enums import JobStatus
 
 from .circuit_breaker import CircuitBreaker
 from .runner import WorkerRunner
+
+# Опциональный импорт для интеграции с domain events
+try:
+    from packages.core_domain.integration import handle_job_result
+    DOMAIN_INTEGRATION_AVAILABLE = True
+except ImportError:
+    DOMAIN_INTEGRATION_AVAILABLE = False
+    handle_job_result = None
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +97,7 @@ class RetryableRunner:
         runner: WorkerRunner,
         retry_policy: Optional[RetryPolicy] = None,
         circuit_breaker: Optional[CircuitBreaker] = None,
+        on_job_complete: Optional[Callable[[Job, JobResult], None]] = None,
     ):
         """
         Инициализация RetryableRunner.
@@ -97,10 +106,12 @@ class RetryableRunner:
             runner: Базовый WorkerRunner для выполнения задач
             retry_policy: Политика retry (по умолчанию RetryPolicy())
             circuit_breaker: Circuit breaker (по умолчанию CircuitBreaker())
+            on_job_complete: Callback для обработки результата выполнения (опционально)
         """
         self.runner = runner
         self.retry_policy = retry_policy or RetryPolicy()
         self.circuit_breaker = circuit_breaker or CircuitBreaker()
+        self.on_job_complete = on_job_complete
     
     def run(self, job: Job) -> JobResult:
         """
@@ -149,6 +160,14 @@ class RetryableRunner:
             # Успех - записываем в circuit breaker
             self.circuit_breaker.record_success()
             logger.info(f"Job {job.id} completed successfully")
+            
+            # Вызываем callback для интеграции с domain (если передан)
+            if self.on_job_complete:
+                try:
+                    self.on_job_complete(job, result)
+                except Exception as e:
+                    logger.error(f"Error in on_job_complete callback: {e}", exc_info=True)
+            
             return result
         
         # Ошибка - обрабатываем retry
@@ -156,6 +175,14 @@ class RetryableRunner:
         
         # Записываем ошибку в circuit breaker
         self.circuit_breaker.record_failure()
+        
+        # Вызываем callback для интеграции с domain (если передан)
+        # Даже при ошибке нужно обновить Step
+        if self.on_job_complete:
+            try:
+                self.on_job_complete(job, result)
+            except Exception as e:
+                logger.error(f"Error in on_job_complete callback: {e}", exc_info=True)
         
         # Увеличиваем счётчик попыток
         updated_retries = job.retries + 1

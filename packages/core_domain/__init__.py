@@ -6,7 +6,10 @@
 
 from .artifact import Artifact
 from .enums import ArtifactType, GenerationModule, GenerationStatus, StepStatus
+from .event_dispatcher import DomainEventDispatcher, event_dispatcher
+from .events import DomainEvent, GenerationUpdated, StepUpdated
 from .generation import Generation
+from .integration import handle_job_result
 from .state_machine import GenerationStateMachine, InvalidGenerationTransitionError
 from .step import Step
 from .step_lifecycle import (
@@ -34,5 +37,14 @@ __all__ = [
     "InvalidStepTransitionError",
     "StepAlreadyFinishedError",
     "calculate_input_hash",
+    # Events
+    "DomainEvent",
+    "GenerationUpdated",
+    "StepUpdated",
+    # Event Dispatcher
+    "DomainEventDispatcher",
+    "event_dispatcher",
+    # Integration
+    "handle_job_result",
 ]
 

@@ -5,6 +5,7 @@
 В production должно быть заменено на реальную БД.
 """
 
+import asyncio
 from typing import Optional
 from uuid import UUID
 
@@ -22,6 +23,8 @@ class InMemoryGenerationStore:
     def __init__(self):
         """Инициализация хранилища."""
         self._storage: dict[UUID, Generation] = {}
+        # Pub/sub для SSE: generation_id -> list[asyncio.Queue]
+        self._subscribers: dict[UUID, list[asyncio.Queue]] = {}
     
     def create(self, generation: Generation) -> Generation:
         """
@@ -88,6 +91,23 @@ class InMemoryGenerationStore:
         
         # Сохраняем обновлённую версию
         self._storage[generation_id] = updated_generation
+        
+        # Отправляем обновление всем подписчикам
+        if generation_id in self._subscribers:
+            event_data = {
+                "id": str(updated_generation.id),
+                "status": updated_generation.status.value,
+                "updated_at": updated_generation.updated_at.isoformat(),
+            }
+            
+            # Отправляем в каждую очередь (неблокирующе)
+            for queue in self._subscribers[generation_id]:
+                try:
+                    queue.put_nowait(event_data)
+                except asyncio.QueueFull:
+                    # Если очередь переполнена, пропускаем
+                    pass
+        
         return updated_generation
     
     def save(self, generation: Generation) -> Generation:
@@ -95,6 +115,7 @@ class InMemoryGenerationStore:
         Сохраняет или обновляет Generation в хранилище.
         
         Используется для сохранения Generation после state transitions.
+        Отправляет обновления всем подписчикам через pub/sub.
         
         Args:
             generation: Объект Generation для сохранения
@@ -103,7 +124,68 @@ class InMemoryGenerationStore:
             Сохранённый объект Generation
         """
         self._storage[generation.id] = generation
+        
+        # Отправляем обновление всем подписчикам
+        if generation.id in self._subscribers:
+            event_data = {
+                "id": str(generation.id),
+                "status": generation.status.value,
+                "updated_at": generation.updated_at.isoformat(),
+            }
+            
+            # Отправляем в каждую очередь (неблокирующе)
+            for queue in self._subscribers[generation.id]:
+                try:
+                    queue.put_nowait(event_data)
+                except asyncio.QueueFull:
+                    # Если очередь переполнена, пропускаем
+                    pass
+        
         return generation
+    
+    def subscribe(self, generation_id: UUID) -> asyncio.Queue:
+        """
+        Подписывается на обновления Generation.
+        
+        Создаёт очередь для получения событий обновления Generation.
+        События отправляются при вызове save().
+        
+        Args:
+            generation_id: UUID генерации для подписки
+        
+        Returns:
+            asyncio.Queue для получения событий
+        
+        Note:
+            Необходимо вызвать unsubscribe() при отключении клиента.
+        """
+        if generation_id not in self._subscribers:
+            self._subscribers[generation_id] = []
+        
+        queue: asyncio.Queue = asyncio.Queue(maxsize=100)
+        self._subscribers[generation_id].append(queue)
+        
+        return queue
+    
+    def unsubscribe(self, generation_id: UUID, queue: asyncio.Queue) -> None:
+        """
+        Отписывается от обновлений Generation.
+        
+        Удаляет очередь из списка подписчиков.
+        
+        Args:
+            generation_id: UUID генерации
+            queue: Очередь для удаления
+        """
+        if generation_id in self._subscribers:
+            try:
+                self._subscribers[generation_id].remove(queue)
+            except ValueError:
+                pass
+            
+            # Удаляем пустой список подписчиков
+            if not self._subscribers[generation_id]:
+                del self._subscribers[generation_id]
 
 
 # Глобальный экземпляр хранилища

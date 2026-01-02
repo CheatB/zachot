@@ -2,11 +2,14 @@
 Роутер для работы с Generation.
 """
 
+import asyncio
+import json
 import logging
 from datetime import datetime
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import StreamingResponse
 
 from ..schemas import ActionRequest, GenerationCreateRequest, GenerationResponse, GenerationUpdateRequest
 from ..storage import generation_store
@@ -292,3 +295,104 @@ async def execute_action(
             detail="Internal server error",
         )
 
+
+
+@router.get("/{generation_id}/events")
+async def stream_generation_events(generation_id: UUID) -> StreamingResponse:
+    """
+    SSE endpoint для стриминга событий изменения Generation.
+    
+    При подключении сразу отправляет текущее состояние Generation,
+    затем отправляет события при каждом изменении через pub/sub.
+    
+    Формат события:
+    ```
+    event: generation
+    data: {"id": "...", "status": "...", "updated_at": "..."}
+    ```
+    
+    Args:
+        generation_id: UUID генерации
+    
+    Returns:
+        StreamingResponse с Content-Type: text/event-stream
+    
+    Raises:
+        HTTPException: 404 если Generation не найдена
+    """
+    # Проверяем, что Generation существует
+    generation = generation_store.get(generation_id)
+    
+    if generation is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Generation with id {generation_id} not found",
+        )
+    
+    logger.info(f"SSE connection opened for generation {generation_id}")
+    
+    async def event_generator():
+        """Генератор событий SSE."""
+        queue = None
+        try:
+            # Подписываемся на обновления
+            queue = generation_store.subscribe(generation_id)
+            
+            # Сразу отправляем текущее состояние
+            initial_event = {
+                "id": str(generation.id),
+                "status": generation.status.value,
+                "updated_at": generation.updated_at.isoformat(),
+            }
+            
+            yield f"event: generation\n"
+            yield f"data: {json.dumps(initial_event)}\n\n"
+            
+            # Отправляем heartbeat каждые 30 секунд
+            heartbeat_interval = 30.0
+            last_heartbeat = asyncio.get_event_loop().time()
+            
+            # Слушаем обновления
+            while True:
+                try:
+                    # Ждём событие с таймаутом для heartbeat
+                    timeout = max(0.1, heartbeat_interval - (asyncio.get_event_loop().time() - last_heartbeat))
+                    
+                    try:
+                        event_data = await asyncio.wait_for(queue.get(), timeout=timeout)
+                        
+                        # Отправляем событие
+                        yield f"event: generation\n"
+                        yield f"data: {json.dumps(event_data)}\n\n"
+                        
+                        last_heartbeat = asyncio.get_event_loop().time()
+                    
+                    except asyncio.TimeoutError:
+                        # Отправляем heartbeat
+                        yield f": heartbeat\n\n"
+                        last_heartbeat = asyncio.get_event_loop().time()
+                
+                except asyncio.CancelledError:
+                    # Клиент отключился
+                    logger.info(f"SSE connection cancelled for generation {generation_id}")
+                    break
+                
+                except Exception as e:
+                    logger.error(f"Error in SSE stream for generation {generation_id}: {e}")
+                    break
+        
+        finally:
+            # Отписываемся при отключении
+            if queue is not None:
+                generation_store.unsubscribe(generation_id, queue)
+                logger.info(f"SSE connection closed for generation {generation_id}")
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Отключаем буферизацию в nginx
+        },
+    )

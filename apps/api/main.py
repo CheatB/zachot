@@ -11,8 +11,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from packages.core_domain import GenerationUpdated, StepUpdated, event_dispatcher
+from packages.core_domain.state_machine import GenerationStateMachine
+
 from .routers import generations, health
 from .settings import settings
+from .storage import generation_store
 
 # Настройка логирования
 logging.basicConfig(
@@ -24,20 +28,87 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def handle_generation_updated(event: GenerationUpdated) -> None:
+    """
+    Обработчик события GenerationUpdated.
+    
+    Загружает Generation из storage, обновляет статус через state machine
+    и сохраняет обратно. Это обновление автоматически триггерит SSE через
+    storage.save().
+    
+    Args:
+        event: Событие обновления Generation
+    """
+    try:
+        generation = generation_store.get(event.generation_id)
+        if not generation:
+            logger.warning(f"Generation {event.generation_id} not found for event")
+            return
+        
+        # Обновляем статус через state machine
+        state_machine = GenerationStateMachine()
+        try:
+            updated_generation = state_machine.transition(generation, event.status)
+        except Exception as e:
+            logger.error(f"Error transitioning generation {event.generation_id}: {e}")
+            return
+        
+        # Сохраняем обновлённую Generation
+        # Это автоматически триггерит SSE через storage.save()
+        generation_store.save(updated_generation)
+        
+        logger.info(
+            f"Generation {event.generation_id} updated to status {event.status.value} "
+            f"via domain event"
+        )
+    except Exception as e:
+        logger.error(f"Error handling GenerationUpdated event: {e}", exc_info=True)
+
+
+def handle_step_updated(event: StepUpdated) -> None:
+    """
+    Обработчик события StepUpdated.
+    
+    Логирует обновление Step. В будущем здесь можно добавить
+    обновление Step в storage, если будет добавлен Step storage.
+    
+    Args:
+        event: Событие обновления Step
+    """
+    try:
+        logger.info(
+            f"Step {event.step_id} updated: status={event.status.value}, "
+            f"progress={event.progress}% (generation {event.generation_id})"
+        )
+        # TODO: Добавить обновление Step в storage, если будет добавлен Step storage
+    except Exception as e:
+        logger.error(f"Error handling StepUpdated event: {e}", exc_info=True)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
     Lifecycle hooks для приложения.
     
     Выполняется при старте и остановке приложения.
+    Подписывается на domain events для обновления storage.
     """
     # Startup
     logger.info(f"Starting {settings.service_name} in {settings.env} mode")
     logger.info(f"Debug mode: {settings.debug}")
     
+    # Подписываемся на domain events
+    event_dispatcher.subscribe(handle_generation_updated)
+    event_dispatcher.subscribe(handle_step_updated)
+    logger.info("Subscribed to domain events")
+    
     yield
     
     # Shutdown
+    # Отписываемся от событий (опционально, но для чистоты)
+    event_dispatcher.unsubscribe(handle_generation_updated)
+    event_dispatcher.unsubscribe(handle_step_updated)
+    logger.info("Unsubscribed from domain events")
     logger.info(f"Shutting down {settings.service_name}")
 
 
