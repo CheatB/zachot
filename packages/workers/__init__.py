@@ -1,12 +1,20 @@
 """
 Базовая архитектура воркеров для выполнения Job.
 
-Этот пакет содержит базовые классы и компоненты для выполнения задач (jobs).
-Не содержит логики очередей, retry или инфраструктуры - только execution layer.
+Этот пакет содержит базовые классы и компоненты для выполнения задач (jobs):
+- BaseWorker: интерфейс для воркеров
+- WorkerRegistry: реестр воркеров
+- WorkerRunner: исполнитель задач
+- RetryableRunner: runner с поддержкой retry
+- CircuitBreaker: защита от каскадных сбоев
+
+Не содержит логики очередей или инфраструктуры - только execution layer.
 """
 
 from .base import BaseWorker
+from .circuit_breaker import CircuitBreaker
 from .registry import WorkerNotFoundError, WorkerRegistry
+from .retry import RetryableRunner, RetryPolicy
 from .runner import WorkerRunner
 from .text_structure import TextStructureWorker
 
@@ -18,6 +26,11 @@ __all__ = [
     "WorkerNotFoundError",
     # Runner
     "WorkerRunner",
+    # Retry
+    "RetryPolicy",
+    "RetryableRunner",
+    # Circuit Breaker
+    "CircuitBreaker",
     # Workers
     "TextStructureWorker",
 ]
