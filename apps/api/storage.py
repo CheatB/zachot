@@ -188,6 +188,16 @@ class InMemoryGenerationStore:
                 del self._subscribers[generation_id]
 
 
+    def clear(self) -> None:
+        """
+        Очищает хранилище (для тестирования).
+        
+        Удаляет все Generation и отписывает всех подписчиков.
+        """
+        self._storage.clear()
+        self._subscribers.clear()
+
+
 # Глобальный экземпляр хранилища
 # В production это должно быть заменено на dependency injection
 generation_store = InMemoryGenerationStore()

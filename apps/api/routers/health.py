@@ -31,3 +31,4 @@ async def health_check() -> HealthResponse:
         service=settings.service_name,
     )
 
+

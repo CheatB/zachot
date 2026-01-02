@@ -11,6 +11,19 @@ from pydantic import BaseModel, Field
 from packages.core_domain.enums import GenerationModule, GenerationStatus
 
 
+class JobQueuedResponse(BaseModel):
+    """
+    Ответ на постановку Job в очередь.
+    
+    Attributes:
+        job_id: Идентификатор задачи, поставленной в очередь
+        status: Статус задачи (всегда "queued" при постановке в очередь)
+    """
+    
+    job_id: UUID = Field(..., description="Идентификатор задачи")
+    status: Literal["queued"] = Field("queued", description="Статус задачи")
+
+
 class GenerationCreateRequest(BaseModel):
     """
     Запрос на создание Generation.
