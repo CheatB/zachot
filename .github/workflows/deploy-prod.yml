@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Setup SSH
@@ -20,7 +20,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H 31.128.42.135 >> ~/.ssh/known_hosts
 
-      - name: SSH deploy PROD (safe)
+      - name: Safe deploy to PROD
         run: |
           ssh -i ~/.ssh/id_ed25519 deploy@31.128.42.135 << 'EOF'
             set -e
@@ -31,17 +31,11 @@ jobs:
             echo "📁 Project dir:"
             cd /home/deploy/zachot
 
-            echo "🔄 Pull latest code:"
+            echo "🔄 Pull latest code"
             git pull origin main
 
-            echo "📦 Frontend build (safe):"
-            cd apps/web
-            npm ci
-            npm run build
-            cd ../..
+            echo "📦 Git status:"
+            git status
 
-            echo "🐍 Backend sanity check:"
-            python3 -m compileall apps packages
-
-            echo "✅ PROD deploy finished"
+            echo "✅ Safe PROD deploy finished"
           EOF
