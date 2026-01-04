@@ -1,4 +1,4 @@
-name: Deploy PROD (Code Sync)
+name: Deploy PROD (safe)
 
 on:
   push:
@@ -7,31 +7,54 @@ on:
 
 jobs:
   deploy-prod:
+    name: Safe production deploy (no restarts)
     runs-on: ubuntu-latest
+
+    needs:
+      - build-web
+      - test-backend
+      - deploy-test
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Add VPS to known_hosts
         run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H 31.128.42.135 >> ~/.ssh/known_hosts
 
-      - name: Deploy code to VPS
+      - name: SSH deploy PROD (safe mode)
         run: |
-          ssh deploy@31.128.42.135 << 'EOF'
+          ssh -i ~/.ssh/id_ed25519 deploy@31.128.42.135 << 'EOF'
             set -e
-            cd /home/deploy/zachot
-            echo "Current commit:"
-            git rev-parse --short HEAD
-            git pull origin main
-            echo "Updated commit:"
-            git rev-parse --short HEAD
-            echo "✅ Code sync completed"
-          EOF
 
+            echo "👤 User:"
+            whoami
+
+            echo "📁 Go to project:"
+            cd /home/deploy/zachot
+
+            echo "🔄 Git pull:"
+            git pull origin main
+
+            echo "🧠 Runtime versions:"
+            node -v
+            python3 --version
+
+            echo "📦 Frontend build:"
+            cd apps/web
+            npm ci
+            npm run build
+            cd ../..
+
+            echo "🐍 Backend sanity check:"
+            python3 -m compileall apps packages
+
+            echo "📂 Project status:"
+            git status --short
+
+            echo "✅ PROD deploy (safe) finished"
+          EOF
