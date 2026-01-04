@@ -7,13 +7,7 @@ on:
 
 jobs:
   deploy-prod:
-    name: Safe production deploy (no restarts)
     runs-on: ubuntu-latest
-
-    needs:
-      - build-web
-      - test-backend
-      - deploy-test
 
     steps:
       - name: Checkout repository
@@ -26,7 +20,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H 31.128.42.135 >> ~/.ssh/known_hosts
 
-      - name: SSH deploy PROD (safe mode)
+      - name: SSH deploy PROD (safe)
         run: |
           ssh -i ~/.ssh/id_ed25519 deploy@31.128.42.135 << 'EOF'
             set -e
@@ -34,17 +28,13 @@ jobs:
             echo "👤 User:"
             whoami
 
-            echo "📁 Go to project:"
+            echo "📁 Project dir:"
             cd /home/deploy/zachot
 
-            echo "🔄 Git pull:"
+            echo "🔄 Pull latest code:"
             git pull origin main
 
-            echo "🧠 Runtime versions:"
-            node -v
-            python3 --version
-
-            echo "📦 Frontend build:"
+            echo "📦 Frontend build (safe):"
             cd apps/web
             npm ci
             npm run build
@@ -53,8 +43,5 @@ jobs:
             echo "🐍 Backend sanity check:"
             python3 -m compileall apps packages
 
-            echo "📂 Project status:"
-            git status --short
-
-            echo "✅ PROD deploy (safe) finished"
+            echo "✅ PROD deploy finished"
           EOF
