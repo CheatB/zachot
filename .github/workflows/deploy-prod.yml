@@ -1,0 +1,37 @@
+name: Deploy PROD (Code Sync)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add VPS to known_hosts
+        run: |
+          ssh-keyscan -H 31.128.42.135 >> ~/.ssh/known_hosts
+
+      - name: Deploy code to VPS
+        run: |
+          ssh deploy@31.128.42.135 << 'EOF'
+            set -e
+            cd /home/deploy/zachot
+            echo "Current commit:"
+            git rev-parse --short HEAD
+            git pull origin main
+            echo "Updated commit:"
+            git rev-parse --short HEAD
+            echo "✅ Code sync completed"
+          EOF
+
