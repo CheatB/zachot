@@ -1,0 +1,141 @@
+/**
+ * Design tokens as CSS variables
+ * Runtime source of truth for components
+ * Generated from design-tokens TypeScript files
+ */
+
+:root {
+  /* Colors - Neutral */
+  --color-neutral-0: #ffffff;
+  --color-neutral-10: #fafafa;
+  --color-neutral-20: #f5f5f5;
+  --color-neutral-30: #ebebeb;
+  --color-neutral-40: #e0e0e0;
+  --color-neutral-50: #d0d0d0;
+  --color-neutral-60: #b0b0b0;
+  --color-neutral-70: #909090;
+  --color-neutral-80: #707070;
+  --color-neutral-90: #505050;
+  --color-neutral-100: #303030;
+  --color-neutral-110: #202020;
+  --color-neutral-120: #101010;
+  --color-neutral-130: #000000;
+
+  /* Colors - Accent */
+  --color-accent-light: #e6f2ff;
+  --color-accent-base: #0066ff;
+  --color-accent-dark: #0052cc;
+  --color-accent-darker: #003d99;
+
+  /* Colors - Status */
+  --color-success-light: #e8f5e9;
+  --color-success-base: #4caf50;
+  --color-success-dark: #388e3c;
+  --color-warn-light: #fff3e0;
+  --color-warn-base: #ff9800;
+  --color-warn-dark: #f57c00;
+  --color-danger-light: #ffebee;
+  --color-danger-base: #f44336;
+  --color-danger-dark: #d32f2f;
+
+  /* Colors - Semantic */
+  --color-surface-base: #ffffff;
+  --color-surface-elevated: #fafafa;
+  --color-surface-overlay: rgba(0, 0, 0, 0.5);
+  --color-border-light: #ebebeb;
+  --color-border-base: #e0e0e0;
+  --color-border-dark: #d0d0d0;
+  --color-text-primary: #101010;
+  --color-text-secondary: #505050;
+  --color-text-muted: #707070;
+  --color-text-inverse: #ffffff;
+  --color-text-disabled: #b0b0b0;
+
+  /* Typography */
+  --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-family-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3rem;
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  --line-height-loose: 2;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Spacing */
+  --spacing-2: 0.125rem;
+  --spacing-4: 0.25rem;
+  --spacing-8: 0.5rem;
+  --spacing-12: 0.75rem;
+  --spacing-16: 1rem;
+  --spacing-20: 1.25rem;
+  --spacing-24: 1.5rem;
+  --spacing-32: 2rem;
+  --spacing-40: 2.5rem;
+  --spacing-48: 3rem;
+  --spacing-64: 4rem;
+  --spacing-xs: var(--spacing-4);
+  --spacing-sm: var(--spacing-8);
+  --spacing-md: var(--spacing-16);
+  --spacing-lg: var(--spacing-24);
+  --spacing-xl: var(--spacing-32);
+  --spacing-2xl: var(--spacing-48);
+  --spacing-3xl: var(--spacing-64);
+
+  /* Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-full: 9999px;
+
+  /* Elevation */
+  --elevation-0: none;
+  --elevation-1: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --elevation-2: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --elevation-3: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --elevation-4: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+
+  /* Motion */
+  --motion-duration-fast: 0.15s;
+  --motion-duration-base: 0.2s;
+  --motion-duration-slow: 0.3s;
+
+  /* Z-index */
+  --z-index-base: 0;
+  --z-index-dropdown: 1000;
+  --z-index-tooltip: 2000;
+  --z-index-modal: 3000;
+  --z-index-overlay: 4000;
+
+  /* Breakpoints */
+  --breakpoint-sm: 360px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+
+  /* Focus ring (accessibility) */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: var(--color-accent-base);
+  --focus-ring: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+  --focus-ring-offset: 0 0 0 calc(var(--focus-ring-width) + var(--focus-ring-offset)) transparent,
+    0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+}
+
+/* Dark mode (prepared, not enabled) */
+@media (prefers-color-scheme: dark) {
+  /* TODO: Enable dark mode when ready */
+}
+
+

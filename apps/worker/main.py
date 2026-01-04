@@ -24,3 +24,4 @@ logger = logging.getLogger(__name__)
 
 logger.info("Worker process initialized: broker and actors registered")
 
+

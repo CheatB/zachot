@@ -107,3 +107,5 @@ class DomainEventDispatcher:
 # В production это должно быть заменено на dependency injection
 event_dispatcher = DomainEventDispatcher()
 
+
+

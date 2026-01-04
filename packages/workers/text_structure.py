@@ -105,3 +105,5 @@ class TextStructureWorker(BaseWorker):
         """Человекочитаемое представление."""
         return "TextStructureWorker (TEXT_STRUCTURE)"
 
+
+

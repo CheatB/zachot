@@ -1,0 +1,15 @@
+/opt/zachot/logs/worker.log
+/opt/zachot/logs/worker.err {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+    dateext
+    dateformat -%Y-%m-%d
+    create 0640 zachot zachot
+}
+
+

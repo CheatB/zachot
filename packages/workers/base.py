@@ -73,3 +73,5 @@ class BaseWorker(ABC):
         """Человекочитаемое представление."""
         return f"{self.__class__.__name__}"
 
+
+

@@ -162,3 +162,5 @@ def _determine_generation_status(
     # Промежуточные задачи - остаётся RUNNING
     return GenerationStatus.RUNNING
 
+
+

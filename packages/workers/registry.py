@@ -105,3 +105,5 @@ class WorkerRegistry:
         """Человекочитаемое представление."""
         return f"WorkerRegistry with {len(self._workers)} worker(s)"
 
+
+

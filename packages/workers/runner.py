@@ -171,3 +171,5 @@ class WorkerRunner:
         """Человекочитаемое представление."""
         return f"WorkerRunner with {len(self.registry.get_all_workers())} worker(s)"
 
+
+

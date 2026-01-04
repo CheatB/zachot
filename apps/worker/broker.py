@@ -49,3 +49,4 @@ def setup_broker() -> RedisBroker:
 # Инициализируем broker при импорте модуля
 broker = setup_broker()
 
+

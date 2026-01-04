@@ -1,0 +1,52 @@
+[Unit]
+Description=Zachot API Service
+Documentation=https://github.com/your-org/zachot
+After=network.target redis-server.service
+Wants=redis-server.service
+
+[Service]
+Type=simple
+User=zachot
+Group=zachot
+WorkingDirectory=/opt/zachot/repo
+
+# Environment
+EnvironmentFile=/opt/zachot/envs/prod/etc/zachot.env
+Environment="PATH=/opt/zachot/envs/prod/bin:/usr/local/bin:/usr/bin:/bin"
+
+# Executable (single process for SSE and in-memory storage)
+ExecStart=/opt/zachot/envs/prod/bin/uvicorn \
+    apps.api.main:app \
+    --host 127.0.0.1 \
+    --port 8000 \
+    --log-level info \
+    --access-log \
+    --no-use-colors
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitInterval=300
+StartLimitBurst=5
+
+# Logging
+StandardOutput=append:/opt/zachot/logs/api.log
+StandardError=append:/opt/zachot/logs/api.err
+SyslogIdentifier=zachot-api
+
+# Security (basic, not strict)
+NoNewPrivileges=true
+PrivateTmp=true
+ReadWritePaths=/opt/zachot/logs /opt/zachot/repo
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Graceful shutdown
+TimeoutStopSec=30
+KillMode=mixed
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target

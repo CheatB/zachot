@@ -288,3 +288,5 @@ class TestGenerationStateMachineTransition:
         assert generated.finished_at >= generated.started_at
         assert generated.updated_at >= generated.created_at
 
+
+

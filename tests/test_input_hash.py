@@ -109,3 +109,5 @@ class TestCalculateInputHash:
         # Проверка, что это hex строка
         assert all(c in '0123456789abcdef' for c in hash_value)
 
+
+

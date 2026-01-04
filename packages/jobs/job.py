@@ -125,3 +125,5 @@ class Job(BaseModel):
             f"({self.type.value}, {self.status.value}, {self.retries}/{self.max_retries})"
         )
 
+
+

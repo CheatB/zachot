@@ -1,0 +1,48 @@
+[Unit]
+Description=Zachot Worker Service (Dramatiq)
+Documentation=https://github.com/your-org/zachot
+After=network.target
+After=redis-server.service
+Wants=redis-server.service
+
+[Service]
+Type=simple
+User=zachot
+Group=zachot
+WorkingDirectory=/opt/zachot/repo
+
+EnvironmentFile=/opt/zachot/envs/prod/etc/zachot.env
+Environment="PATH=/opt/zachot/envs/prod/bin:/usr/local/bin:/usr/bin:/bin"
+
+ExecCondition=/opt/zachot/envs/prod/bin/python /opt/zachot/repo/infra/healthchecks/redis_check.py
+
+ExecStart=/opt/zachot/envs/prod/bin/dramatiq \
+    apps.worker.actors \
+    --processes ${WORKER_CONCURRENCY} \
+    --queues default
+
+ExecReload=/bin/kill -HUP $MAINPID
+
+Restart=always
+RestartSec=10
+StartLimitInterval=300
+StartLimitBurst=5
+
+StandardOutput=append:/opt/zachot/logs/worker.log
+StandardError=append:/opt/zachot/logs/worker.err
+SyslogIdentifier=zachot-worker
+
+NoNewPrivileges=true
+PrivateTmp=true
+ReadWritePaths=/opt/zachot/logs
+
+LimitNOFILE=65536
+LimitNPROC=4096
+
+TimeoutStopSec=30
+KillMode=mixed
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target
+

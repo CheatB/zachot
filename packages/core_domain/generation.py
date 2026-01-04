@@ -90,3 +90,5 @@ class Generation(BaseModel):
             f"({self.module.value}, {self.status.value})"
         )
 
+
+

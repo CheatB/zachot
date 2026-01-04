@@ -65,3 +65,5 @@ class Artifact(BaseModel):
             f"({self.artifact_type.value}, v{self.version})"
         )
 
+
+
