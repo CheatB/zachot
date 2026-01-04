@@ -1,0 +1,42 @@
+name: Deploy Test (SSH)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 31.128.42.135 >> ~/.ssh/known_hosts
+
+      - name: SSH deploy test
+        run: |
+          ssh -i ~/.ssh/id_ed25519 deploy@31.128.42.135 << 'EOF'
+            set -e
+
+            echo "👤 User:"
+            whoami
+
+            echo "📁 Go to project:"
+            cd /home/deploy/zachot
+
+            echo "📦 Git status:"
+            git status
+
+            echo "🧠 Node & Python:"
+            node -v || echo "node not installed"
+            python3 --version
+
+            echo "✅ SSH deploy test finished"
+          EOF
