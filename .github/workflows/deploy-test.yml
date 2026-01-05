@@ -10,11 +10,6 @@ jobs:
     name: SSH deploy test
     runs-on: ubuntu-latest
 
-    # ЖДЁМ, ПОКА ПРОЙДУТ ВСЕ ПРОВЕРКИ
-    needs:
-      - build-web
-      - test-backend
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
