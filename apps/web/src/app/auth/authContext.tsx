@@ -1,16 +1,25 @@
 /**
  * Auth Context
- * Контекст для управления аутентификацией
- * Временный auth bridge из лэндинга
+ * Контекст аутентификации (integration-ready)
  */
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react'
+
 import type { AuthContextValue, AuthState } from './authTypes'
+import { IS_INTEGRATION } from '@/shared/config'
+import { fetchMe } from '@/shared/api/me'
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
-const SESSION_STORAGE_TOKEN_KEY = 'zachot_auth_token'
-const SESSION_STORAGE_USER_ID_KEY = 'zachot_auth_user_id'
+const TOKEN_KEY = 'zachot_auth_token'
+const USER_ID_KEY = 'zachot_auth_user_id'
+const REFRESH_TOKEN_KEY = 'zachot_refresh_token'
 
 interface AuthProviderProps {
   children: ReactNode
@@ -19,72 +28,119 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
+    isAuthResolved: false,
     user: null,
     token: null,
   })
 
-  // Инициализация: проверка sessionStorage и URL params
+  /**
+   * Bootstrap auth:
+   * 1. URL params (landing / integration)
+   * 2. sessionStorage
+   * 3. integration mode fallback
+   */
   useEffect(() => {
-    // Проверка URL params (приход с лэндинга)
-    const urlParams = new URLSearchParams(window.location.search)
-    const tokenFromUrl = urlParams.get('token')
-    const userIdFromUrl = urlParams.get('user_id')
+    const params = new URLSearchParams(window.location.search)
+    const tokenFromUrl = params.get('token')
+    const userIdFromUrl = params.get('user_id')
 
+    // 1️⃣ Вход через URL (лендинг / интеграция)
     if (tokenFromUrl && userIdFromUrl) {
-      // Сохранить в sessionStorage
-      sessionStorage.setItem(SESSION_STORAGE_TOKEN_KEY, tokenFromUrl)
-      sessionStorage.setItem(SESSION_STORAGE_USER_ID_KEY, userIdFromUrl)
+      sessionStorage.setItem(TOKEN_KEY, tokenFromUrl)
+      sessionStorage.setItem(USER_ID_KEY, userIdFromUrl)
 
-      // Обновить состояние
       setAuthState({
         isAuthenticated: true,
+        isAuthResolved: true,
         user: { id: userIdFromUrl },
         token: tokenFromUrl,
       })
 
-      // Очистить query params из URL
       window.history.replaceState({}, '', window.location.pathname)
       return
     }
 
-    // Проверка sessionStorage (восстановление сессии)
-    const storedToken = sessionStorage.getItem(SESSION_STORAGE_TOKEN_KEY)
-    const storedUserId = sessionStorage.getItem(SESSION_STORAGE_USER_ID_KEY)
+    // 2️⃣ Восстановление сессии + проверка через /me
+    const storedToken = sessionStorage.getItem(TOKEN_KEY)
 
-    if (storedToken && storedUserId) {
+    if (storedToken) {
+      // Проверяем валидность токена через /me
+      fetchMe()
+        .then((response) => {
+          setAuthState({
+            isAuthenticated: true,
+            isAuthResolved: true,
+            user: { id: response.id },
+            token: storedToken,
+          })
+        })
+        .catch(() => {
+          // Ошибка /me — auth не прошла
+          setAuthState((prev) => ({
+            ...prev,
+            isAuthResolved: true,
+          }))
+        })
+      return
+    }
+
+    // 3️⃣ Integration mode — пускаем внутрь (без backend auth)
+    if (IS_INTEGRATION) {
       setAuthState({
         isAuthenticated: true,
-        user: { id: storedUserId },
-        token: storedToken,
+        isAuthResolved: true,
+        user: { id: 'integration-user' },
+        token: 'integration-token',
       })
+      return
     }
+
+    // 4️⃣ Нет токена и не integration mode — auth resolved, но не authenticated
+    setAuthState((prev) => ({
+      ...prev,
+      isAuthResolved: true,
+    }))
   }, [])
 
   const loginFromLanding = (token: string, userId: string) => {
-    // Сохранить в sessionStorage
-    sessionStorage.setItem(SESSION_STORAGE_TOKEN_KEY, token)
-    sessionStorage.setItem(SESSION_STORAGE_USER_ID_KEY, userId)
+    sessionStorage.setItem(TOKEN_KEY, token)
+    sessionStorage.setItem(USER_ID_KEY, userId)
 
-    // Обновить состояние
     setAuthState({
       isAuthenticated: true,
+      isAuthResolved: true,
       user: { id: userId },
       token,
     })
   }
 
   const logout = () => {
-    // Очистить sessionStorage
-    sessionStorage.removeItem(SESSION_STORAGE_TOKEN_KEY)
-    sessionStorage.removeItem(SESSION_STORAGE_USER_ID_KEY)
+    sessionStorage.removeItem(TOKEN_KEY)
+    sessionStorage.removeItem(USER_ID_KEY)
+    sessionStorage.removeItem(REFRESH_TOKEN_KEY)
 
-    // Обновить состояние
     setAuthState({
       isAuthenticated: false,
+      isAuthResolved: true,
       user: null,
       token: null,
     })
   }
+
+  // Подписка на событие logout из API слоя
+  useEffect(() => {
+    const handleAuthLogout = () => {
+      setAuthState({
+        isAuthenticated: false,
+        isAuthResolved: true,
+        user: null,
+        token: null,
+      })
+    }
+
+    window.addEventListener('auth:logout', handleAuthLogout)
+    return () => window.removeEventListener('auth:logout', handleAuthLogout)
+  }, [])
 
   const value: AuthContextValue = {
     ...authState,
@@ -92,15 +148,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
   }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuthContext() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
+  const ctx = useContext(AuthContext)
+  if (!ctx) {
     throw new Error('useAuthContext must be used within AuthProvider')
   }
-  return context
+  return ctx
 }
-
-

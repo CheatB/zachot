@@ -10,8 +10,9 @@ import logging
 # Импортируем broker для настройки RedisBroker
 from . import broker  # noqa: F401
 
-# Импортируем actors для регистрации execute_job actor
-from . import actors  # noqa: F401
+# Импортируем runtime actors для регистрации execute_job actor
+# Runtime импорт нужен для регистрации @dramatiq.actor декораторов
+from . import _actors_runtime  # noqa: F401
 
 # Настройка логирования
 logging.basicConfig(

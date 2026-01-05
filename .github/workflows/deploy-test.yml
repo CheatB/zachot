@@ -7,7 +7,13 @@ on:
 
 jobs:
   deploy-test:
+    name: SSH deploy test
     runs-on: ubuntu-latest
+
+    # ЖДЁМ, ПОКА ПРОЙДУТ ВСЕ ПРОВЕРКИ
+    needs:
+      - build-web
+      - test-backend
 
     steps:
       - name: Checkout repository
@@ -20,7 +26,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H 31.128.42.135 >> ~/.ssh/known_hosts
 
-      - name: SSH deploy test
+      - name: SSH deploy test (no side effects)
         run: |
           ssh -i ~/.ssh/id_ed25519 deploy@31.128.42.135 << 'EOF'
             set -e
@@ -28,15 +34,18 @@ jobs:
             echo "👤 User:"
             whoami
 
-            echo "📁 Go to project:"
+            echo "📁 Project directory:"
             cd /home/deploy/zachot
 
             echo "📦 Git status:"
-            git status
+            git status --short
 
-            echo "🧠 Node & Python:"
+            echo "🧠 Runtime versions:"
             node -v || echo "node not installed"
             python3 --version
 
-            echo "✅ SSH deploy test finished"
+            echo "📂 Project contents:"
+            ls -la | head -n 20
+
+            echo "✅ SSH deploy test finished successfully"
           EOF

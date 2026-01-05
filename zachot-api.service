@@ -1,52 +1,37 @@
 [Unit]
-Description=Zachot API Service
-Documentation=https://github.com/your-org/zachot
-After=network.target redis-server.service
-Wants=redis-server.service
+Description=Zachot API (integration)
+After=network.target
 
 [Service]
 Type=simple
-User=zachot
-Group=zachot
-WorkingDirectory=/opt/zachot/repo
+User=deploy
+Group=deploy
+WorkingDirectory=/home/deploy/zachot
 
-# Environment
-EnvironmentFile=/opt/zachot/envs/prod/etc/zachot.env
-Environment="PATH=/opt/zachot/envs/prod/bin:/usr/local/bin:/usr/bin:/bin"
+# === Integration mode flags ===
+Environment=ZACHOT_MODE=integration
+Environment=INTEGRATION_MODE=true
 
-# Executable (single process for SSE and in-memory storage)
-ExecStart=/opt/zachot/envs/prod/bin/uvicorn \
+# === API only, no workers, no redis ===
+ExecStart=/usr/bin/python3 -m uvicorn \
     apps.api.main:app \
-    --host 127.0.0.1 \
+    --host 0.0.0.0 \
     --port 8000 \
-    --log-level info \
-    --access-log \
-    --no-use-colors
+    --log-level info
 
-# Restart policy
+# === Reliability ===
 Restart=always
-RestartSec=10
-StartLimitInterval=300
-StartLimitBurst=5
+RestartSec=3
 
-# Logging
-StandardOutput=append:/opt/zachot/logs/api.log
-StandardError=append:/opt/zachot/logs/api.err
+# === Logs ===
+StandardOutput=journal
+StandardError=journal
 SyslogIdentifier=zachot-api
 
-# Security (basic, not strict)
-NoNewPrivileges=true
-PrivateTmp=true
-ReadWritePaths=/opt/zachot/logs /opt/zachot/repo
-
-# Resource limits
-LimitNOFILE=65536
-LimitNPROC=4096
-
-# Graceful shutdown
-TimeoutStopSec=30
-KillMode=mixed
+# === Graceful shutdown ===
+TimeoutStopSec=20
 KillSignal=SIGTERM
+KillMode=mixed
 
 [Install]
 WantedBy=multi-user.target

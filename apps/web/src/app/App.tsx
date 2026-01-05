@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider } from './auth/authContext'
 import AppErrorBoundary from './errors/AppErrorBoundary'
+import AppBoundary from './AppBoundary'
 import GlobalLoading from './layout/GlobalLoading'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
@@ -46,7 +47,7 @@ function AppRoutes() {
   }, [location.pathname, isLoading])
 
   return (
-    <>
+    <AppBoundary>
       <GlobalLoading isLoading={isLoading} />
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -60,7 +61,7 @@ function AppRoutes() {
         <Route path="/account" element={<AccountPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </>
+    </AppBoundary>
   )
 }
 
