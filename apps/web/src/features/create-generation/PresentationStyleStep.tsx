@@ -52,29 +52,6 @@ function PresentationStyleStep({ selectedStyle, onSelect }: PresentationStyleSte
       }}
     >
       <div className="wizard-step">
-        <h2
-          className="wizard-step__title"
-          style={{
-            fontSize: 'var(--font-size-2xl)',
-            fontWeight: 'var(--font-weight-bold)',
-            marginBottom: 'var(--spacing-12)',
-            color: 'var(--color-text-primary)',
-          }}
-        >
-          Визуальный стиль презентации
-        </h2>
-        <p
-          className="wizard-step__subtitle"
-          style={{
-            fontSize: 'var(--font-size-base)',
-            color: 'var(--color-text-secondary)',
-            marginBottom: 'var(--spacing-32)',
-            lineHeight: 'var(--line-height-relaxed)',
-          }}
-        >
-          Выберите оформление, которое лучше всего подходит для вашей аудитории.
-        </p>
-
         <div className="presentation-style-grid">
           {styleOptions.map((option) => {
             const isSelected = selectedStyle === option.id
@@ -140,7 +117,7 @@ const stepStyles = `
 
 .style-card--selected {
   border-color: var(--color-accent-base);
-  box-shadow: 0 0 0 2px var(--color-accent-base);
+  box-shadow: 0 4px 12px var(--color-accent-shadow);
 }
 
 .style-card__preview {
@@ -149,20 +126,26 @@ const stepStyles = `
 }
 
 .style-card__content {
-  padding: var(--spacing-20);
+  padding: var(--spacing-32);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
 }
 
 .style-card__title {
   font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
-  margin-bottom: var(--spacing-8);
+  text-align: center;
+  margin: 0;
 }
 
 .style-card__description {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   line-height: var(--line-height-relaxed);
+  text-align: left;
+  margin: 0;
 }
 `
 
