@@ -8,7 +8,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { useAuth } from '@/app/auth/useAuth'
-import AppShell from '@/app/layout/AppShell'
 import { Container, Stack, Button, Badge, EmptyState, Card } from '@/ui'
 import ResultContent from './ResultContent'
 import ResultActions from './ResultActions'
@@ -24,7 +23,7 @@ import { useToast } from '@/ui/primitives/Toast'
 function GenerationResultPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated } = useAuth()
   const { showToast } = useToast()
   
   const [generation, setGeneration] = useState<Generation | null>(null)
@@ -71,24 +70,20 @@ function GenerationResultPage() {
 
   if (loading) {
     return (
-      <AppShell isAuthenticated={isAuthenticated} user={user}>
-        <Container size="lg">
-          <p style={{ textAlign: 'center', paddingTop: 100 }}>Загрузка результата...</p>
-        </Container>
-      </AppShell>
+      <Container size="lg">
+        <p style={{ textAlign: 'center', paddingTop: 100 }}>Загрузка результата...</p>
+      </Container>
     )
   }
 
   if (!generation) {
     return (
-      <AppShell isAuthenticated={isAuthenticated} user={user}>
-        <EmptyState title="Результат не найден" description="Возможно, работа была удалена." />
-      </AppShell>
+      <EmptyState title="Результат не найден" description="Возможно, работа была удалена." />
     )
   }
 
   return (
-    <AppShell isAuthenticated={isAuthenticated} user={user}>
+    <>
       {isAuthenticated ? (
         generation.status === 'failed' ? (
           <Container size="lg">
@@ -189,7 +184,7 @@ function GenerationResultPage() {
       ) : (
         <EmptyState title="Войдите через лэндинг" description="Для просмотра результата необходимо войти" />
       )}
-    </AppShell>
+    </>
   )
 }
 

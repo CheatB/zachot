@@ -4,36 +4,26 @@
  */
 
 import { Button, EmptyState } from '@/ui'
-import AppShell from '../layout/AppShell'
-import { useAuth } from '../auth/useAuth'
 
 function UnauthPage() {
-  console.log('[UnauthPage] Rendering, about to call useAuth()...')
-  
-  const { isAuthenticated, user } = useAuth()
-  
-  console.log('[UnauthPage] useAuth() succeeded:', { isAuthenticated, user: user?.id })
-  
   const handleLogin = () => {
     console.log('Login button clicked')
     // TODO: Реализовать логику входа
   }
 
   return (
-    <AppShell isAuthenticated={isAuthenticated} user={user}>
-      <div className="unauth-page">
-        <EmptyState
-          title="Требуется вход"
-          description="Для доступа к приложению необходимо войти через лэндинг"
-        >
-          <div className="unauth-page__action">
-            <Button variant="primary" onClick={handleLogin}>
-              Войти
-            </Button>
-          </div>
-        </EmptyState>
-      </div>
-    </AppShell>
+    <div className="unauth-page">
+      <EmptyState
+        title="Требуется вход"
+        description="Для доступа к приложению необходимо войти через лэндинг"
+      >
+        <div className="unauth-page__action">
+          <Button variant="primary" onClick={handleLogin}>
+            Войти
+          </Button>
+        </div>
+      </EmptyState>
+    </div>
   )
 }
 
@@ -63,4 +53,3 @@ if (typeof document !== 'undefined') {
     document.head.appendChild(style)
   }
 }
-

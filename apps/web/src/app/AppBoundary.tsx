@@ -4,6 +4,7 @@
  */
 
 import { ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from './auth/useAuth'
 import GlobalLoader from './ui/GlobalLoader'
 import UnauthPage from './pages/UnauthPage'
@@ -15,6 +16,7 @@ interface AppBoundaryProps {
 
 function AppBoundary({ children }: AppBoundaryProps) {
   const { isAuthResolved, isAuthenticated, user } = useAuth()
+  const location = useLocation()
   
   // 1. Auth ещё не resolved — показываем loader
   if (!isAuthResolved) {
@@ -26,7 +28,12 @@ function AppBoundary({ children }: AppBoundaryProps) {
     return <UnauthPage />
   }
 
-  // 3. Auth resolved и authenticated — показываем приложение в Shell
+  // 3. Если это админ-маршрут — рендерим детей напрямую (у них свой Layout)
+  if (location.pathname.startsWith('/admin')) {
+    return <>{children}</>
+  }
+
+  // 4. Обычные страницы — показываем в стандартном Shell
   return (
     <AppShell isAuthenticated={isAuthenticated} user={user}>
       {children}

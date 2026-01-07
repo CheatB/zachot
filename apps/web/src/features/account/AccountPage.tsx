@@ -6,7 +6,6 @@
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { useAuth } from '@/app/auth/useAuth'
-import AppShell from '@/app/layout/AppShell'
 import { Container, Stack, Button, EmptyState, Tooltip } from '@/ui'
 import SubscriptionCard from './SubscriptionCard'
 import UsageOverviewCard from './UsageOverviewCard'
@@ -26,7 +25,7 @@ const mockCapabilities: Capabilities = {
 }
 
 function AccountPage() {
-  const { isAuthenticated, user, logout } = useAuth()
+  const { isAuthenticated, logout } = useAuth()
   const [meData, setMeResponse] = useState<MeResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const shouldReduceMotion = false
@@ -46,22 +45,18 @@ function AccountPage() {
 
   if (!isAuthenticated) {
     return (
-      <AppShell isAuthenticated={isAuthenticated} user={user}>
-        <EmptyState
-          title="Войдите через лэндинг"
-          description="Для просмотра аккаунта необходимо войти"
-        />
-      </AppShell>
+      <EmptyState
+        title="Войдите через лэндинг"
+        description="Для просмотра аккаунта необходимо войти"
+      />
     )
   }
 
   if (loading) {
     return (
-      <AppShell isAuthenticated={isAuthenticated} user={user}>
-        <Container size="lg">
-          <p style={{ textAlign: 'center', paddingTop: 100 }}>Загрузка данных аккаунта...</p>
-        </Container>
-      </AppShell>
+      <Container size="lg">
+        <p style={{ textAlign: 'center', paddingTop: 100 }}>Загрузка данных аккаунта...</p>
+      </Container>
     )
   }
 
@@ -80,56 +75,54 @@ function AccountPage() {
   }
 
   return (
-    <AppShell isAuthenticated={isAuthenticated} user={user}>
-      <Container size="lg">
-        <Stack gap="xl" style={{ paddingTop: 'var(--spacing-32)', paddingBottom: 'var(--spacing-32)' }}>
-          <motion.div
-            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: motionTokens.duration.base,
-              ease: motionTokens.easing.out,
-            }}
-          >
-            <div className="account-header">
-              <h1 style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-12)' }}>
-                Аккаунт
-              </h1>
-              <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
-                Информация о вашем тарифе, использовании и доступных возможностях
-              </p>
-            </div>
-          </motion.div>
+    <Container size="lg">
+      <Stack gap="xl" style={{ paddingTop: 'var(--spacing-32)', paddingBottom: 'var(--spacing-32)' }}>
+        <motion.div
+          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: motionTokens.duration.base,
+            ease: motionTokens.easing.out,
+          }}
+        >
+          <div className="account-header">
+            <h1 style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-12)' }}>
+              Аккаунт
+            </h1>
+            <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
+              Информация о вашем тарифе, использовании и доступных возможностях
+            </p>
+          </div>
+        </motion.div>
 
-          <SubscriptionCard subscription={subscription} />
-          <UsageOverviewCard usage={usage} />
-          <FairUseModeCard mode={mockFairUseMode} />
-          <CapabilitiesCard capabilities={mockCapabilities} />
+        <SubscriptionCard subscription={subscription} />
+        <UsageOverviewCard usage={usage} />
+        <FairUseModeCard mode={mockFairUseMode} />
+        <CapabilitiesCard capabilities={mockCapabilities} />
 
-          <motion.div
-            className="account-actions"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{
-              duration: motionTokens.duration.base,
-              ease: motionTokens.easing.out,
-              delay: 0.4,
-            }}
-          >
-            <div className="account-actions__group">
-              <Button variant="ghost" onClick={handleLogout}>
-                Выйти из аккаунта
+        <motion.div
+          className="account-actions"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{
+            duration: motionTokens.duration.base,
+            ease: motionTokens.easing.out,
+            delay: 0.4,
+          }}
+        >
+          <div className="account-actions__group">
+            <Button variant="ghost" onClick={handleLogout}>
+              Выйти из аккаунта
+            </Button>
+            <Tooltip content="Функция будет доступна позже">
+              <Button variant="ghost" disabled>
+                Связаться с поддержкой
               </Button>
-              <Tooltip content="Функция будет доступна позже">
-                <Button variant="ghost" disabled>
-                  Связаться с поддержкой
-                </Button>
-              </Tooltip>
-            </div>
-          </motion.div>
-        </Stack>
-      </Container>
-    </AppShell>
+            </Tooltip>
+          </div>
+        </motion.div>
+      </Stack>
+    </Container>
   )
 }
 

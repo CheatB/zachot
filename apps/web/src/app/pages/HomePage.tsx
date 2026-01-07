@@ -5,13 +5,12 @@
 
 import { useEffect } from 'react'
 import { useAuth } from '../auth/useAuth'
-import AppShell from '../layout/AppShell'
 import { EmptyState } from '@/ui'
 import { fetchHealth } from '@/shared/api/health'
 import { ApiError } from '@/shared/api/http'
 
 function HomePage() {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   useEffect(() => {
     fetchHealth()
@@ -29,25 +28,19 @@ function HomePage() {
 
   if (!isAuthenticated) {
     return (
-      <AppShell isAuthenticated={isAuthenticated} user={user}>
-        <EmptyState
-          title="Войдите через лэндинг"
-          description="Для доступа к продукту необходимо войти через лэндинг"
-        />
-      </AppShell>
+      <EmptyState
+        title="Войдите через лэндинг"
+        description="Для доступа к продукту необходимо войти через лэндинг"
+      />
     )
   }
 
   return (
-    <AppShell isAuthenticated={isAuthenticated} user={user}>
-      <EmptyState
-        title="Вы успешно вошли в продукт"
-        description="Продукт загружается. Функции скоро станут доступны"
-      />
-    </AppShell>
+    <EmptyState
+      title="Вы успешно вошли в продукт"
+      description="Продукт загружается. Функции скоро станут доступны"
+    />
   )
 }
 
 export default HomePage
-
-
