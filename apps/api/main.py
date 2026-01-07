@@ -17,6 +17,8 @@ from packages.core_domain.state_machine import GenerationStateMachine
 from .routers import generations, health, jobs, me
 from .settings import settings
 from .storage import generation_store
+from .database import init_db
+
 
 # Настройка логирования
 logging.basicConfig(
@@ -96,6 +98,10 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info(f"Starting {settings.service_name} in {settings.env} mode")
     logger.info(f"Debug mode: {settings.debug}")
+    
+    logger.info("Initializing database...")
+    init_db()
+    logger.info("Database initialized successfully")
     
     # Подписываемся на domain events
     event_dispatcher.subscribe(handle_generation_updated)

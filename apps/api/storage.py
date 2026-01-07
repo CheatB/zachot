@@ -1,204 +1,137 @@
 """
-Временное in-memory хранилище для Generation.
-
-ВНИМАНИЕ: Это временное хранилище для разработки и тестирования.
-В production должно быть заменено на реальную БД.
+Хранилище для Generation на базе PostgreSQL.
 """
 
 import asyncio
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
+from datetime import datetime
 
 from packages.core_domain import Generation
+from .database import SessionLocal, GenerationDB, User as UserDB
 
 
-class InMemoryGenerationStore:
+class SQLGenerationStore:
     """
-    In-memory хранилище для Generation.
-    
-    Использует словарь для хранения генераций в памяти.
-    Данные теряются при перезапуске приложения.
+    SQL хранилище для Generation.
     """
     
     def __init__(self):
-        """Инициализация хранилища."""
-        self._storage: dict[UUID, Generation] = {}
         # Pub/sub для SSE: generation_id -> list[asyncio.Queue]
         self._subscribers: dict[UUID, list[asyncio.Queue]] = {}
     
     def create(self, generation: Generation) -> Generation:
-        """
-        Сохраняет Generation в хранилище.
-        
-        Args:
-            generation: Объект Generation для сохранения
-        
-        Returns:
-            Сохранённый объект Generation
-        
-        Raises:
-            ValueError: Если generation с таким id уже существует
-        """
-        if generation.id in self._storage:
-            raise ValueError(f"Generation with id {generation.id} already exists")
-        
-        self._storage[generation.id] = generation
-        return generation
+        with SessionLocal() as session:
+            db_gen = GenerationDB(
+                id=generation.id,
+                user_id=generation.user_id,
+                module=generation.module.value,
+                status=generation.status.value,
+                title=generation.title,
+                work_type=generation.work_type,
+                complexity_level=generation.complexity_level,
+                humanity_level=generation.humanity_level,
+                input_payload=generation.input_payload,
+                settings_payload=generation.settings_payload,
+                created_at=generation.created_at,
+                updated_at=generation.updated_at
+            )
+            session.add(db_gen)
+            
+            # Декремент лимита у пользователя
+            user = session.query(UserDB).filter(UserDB.id == generation.user_id).first()
+            if user:
+                user.generations_used += 1
+            
+            session.commit()
+            return generation
     
     def get(self, generation_id: UUID) -> Optional[Generation]:
-        """
-        Получает Generation по идентификатору.
-        
-        Args:
-            generation_id: UUID генерации
-        
-        Returns:
-            Объект Generation или None, если не найдено
-        """
-        return self._storage.get(generation_id)
+        with SessionLocal() as session:
+            db_gen = session.query(GenerationDB).filter(GenerationDB.id == generation_id).first()
+            if not db_gen:
+                return None
+            return self._map_to_domain(db_gen)
     
-    def get_all(self) -> list[Generation]:
-        """
-        Получает все Generation из хранилища.
-        
-        Returns:
-            Список всех Generation
-        """
-        return list(self._storage.values())
+    def get_all(self) -> List[Generation]:
+        with SessionLocal() as session:
+            db_gens = session.query(GenerationDB).all()
+            return [self._map_to_domain(g) for g in db_gens]
+
+    def get_all_for_user(self, user_id: UUID) -> List[Generation]:
+        with SessionLocal() as session:
+            db_gens = session.query(GenerationDB).filter(GenerationDB.user_id == user_id).all()
+            return [self._map_to_domain(g) for g in db_gens]
     
     def update(self, generation_id: UUID, **updates) -> Generation:
-        """
-        Обновляет Generation в хранилище.
-        
-        Args:
-            generation_id: UUID генерации для обновления
-            **updates: Поля для обновления (kwargs)
-        
-        Returns:
-            Обновлённый объект Generation
-        
-        Raises:
-            ValueError: Если generation с таким id не существует
-        """
-        if generation_id not in self._storage:
-            raise ValueError(f"Generation with id {generation_id} not found")
-        
-        generation = self._storage[generation_id]
-        
-        # Создаём обновлённую копию с переданными полями
-        update_data = {**generation.model_dump(), **updates}
-        updated_generation = Generation(**update_data)
-        
-        # Сохраняем обновлённую версию
-        self._storage[generation_id] = updated_generation
-        
-        # Отправляем обновление всем подписчикам
-        if generation_id in self._subscribers:
-            event_data = {
-                "id": str(updated_generation.id),
-                "status": updated_generation.status.value,
-                "updated_at": updated_generation.updated_at.isoformat(),
-            }
+        with SessionLocal() as session:
+            db_gen = session.query(GenerationDB).filter(GenerationDB.id == generation_id).first()
+            if not db_gen:
+                raise ValueError(f"Generation with id {generation_id} not found")
             
-            # Отправляем в каждую очередь (неблокирующе)
-            for queue in self._subscribers[generation_id]:
-                try:
-                    queue.put_nowait(event_data)
-                except asyncio.QueueFull:
-                    # Если очередь переполнена, пропускаем
-                    pass
-        
-        return updated_generation
+            for key, value in updates.items():
+                if hasattr(db_gen, key):
+                    setattr(db_gen, key, value)
+            
+            db_gen.updated_at = datetime.utcnow()
+            session.commit()
+            
+            updated_gen = self._map_to_domain(db_gen)
+            self._notify_subscribers(updated_gen)
+            return updated_gen
     
     def save(self, generation: Generation) -> Generation:
-        """
-        Сохраняет или обновляет Generation в хранилище.
-        
-        Используется для сохранения Generation после state transitions.
-        Отправляет обновления всем подписчикам через pub/sub.
-        
-        Args:
-            generation: Объект Generation для сохранения
-        
-        Returns:
-            Сохранённый объект Generation
-        """
-        self._storage[generation.id] = generation
-        
-        # Отправляем обновление всем подписчикам
+        # Пакетное сохранение для state transitions
+        return self.update(generation.id, 
+                           status=generation.status.value,
+                           input_payload=generation.input_payload,
+                           settings_payload=generation.settings_payload)
+
+    def _map_to_domain(self, db_gen: GenerationDB) -> Generation:
+        return Generation(
+            id=db_gen.id,
+            user_id=db_gen.user_id,
+            module=db_gen.module,
+            status=db_gen.status,
+            title=db_gen.title,
+            work_type=db_gen.work_type,
+            complexity_level=db_gen.complexity_level,
+            humanity_level=db_gen.humanity_level,
+            created_at=db_gen.created_at,
+            updated_at=db_gen.updated_at,
+            input_payload=db_gen.input_payload,
+            settings_payload=db_gen.settings_payload,
+            result_content=db_gen.result_content
+        )
+
+    def _notify_subscribers(self, generation: Generation):
         if generation.id in self._subscribers:
             event_data = {
                 "id": str(generation.id),
                 "status": generation.status.value,
                 "updated_at": generation.updated_at.isoformat(),
             }
-            
-            # Отправляем в каждую очередь (неблокирующе)
             for queue in self._subscribers[generation.id]:
                 try:
                     queue.put_nowait(event_data)
                 except asyncio.QueueFull:
-                    # Если очередь переполнена, пропускаем
                     pass
-        
-        return generation
-    
+
     def subscribe(self, generation_id: UUID) -> asyncio.Queue:
-        """
-        Подписывается на обновления Generation.
-        
-        Создаёт очередь для получения событий обновления Generation.
-        События отправляются при вызове save().
-        
-        Args:
-            generation_id: UUID генерации для подписки
-        
-        Returns:
-            asyncio.Queue для получения событий
-        
-        Note:
-            Необходимо вызвать unsubscribe() при отключении клиента.
-        """
         if generation_id not in self._subscribers:
             self._subscribers[generation_id] = []
-        
         queue: asyncio.Queue = asyncio.Queue(maxsize=100)
         self._subscribers[generation_id].append(queue)
-        
         return queue
     
     def unsubscribe(self, generation_id: UUID, queue: asyncio.Queue) -> None:
-        """
-        Отписывается от обновлений Generation.
-        
-        Удаляет очередь из списка подписчиков.
-        
-        Args:
-            generation_id: UUID генерации
-            queue: Очередь для удаления
-        """
         if generation_id in self._subscribers:
             try:
                 self._subscribers[generation_id].remove(queue)
             except ValueError:
                 pass
-            
-            # Удаляем пустой список подписчиков
             if not self._subscribers[generation_id]:
                 del self._subscribers[generation_id]
 
-
-    def clear(self) -> None:
-        """
-        Очищает хранилище (для тестирования).
-        
-        Удаляет все Generation и отписывает всех подписчиков.
-        """
-        self._storage.clear()
-        self._subscribers.clear()
-
-
 # Глобальный экземпляр хранилища
-# В production это должно быть заменено на dependency injection
-generation_store = InMemoryGenerationStore()
-
+generation_store = SQLGenerationStore()

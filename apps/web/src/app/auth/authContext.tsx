@@ -97,11 +97,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return
     }
 
-    // 4️⃣ Нет токена и не integration mode — auth resolved, но не authenticated
-    setAuthState((prev) => ({
-      ...prev,
+    // 4️⃣ Нет токена и не integration mode — создаем анонимную сессию для MVP
+    const anonymousId = crypto.randomUUID()
+    sessionStorage.setItem(TOKEN_KEY, anonymousId)
+    sessionStorage.setItem(USER_ID_KEY, anonymousId)
+    
+    setAuthState({
+      isAuthenticated: true,
       isAuthResolved: true,
-    }))
+      user: { id: anonymousId },
+      token: anonymousId,
+    })
   }, [])
 
   const loginFromLanding = (token: string, userId: string) => {
