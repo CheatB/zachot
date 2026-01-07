@@ -6,12 +6,13 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
-import { Button } from '@/ui'
+import { Button, Stack, Tooltip } from '@/ui'
 
 interface ResultActionsProps {
   onCopy: () => void
   onNewGeneration: () => void
   onBackToList: () => void
+  onExport: (format: 'docx' | 'pdf' | 'pptx') => void
   isDegraded?: boolean
   onContinue?: () => void
 }
@@ -20,8 +21,7 @@ function ResultActions({
   onCopy,
   onNewGeneration,
   onBackToList,
-  isDegraded = false,
-  onContinue,
+  onExport,
 }: ResultActionsProps) {
   const [copied, setCopied] = useState(false)
 
@@ -31,39 +31,6 @@ function ResultActions({
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // Degraded state actions
-  if (isDegraded) {
-    return (
-      <motion.div
-        className="result-actions"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{
-          duration: motionTokens.duration.base,
-          ease: motionTokens.easing.out,
-          delay: 0.2,
-        }}
-      >
-        <div className="result-actions__primary">
-          <Button variant="primary" onClick={onNewGeneration}>
-            Создать новую генерацию
-          </Button>
-          {onContinue && (
-            <Button variant="secondary" onClick={onContinue}>
-              Продолжить с этим результатом
-            </Button>
-          )}
-        </div>
-        <div className="result-actions__secondary">
-          <Button variant="ghost" onClick={onBackToList}>
-            Вернуться к списку
-          </Button>
-        </div>
-      </motion.div>
-    )
-  }
-
-  // Normal state actions
   return (
     <motion.div
       className="result-actions"
@@ -75,19 +42,35 @@ function ResultActions({
         delay: 0.2,
       }}
     >
-      <div className="result-actions__primary">
-        <Button variant="primary" onClick={handleCopy}>
-          {copied ? 'Скопировано' : 'Скопировать результат'}
-        </Button>
-        <Button variant="secondary" onClick={onNewGeneration}>
-          Создать новую генерацию
-        </Button>
-      </div>
-      <div className="result-actions__secondary">
-        <Button variant="ghost" onClick={onBackToList}>
-          Вернуться к списку
-        </Button>
-      </div>
+      <Stack gap="lg">
+        <div className="result-actions__primary">
+          <Button variant="primary" onClick={handleCopy}>
+            {copied ? '✅ Скопировано' : '📋 Скопировать текст'}
+          </Button>
+          <Button variant="secondary" onClick={onNewGeneration}>
+            ✨ Новая работа
+          </Button>
+        </div>
+
+        <div className="result-actions__export">
+          <h3 style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-12)' }}>
+            Экспорт файла по ГОСТу
+          </h3>
+          <div style={{ display: 'flex', gap: 'var(--spacing-12)', flexWrap: 'wrap' }}>
+            <Button variant="ghost" size="sm" onClick={() => onExport('docx')}>📄 .DOCX</Button>
+            <Button variant="ghost" size="sm" onClick={() => onExport('pdf')}>📕 .PDF</Button>
+            <Tooltip content="Доступно для презентаций">
+              <Button variant="ghost" size="sm" onClick={() => onExport('pptx')} disabled>📊 .PPTX</Button>
+            </Tooltip>
+          </div>
+        </div>
+
+        <div className="result-actions__secondary">
+          <Button variant="ghost" onClick={onBackToList}>
+            ← Вернуться к списку
+          </Button>
+        </div>
+      </Stack>
     </motion.div>
   )
 }
@@ -99,12 +82,20 @@ const actionsStyles = `
   display: flex;
   flex-direction: column;
   gap: var(--spacing-16);
+  padding-top: var(--spacing-24);
+  border-top: 1px solid var(--color-border-light);
 }
 
 .result-actions__primary {
   display: flex;
   gap: var(--spacing-16);
   flex-wrap: wrap;
+}
+
+.result-actions__export {
+  padding: var(--spacing-16);
+  background-color: var(--color-neutral-10);
+  border-radius: var(--radius-md);
 }
 
 .result-actions__secondary {
@@ -132,4 +123,3 @@ if (typeof document !== 'undefined') {
     document.head.appendChild(style)
   }
 }
-

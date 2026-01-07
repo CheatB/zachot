@@ -1,175 +1,123 @@
 /**
  * GenerationRecoveryPage
- * Экран восстановления после ошибки генерации
+ * Страница восстановления или пересборки генерации
  */
 
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { useAuth } from '@/app/auth/useAuth'
 import AppShell from '@/app/layout/AppShell'
-import { Container, Stack, Button, Card, EmptyState } from '@/ui'
+import { Container, Stack, Button, Card, Badge, EmptyState } from '@/ui'
+import { getGenerationById, createGeneration, type Generation } from '@/shared/api/generations'
 
 function GenerationRecoveryPage() {
+  const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  
+  const [generation, setGeneration] = useState<Generation | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [isRecovering, setIsRecovering] = useState(false)
 
-  if (!isAuthenticated) {
+  useEffect(() => {
+    if (!id || !isAuthenticated) return
+
+    getGenerationById(id)
+      .then(setGeneration)
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [id, isAuthenticated])
+
+  const handleRestart = async () => {
+    if (!generation) return
+    
+    setIsRecovering(true)
+    try {
+      // Создаем новую генерацию на основе старых данных (пересборка)
+      const newGen = await createGeneration({
+        type: generation.module,
+        work_type: generation.work_type,
+        complexity_level: generation.complexity_level,
+        humanity_level: generation.humanity_level,
+        input_payload: generation.input_payload,
+        settings_payload: generation.settings_payload,
+      })
+      navigate(`/generations/${newGen.id}`)
+    } catch (error) {
+      console.error('Failed to restart generation:', error)
+      setIsRecovering(false)
+    }
+  }
+
+  if (loading) {
     return (
-      <AppShell>
-        <EmptyState
-          title="Войдите через лэндинг"
-          description="Для просмотра генерации необходимо войти"
-        />
+      <AppShell isAuthenticated={isAuthenticated} user={user}>
+        <Container size="lg">
+          <p style={{ textAlign: 'center', paddingTop: 100 }}>Загрузка данных для восстановления...</p>
+        </Container>
       </AppShell>
     )
   }
 
-  const handleRetry = () => {
-    // TODO: Редирект на создание новой генерации с теми же параметрами
-    navigate('/generations/new')
-  }
-
-  const handleNewGeneration = () => {
-    navigate('/generations/new')
-  }
-
-  const handleBackToList = () => {
-    navigate('/generations')
+  if (!generation) {
+    return (
+      <AppShell isAuthenticated={isAuthenticated} user={user}>
+        <EmptyState title="Работа не найдена" description="Не удается найти данные для восстановления." />
+      </AppShell>
+    )
   }
 
   return (
-    <AppShell>
+    <AppShell isAuthenticated={isAuthenticated} user={user}>
       <Container size="lg">
         <Stack gap="xl" style={{ paddingTop: 'var(--spacing-32)', paddingBottom: 'var(--spacing-32)' }}>
-          {/* Header */}
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: motionTokens.duration.base,
-              ease: motionTokens.easing.out,
-            }}
+            transition={{ duration: motionTokens.duration.base, ease: motionTokens.easing.out }}
           >
-            <div className="recovery-header">
-              <h1
-                style={{
-                  fontSize: 'var(--font-size-3xl)',
-                  fontWeight: 'var(--font-weight-bold)',
-                  color: 'var(--color-text-primary)',
-                  marginBottom: 'var(--spacing-12)',
-                }}
-              >
-                Не удалось завершить генерацию
-              </h1>
-              <p
-                style={{
-                  fontSize: 'var(--font-size-base)',
-                  color: 'var(--color-text-secondary)',
-                  lineHeight: 'var(--line-height-relaxed)',
-                  marginBottom: 'var(--spacing-12)',
-                }}
-              >
-                Такое иногда случается. Это не ваша ошибка.
-              </p>
-            </div>
+            <h1 style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-12)' }}>
+              Восстановление работы
+            </h1>
+            <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
+              Вы можете перезапустить процесс генерации с теми же параметрами или изменить их.
+            </p>
           </motion.div>
 
-          {/* Explanation Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: motionTokens.duration.base,
-              ease: motionTokens.easing.out,
-              delay: 0.1,
-            }}
-          >
-            <Card className="recovery-explanation">
-              <div className="recovery-explanation__content">
-                <h3
-                  style={{
-                    fontSize: 'var(--font-size-lg)',
-                    fontWeight: 'var(--font-weight-semibold)',
-                    color: 'var(--color-text-primary)',
-                    marginBottom: 'var(--spacing-16)',
-                  }}
-                >
-                  Что происходит?
-                </h3>
-                <ul className="recovery-explanation__list">
-                  <li className="recovery-explanation__item">
-                    <span
-                      style={{
-                        fontSize: 'var(--font-size-base)',
-                        color: 'var(--color-text-secondary)',
-                        lineHeight: 'var(--line-height-relaxed)',
-                      }}
-                    >
-                      <strong style={{ color: 'var(--color-text-primary)' }}>
-                        Что могло пойти не так:
-                      </strong>{' '}
-                      Временные проблемы с обработкой, слишком большой объём данных или неожиданная ошибка системы.
-                    </span>
-                  </li>
-                  <li className="recovery-explanation__item">
-                    <span
-                      style={{
-                        fontSize: 'var(--font-size-base)',
-                        color: 'var(--color-text-secondary)',
-                        lineHeight: 'var(--line-height-relaxed)',
-                      }}
-                    >
-                      <strong style={{ color: 'var(--color-text-primary)' }}>
-                        Что можно сделать сейчас:
-                      </strong>{' '}
-                      Попробуйте создать генерацию ещё раз. Чаще всего это помогает.
-                    </span>
-                  </li>
-                  <li className="recovery-explanation__item">
-                    <span
-                      style={{
-                        fontSize: 'var(--font-size-base)',
-                        color: 'var(--color-text-secondary)',
-                        lineHeight: 'var(--line-height-relaxed)',
-                      }}
-                    >
-                      <strong style={{ color: 'var(--color-text-primary)' }}>
-                        Что сохранено:
-                      </strong>{' '}
-                      Ваш запрос сохранён. Вы можете вернуться к нему позже или создать новый.
-                    </span>
-                  </li>
-                </ul>
-              </div>
-            </Card>
-          </motion.div>
+          <Card>
+            <div style={{ padding: 'var(--spacing-24)' }}>
+              <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--spacing-16)' }}>
+                Параметры исходной работы
+              </h3>
+              <Stack gap="md">
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Тема</span>
+                  <span style={{ fontWeight: 'var(--font-weight-medium)', maxWidth: '60%', textAlign: 'right' }}>
+                    {generation.title || 'Без названия'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Тип</span>
+                  <Badge status="neutral">{generation.work_type || generation.module}</Badge>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>Сложность</span>
+                  <span>{generation.complexity_level}</span>
+                </div>
+              </Stack>
+            </div>
+          </Card>
 
-          {/* Actions */}
-          <motion.div
-            className="recovery-actions"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{
-              duration: motionTokens.duration.base,
-              ease: motionTokens.easing.out,
-              delay: 0.2,
-            }}
-          >
-            <div className="recovery-actions__primary">
-              <Button variant="primary" onClick={handleRetry}>
-                Попробовать ещё раз
-              </Button>
-              <Button variant="secondary" onClick={handleNewGeneration}>
-                Создать новую генерацию
-              </Button>
-            </div>
-            <div className="recovery-actions__secondary">
-              <Button variant="ghost" onClick={handleBackToList}>
-                Вернуться к списку
-              </Button>
-            </div>
-          </motion.div>
+          <div style={{ display: 'flex', gap: 'var(--spacing-16)' }}>
+            <Button variant="primary" onClick={handleRestart} loading={isRecovering} disabled={isRecovering}>
+              Перезапустить генерацию
+            </Button>
+            <Button variant="secondary" onClick={() => navigate('/generations')} disabled={isRecovering}>
+              Отмена
+            </Button>
+          </div>
         </Stack>
       </Container>
     </AppShell>
@@ -177,79 +125,3 @@ function GenerationRecoveryPage() {
 }
 
 export default GenerationRecoveryPage
-
-const recoveryStyles = `
-.recovery-header {
-  width: 100%;
-}
-
-.recovery-explanation {
-  background-color: var(--color-neutral-20);
-  border: 1px solid var(--color-border-light);
-}
-
-.recovery-explanation__content {
-  padding: var(--spacing-20);
-}
-
-.recovery-explanation__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-20);
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.recovery-explanation__item {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-12);
-}
-
-.recovery-explanation__item::before {
-  content: '•';
-  color: var(--color-accent-base);
-  font-size: var(--font-size-xl);
-  line-height: var(--line-height-normal);
-  flex-shrink: 0;
-}
-
-.recovery-actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-16);
-}
-
-.recovery-actions__primary {
-  display: flex;
-  gap: var(--spacing-16);
-  flex-wrap: wrap;
-}
-
-.recovery-actions__secondary {
-  display: flex;
-  justify-content: flex-start;
-}
-
-@media (max-width: 768px) {
-  .recovery-actions__primary {
-    flex-direction: column;
-  }
-  
-  .recovery-actions__primary button {
-    width: 100%;
-  }
-}
-`
-
-if (typeof document !== 'undefined') {
-  const styleId = 'generation-recovery-page-styles'
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style')
-    style.id = styleId
-    style.textContent = recoveryStyles
-    document.head.appendChild(style)
-  }
-}
-

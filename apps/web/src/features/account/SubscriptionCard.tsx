@@ -3,7 +3,7 @@
  * Карточка с информацией о подписке
  */
 
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { Card, Badge, Button, Tooltip } from '@/ui'
 import type { SubscriptionInfo } from './types'
@@ -50,7 +50,7 @@ function SubscriptionCard({ subscription }: SubscriptionCardProps) {
     return ''
   }
 
-  const shouldReduceMotion = useReducedMotion()
+  const shouldReduceMotion = false
 
   return (
     <motion.div

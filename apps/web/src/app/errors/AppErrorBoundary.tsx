@@ -5,9 +5,6 @@
  */
 
 import { Component, ReactNode } from 'react'
-import { Card, Button, EmptyState } from '@/ui'
-import AppShell from '../layout/AppShell'
-import { Container, Stack } from '@/ui'
 
 interface AppErrorBoundaryProps {
   children: ReactNode
@@ -20,23 +17,32 @@ interface AppErrorBoundaryState {
 class AppErrorBoundaryClass extends Component<AppErrorBoundaryProps, AppErrorBoundaryState> {
   constructor(props: AppErrorBoundaryProps) {
     super(props)
+    console.log('[AppErrorBoundary] Constructor called')
     this.state = { hasError: false }
   }
 
-  static getDerivedStateFromError(): AppErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): AppErrorBoundaryState {
+    console.error('[AppErrorBoundary] Error caught:', error.message, error.stack)
     return { hasError: true }
   }
 
-  componentDidCatch(_error: Error, _errorInfo: React.ErrorInfo) {
-    // В production здесь можно отправить ошибку в систему мониторинга
-    // Но не логируем в консоль для пользователя
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('[AppErrorBoundary] componentDidCatch:', {
+      error: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+    })
   }
 
   render() {
+    console.log('[AppErrorBoundary] Render called, hasError:', this.state.hasError)
+    
     if (this.state.hasError) {
+      console.log('[AppErrorBoundary] Rendering ErrorFallback')
       return <ErrorFallback />
     }
 
+    console.log('[AppErrorBoundary] Rendering children')
     return this.props.children
   }
 }
@@ -46,73 +52,41 @@ function ErrorFallback() {
     window.location.reload()
   }
 
-  const handleGoBack = () => {
-    window.location.href = '/generations'
-  }
-
   return (
-    <AppShell>
-      <Container size="lg">
-        <Stack gap="xl" style={{ paddingTop: 'var(--spacing-32)', paddingBottom: 'var(--spacing-32)' }}>
-          <Card>
-            <div className="error-boundary">
-              <EmptyState
-                title="Что-то пошло не так"
-                description="Попробуйте обновить страницу или вернуться позже"
-              >
-                <div className="error-boundary__actions">
-                  <Button variant="primary" onClick={handleRefresh}>
-                    Обновить страницу
-                  </Button>
-                  <Button variant="secondary" onClick={handleGoBack}>
-                    Вернуться к списку генераций
-                  </Button>
-                </div>
-              </EmptyState>
-            </div>
-          </Card>
-        </Stack>
-      </Container>
-    </AppShell>
+    <div style={{ padding: 32, textAlign: 'center', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <h1 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)', marginBottom: 'var(--spacing-16)', color: 'var(--color-text-primary)' }}>
+        Что-то пошло не так
+      </h1>
+      <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-24)' }}>
+        Попробуйте обновить страницу или вернуться позже
+      </p>
+      <button
+        onClick={handleRefresh}
+        style={{
+          padding: 'var(--spacing-12) var(--spacing-24)',
+          fontSize: 'var(--font-size-base)',
+          fontWeight: 'var(--font-weight-medium)',
+          color: 'var(--color-text-inverse)',
+          backgroundColor: 'var(--color-accent-base)',
+          border: 'none',
+          borderRadius: 'var(--radius-md)',
+          cursor: 'pointer',
+          transition: 'background-color var(--motion-duration-base) ease',
+        }}
+        onMouseOver={(e) => {
+          e.currentTarget.style.backgroundColor = 'var(--color-accent-hover)'
+        }}
+        onMouseOut={(e) => {
+          e.currentTarget.style.backgroundColor = 'var(--color-accent-base)'
+        }}
+      >
+        Обновить страницу
+      </button>
+    </div>
   )
 }
 
 const AppErrorBoundary = AppErrorBoundaryClass
 
 export default AppErrorBoundary
-
-const errorStyles = `
-.error-boundary {
-  padding: var(--spacing-32);
-  text-align: center;
-}
-
-.error-boundary__actions {
-  display: flex;
-  gap: var(--spacing-16);
-  justify-content: center;
-  margin-top: var(--spacing-24);
-  flex-wrap: wrap;
-}
-
-@media (max-width: 768px) {
-  .error-boundary__actions {
-    flex-direction: column;
-  }
-  
-  .error-boundary__actions button {
-    width: 100%;
-  }
-}
-`
-
-if (typeof document !== 'undefined') {
-  const styleId = 'error-boundary-styles'
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style')
-    style.id = styleId
-    style.textContent = errorStyles
-    document.head.appendChild(style)
-  }
-}
 

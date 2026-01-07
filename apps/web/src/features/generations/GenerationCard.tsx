@@ -3,10 +3,10 @@
  * Карточка генерации с hover эффектами
  */
 
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { Badge } from '@/ui'
-import type { Generation } from './generationTypes'
+import type { Generation } from '@/shared/api/generations'
 import { formatRelativeTime } from '@/utils/format'
 import clsx from 'clsx'
 
@@ -48,11 +48,11 @@ function GenerationCard({ generation, onClick }: GenerationCardProps) {
 
   const getModuleLabel = (module: Generation['module']): string => {
     switch (module) {
-      case 'text':
+      case 'TEXT':
         return 'Текст'
-      case 'presentation':
+      case 'PRESENTATION':
         return 'Презентация'
-      case 'tasks':
+      case 'TASK':
         return 'Задачи'
       default:
         return module
@@ -74,7 +74,7 @@ function GenerationCard({ generation, onClick }: GenerationCardProps) {
     }
   }
 
-  const shouldReduceMotion = useReducedMotion()
+  const shouldReduceMotion = false
 
   return (
     <motion.button

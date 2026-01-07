@@ -14,27 +14,16 @@ function getAuthToken(): string | null {
   return sessionStorage.getItem('zachot_auth_token')
 }
 
-// Single-flight lock для refresh
 let refreshPromise: Promise<void> | null = null
 
-/**
- * Выполняет logout и редирект на /login
- * Вызывается при невозможности восстановить сессию
- */
 function performLogout() {
   sessionStorage.removeItem('zachot_auth_token')
   sessionStorage.removeItem('zachot_auth_user_id')
   sessionStorage.removeItem('zachot_refresh_token')
-  
-  // Диспатчим событие для AuthContext
   window.dispatchEvent(new CustomEvent('auth:logout'))
-  
   window.location.href = '/login'
 }
 
-/**
- * Внутренняя функция для выполнения запроса
- */
 async function performFetch<T>(
   path: string,
   options: RequestInit = {},
@@ -58,42 +47,28 @@ async function performFetch<T>(
       message = data?.detail || data?.message || message
     } catch {}
 
-    // Обработка 401 с refresh flow
     if (res.status === 401 && !isRetry) {
-      // Пытаемся обновить токены
-      try {
-        // Single-flight lock: если refresh уже идёт, ждём его
-        if (!refreshPromise) {
-          refreshPromise = (async () => {
-            try {
-              const tokens = await refreshSession()
-              
-              // Обновляем токены в sessionStorage
-              sessionStorage.setItem('zachot_auth_token', tokens.accessToken)
-              if (tokens.refreshToken) {
-                sessionStorage.setItem('zachot_refresh_token', tokens.refreshToken)
-              }
-            } catch (error) {
-              // Refresh не удался — выполняем logout
-              performLogout()
-              throw error
-            } finally {
-              refreshPromise = null
+      if (!refreshPromise) {
+        refreshPromise = (async () => {
+          try {
+            const tokens = await refreshSession()
+            sessionStorage.setItem('zachot_auth_token', tokens.accessToken)
+            if (tokens.refreshToken) {
+              sessionStorage.setItem('zachot_refresh_token', tokens.refreshToken)
             }
-          })()
-        }
-
-        await refreshPromise
-
-        // Повторяем исходный запрос с новым токеном
-        return performFetch<T>(path, options, true)
-      } catch (error) {
-        // Refresh не удался, logout уже выполнен в performLogout
-        throw new ApiError(401, 'Session expired')
+          } catch (error) {
+            performLogout()
+            throw error
+          } finally {
+            refreshPromise = null
+          }
+        })()
       }
+
+      await refreshPromise
+      return performFetch<T>(path, options, true)
     }
 
-    // Для других ошибок или если это уже retry
     if (res.status === 401) {
       performLogout()
     }
@@ -104,9 +79,6 @@ async function performFetch<T>(
   return res.json()
 }
 
-/**
- * Основная функция для API запросов с автоматическим refresh
- */
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {}

@@ -6,7 +6,19 @@
 import { apiFetch } from './http'
 
 export interface MeResponse {
-  id: string
+  id: string;
+  subscription: {
+    planName: string;
+    status: 'active' | 'expiring' | 'paused';
+    monthlyPriceRub: number;
+    nextBillingDate?: string;
+  };
+  usage: {
+    generationsUsed: number;
+    generationsLimit: number;
+    tokensUsed: number;
+    tokensLimit: number;
+  };
 }
 
 /**

@@ -3,9 +3,13 @@
  * Bottom navigation для мобильных устройств
  */
 
-import { useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../auth/useAuth'
+import { useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
+
+interface MobileNavProps {
+  isAuthenticated: boolean
+  currentPath: string
+}
 
 interface NavItem {
   label: string
@@ -13,10 +17,8 @@ interface NavItem {
   disabled?: boolean
 }
 
-function MobileNav() {
+function MobileNav({ isAuthenticated, currentPath }: MobileNavProps) {
   const navigate = useNavigate()
-  const location = useLocation()
-  const { isAuthenticated } = useAuth()
 
   const navItems: NavItem[] = [
     { label: 'Generations', path: '/generations', disabled: !isAuthenticated },
@@ -34,7 +36,7 @@ function MobileNav() {
     <nav className="app-mobile-nav" aria-label="Мобильная навигация">
       <ul className="app-mobile-nav__list">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path
+          const isActive = currentPath === item.path
           return (
             <li key={item.path}>
               <button

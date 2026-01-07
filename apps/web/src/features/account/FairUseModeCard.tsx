@@ -3,7 +3,7 @@
  * Карточка с информацией о режиме fair use
  */
 
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { Card, Badge } from '@/ui'
 import type { FairUseMode } from './types'
@@ -44,7 +44,7 @@ function FairUseModeCard({ mode }: FairUseModeCardProps) {
 
   const modeInfo = getModeInfo()
 
-  const shouldReduceMotion = useReducedMotion()
+  const shouldReduceMotion = false
 
   return (
     <motion.div

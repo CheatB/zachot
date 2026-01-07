@@ -3,7 +3,7 @@
  * Единая точка принятия решений о состоянии UI
  */
 
-import { ReactNode } from 'react'
+import { ReactNode, useEffect } from 'react'
 import { useAuth } from './auth/useAuth'
 import GlobalLoader from './ui/GlobalLoader'
 import UnauthPage from './pages/UnauthPage'
@@ -13,7 +13,25 @@ interface AppBoundaryProps {
 }
 
 function AppBoundary({ children }: AppBoundaryProps) {
+  console.log('[AppBoundary] Component rendering, about to call useAuth()...')
+  
   const { isAuthResolved, isAuthenticated } = useAuth()
+  
+  console.log('[AppBoundary] useAuth() succeeded:', {
+    isAuthResolved,
+    isAuthenticated,
+  })
+
+  // Логирование для отладки
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('[AppBoundary] Auth state:', {
+        isAuthResolved,
+        isAuthenticated,
+        timestamp: new Date().toISOString(),
+      })
+    }
+  }, [isAuthResolved, isAuthenticated])
 
   // 1. Auth ещё не resolved — показываем loader
   if (!isAuthResolved) {
@@ -30,4 +48,7 @@ function AppBoundary({ children }: AppBoundaryProps) {
 }
 
 export default AppBoundary
+
+
+
 

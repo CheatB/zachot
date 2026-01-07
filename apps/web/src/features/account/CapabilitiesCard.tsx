@@ -3,7 +3,7 @@
  * Карточка с доступными возможностями
  */
 
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { Card } from '@/ui'
 import type { Capabilities } from './types'
@@ -49,7 +49,7 @@ function CapabilitiesCard({ capabilities }: CapabilitiesCardProps) {
     },
   ]
 
-  const shouldReduceMotion = useReducedMotion()
+  const shouldReduceMotion = false
 
   return (
     <motion.div

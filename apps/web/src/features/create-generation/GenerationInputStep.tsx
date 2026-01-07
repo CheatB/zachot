@@ -1,12 +1,12 @@
 /**
  * GenerationInputStep
- * Шаг 2: Ввод данных
+ * Шаг 2: Тема и детали
+ * Updated for "juicy" landing page aesthetic
  */
 
-import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
-import { Textarea, Button } from '@/ui'
+import { Textarea } from '@/ui'
 import type { GenerationType, GenerationTypeInfo } from './types'
 
 interface GenerationInputStepProps {
@@ -18,36 +18,27 @@ interface GenerationInputStepProps {
 
 const typeInfoMap: Record<GenerationType, GenerationTypeInfo> = {
   text: {
-    title: 'Введите текст для структурирования',
-    placeholder: 'Например:\n\nИстория России — это многовековая история развития государства...',
-    hint: 'Можно вставить сырой текст, мы всё обработаем',
-    helperText: 'Ничего страшного, если текст сырой. Мы поможем аккуратно структурировать ваш материал.',
+    title: 'О чем будет работа?',
+    placeholder: 'Введите тему или вставьте план/тезисы, если они есть...',
+    hint: 'Чем подробнее описание, тем точнее будет черновик',
+    helperText: 'На основе этой темы мы предложим цель и структуру работы на следующем шаге.',
   },
   presentation: {
-    title: 'Подготовьте материал для презентации',
-    placeholder: 'Введите текст, который нужно преобразовать в презентацию...',
-    hint: 'Можно использовать любой текст, мы создадим структурированную презентацию',
-    helperText: 'Вы всегда сможете вернуться к результату позже и внести изменения.',
+    title: 'Тема презентации',
+    placeholder: 'Опишите тему выступления и основные тезисы...',
+    hint: 'Мы подготовим логическую структуру слайдов',
+    helperText: 'Вы сможете отредактировать содержание перед финальной генерацией.',
   },
   task: {
-    title: 'Опишите задачу',
-    placeholder: 'Например:\n\nРешить уравнение: 2x + 5 = 15\n\nНайти значение x...',
-    hint: 'Опишите задачу максимально подробно',
-    helperText: 'Чем подробнее описание, тем точнее будет решение.',
+    title: 'Условие задачи',
+    placeholder: 'Вставьте текст задачи, условия и требования к решению...',
+    hint: 'Укажите известные данные и что именно нужно найти',
+    helperText: 'ИИ проанализирует условие и подготовит пошаговый алгоритм решения.',
   },
 }
 
-function GenerationInputStep({ type, input, onInputChange, onShowError }: GenerationInputStepProps) {
-  const [hasError, setHasError] = useState(false)
+function GenerationInputStep({ type, input, onInputChange }: GenerationInputStepProps) {
   const typeInfo = typeInfoMap[type]
-
-  const handleShowError = () => {
-    setHasError(true)
-    onShowError?.()
-    setTimeout(() => setHasError(false), 3000)
-  }
-
-  const characterCount = input.length
 
   return (
     <motion.div
@@ -55,63 +46,38 @@ function GenerationInputStep({ type, input, onInputChange, onShowError }: Genera
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{
-        duration: motionTokens.duration.base,
+        duration: motionTokens.duration.slow,
         ease: motionTokens.easing.out,
       }}
     >
       <div className="wizard-step">
-        <h2
-          className="wizard-step__title"
-          style={{
-            fontSize: 'var(--font-size-2xl)',
-            fontWeight: 'var(--font-weight-bold)',
-            marginBottom: 'var(--spacing-12)',
-            color: 'var(--color-text-primary)',
-          }}
-        >
-          {typeInfo.title}
-        </h2>
-
         <div className="wizard-input-wrapper">
           <Textarea
             label=""
             placeholder={typeInfo.placeholder}
             hint={typeInfo.hint}
-            error={hasError ? 'Произошла ошибка при обработке. Попробуйте ещё раз.' : undefined}
             value={input}
             onChange={(e) => onInputChange(e.target.value)}
-            rows={12}
+            rows={10}
             style={{
-              minHeight: '200px',
+              minHeight: '240px',
               fontFamily: 'var(--font-family-sans)',
+              fontSize: 'var(--font-size-base)',
+              padding: 'var(--spacing-24)',
+              borderRadius: 'var(--radius-lg)',
+              backgroundColor: 'var(--color-neutral-10)',
+              border: '1px solid var(--color-border-base)',
+              boxShadow: 'var(--elevation-1)'
             }}
           />
-
-          <div className="wizard-input-footer">
-            <div className="wizard-input-counter">
-              <span
-                style={{
-                  fontSize: 'var(--font-size-sm)',
-                  color: 'var(--color-text-muted)',
-                }}
-              >
-                {characterCount} символов
-              </span>
-            </div>
-            {onShowError && (
-              <Button variant="ghost" size="sm" onClick={handleShowError}>
-                Показать пример ошибки
-              </Button>
-            )}
-          </div>
 
           <p
             className="wizard-input-helper"
             style={{
               fontSize: 'var(--font-size-sm)',
-              color: 'var(--color-text-muted)',
+              color: 'var(--color-text-secondary)',
               lineHeight: 'var(--line-height-relaxed)',
-              marginTop: 'var(--spacing-16)',
+              marginTop: 'var(--spacing-8)'
             }}
           >
             {typeInfo.helperText}
@@ -133,8 +99,12 @@ const inputStepStyles = `
 
 .wizard-input-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
+  margin-top: -48px; /* Overlay counter on textarea bottom */
+  margin-right: 16px;
+  position: relative;
+  z-index: 2;
 }
 
 .wizard-input-counter {
@@ -152,5 +122,3 @@ if (typeof document !== 'undefined') {
     document.head.appendChild(style)
   }
 }
-
-

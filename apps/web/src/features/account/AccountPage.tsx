@@ -3,7 +3,7 @@
  * Страница аккаунта с информацией о подписке, использовании и возможностях
  */
 
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { useAuth } from '@/app/auth/useAuth'
 import AppShell from '@/app/layout/AppShell'
@@ -13,21 +13,8 @@ import UsageOverviewCard from './UsageOverviewCard'
 import FairUseModeCard from './FairUseModeCard'
 import CapabilitiesCard from './CapabilitiesCard'
 import type { SubscriptionInfo, UsageInfo, FairUseMode, Capabilities } from './types'
-
-// Mock данные
-const mockSubscription: SubscriptionInfo = {
-  planName: 'BASE 499',
-  status: 'active',
-  monthlyPriceRub: 499,
-  nextBillingDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(), // через 15 дней
-}
-
-const mockUsage: UsageInfo = {
-  tokensUsed: 34200,
-  tokensLimit: 100000,
-  costRub: 172.45,
-  costLimitRub: 499,
-}
+import { fetchMe, type MeResponse } from '@/shared/api/me'
+import { useState, useEffect } from 'react'
 
 const mockFairUseMode: FairUseMode = 'normal'
 
@@ -39,8 +26,19 @@ const mockCapabilities: Capabilities = {
 }
 
 function AccountPage() {
-  const { isAuthenticated, logout } = useAuth()
-  const shouldReduceMotion = useReducedMotion()
+  const { isAuthenticated, user, logout } = useAuth()
+  const [meData, setMeResponse] = useState<MeResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const shouldReduceMotion = false
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    fetchMe()
+      .then(setMeResponse)
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [isAuthenticated])
 
   const handleLogout = () => {
     logout()
@@ -48,7 +46,7 @@ function AccountPage() {
 
   if (!isAuthenticated) {
     return (
-      <AppShell>
+      <AppShell isAuthenticated={isAuthenticated} user={user}>
         <EmptyState
           title="Войдите через лэндинг"
           description="Для просмотра аккаунта необходимо войти"
@@ -57,11 +55,34 @@ function AccountPage() {
     )
   }
 
+  if (loading) {
+    return (
+      <AppShell isAuthenticated={isAuthenticated} user={user}>
+        <Container size="lg">
+          <p style={{ textAlign: 'center', paddingTop: 100 }}>Загрузка данных аккаунта...</p>
+        </Container>
+      </AppShell>
+    )
+  }
+
+  const subscription: SubscriptionInfo = meData?.subscription || {
+    planName: 'BASE 499',
+    status: 'active',
+    monthlyPriceRub: 499,
+    nextBillingDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+  }
+
+  const usage: UsageInfo = {
+    tokensUsed: meData?.usage.tokensUsed || 0,
+    tokensLimit: meData?.usage.tokensLimit || 100000,
+    costRub: 0,
+    costLimitRub: subscription.monthlyPriceRub,
+  }
+
   return (
-    <AppShell>
+    <AppShell isAuthenticated={isAuthenticated} user={user}>
       <Container size="lg">
         <Stack gap="xl" style={{ paddingTop: 'var(--spacing-32)', paddingBottom: 'var(--spacing-32)' }}>
-          {/* Account Header */}
           <motion.div
             initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -71,41 +92,20 @@ function AccountPage() {
             }}
           >
             <div className="account-header">
-              <h1
-                style={{
-                  fontSize: 'var(--font-size-3xl)',
-                  fontWeight: 'var(--font-weight-bold)',
-                  color: 'var(--color-text-primary)',
-                  marginBottom: 'var(--spacing-12)',
-                }}
-              >
+              <h1 style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-12)' }}>
                 Аккаунт
               </h1>
-              <p
-                style={{
-                  fontSize: 'var(--font-size-base)',
-                  color: 'var(--color-text-secondary)',
-                  lineHeight: 'var(--line-height-relaxed)',
-                }}
-              >
+              <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
                 Информация о вашем тарифе, использовании и доступных возможностях
               </p>
             </div>
           </motion.div>
 
-          {/* Subscription Card */}
-          <SubscriptionCard subscription={mockSubscription} />
-
-          {/* Usage Overview Card */}
-          <UsageOverviewCard usage={mockUsage} />
-
-          {/* Fair Use Mode Card */}
+          <SubscriptionCard subscription={subscription} />
+          <UsageOverviewCard usage={usage} />
           <FairUseModeCard mode={mockFairUseMode} />
-
-          {/* Capabilities Card */}
           <CapabilitiesCard capabilities={mockCapabilities} />
 
-          {/* Secondary Actions */}
           <motion.div
             className="account-actions"
             initial={{ opacity: 0 }}
@@ -172,4 +172,3 @@ if (typeof document !== 'undefined') {
     document.head.appendChild(style)
   }
 }
-

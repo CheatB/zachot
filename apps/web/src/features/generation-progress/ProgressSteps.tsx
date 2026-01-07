@@ -3,7 +3,7 @@
  * Анимированный индикатор прогресса (step-based)
  */
 
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import type { ProgressStep } from './types'
 
@@ -13,7 +13,7 @@ interface ProgressStepsProps {
 }
 
 function ProgressSteps({ steps, currentStepIndex }: ProgressStepsProps) {
-  const shouldReduceMotion = useReducedMotion()
+  const shouldReduceMotion = false
 
   return (
     <div className="progress-steps">

@@ -8,18 +8,18 @@ import { motion as motionTokens } from '@/design-tokens'
 import { Card, Badge } from '@/ui'
 
 interface ResultMetaProps {
-  type: 'text' | 'presentation' | 'task'
+  type: 'TEXT' | 'PRESENTATION' | 'TASK'
   durationSeconds?: number
 }
 
 function ResultMeta({ type, durationSeconds }: ResultMetaProps) {
   const getTypeLabel = (t: string): string => {
     switch (t) {
-      case 'text':
+      case 'TEXT':
         return 'Текст'
-      case 'presentation':
+      case 'PRESENTATION':
         return 'Презентация'
-      case 'task':
+      case 'TASK':
         return 'Задачи'
       default:
         return t

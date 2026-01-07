@@ -12,6 +12,7 @@ export { default as Progress } from './primitives/Progress'
 export { default as Skeleton } from './primitives/Skeleton'
 export { default as Tooltip } from './primitives/Tooltip'
 export { default as EmptyState } from './primitives/EmptyState'
+export { default as Formula } from './primitives/Formula'
 
 // Layout
 export { default as Container } from './layout/Container'

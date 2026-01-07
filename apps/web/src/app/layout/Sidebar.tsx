@@ -1,17 +1,19 @@
 /**
  * Sidebar component
  * Desktop navigation sidebar
+ * Updated for "juicy" landing page aesthetic
  */
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../auth/useAuth'
+import { useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
 
 interface SidebarProps {
   isOpen: boolean
   onClose: () => void
+  isAuthenticated: boolean
+  currentPath: string
 }
 
 interface NavItem {
@@ -20,16 +22,14 @@ interface NavItem {
   disabled?: boolean
 }
 
-function Sidebar({ isOpen, onClose }: SidebarProps) {
+function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps) {
   const navigate = useNavigate()
-  const location = useLocation()
-  const { isAuthenticated } = useAuth()
 
   const navItems: NavItem[] = [
-    { label: 'Generations', path: '/generations', disabled: !isAuthenticated },
-    { label: 'Account', path: '/account', disabled: !isAuthenticated },
-    { label: 'Billing', path: '/billing', disabled: true },
-    { label: 'Profile', path: '/profile', disabled: true },
+    { label: 'Мои генерации', path: '/generations', disabled: !isAuthenticated },
+    { label: 'Аккаунт', path: '/account', disabled: !isAuthenticated },
+    { label: 'Оплата', path: '/billing', disabled: !isAuthenticated },
+    { label: 'Профиль', path: '/profile', disabled: !isAuthenticated },
   ]
 
   const handleNavClick = (item: NavItem) => {
@@ -71,7 +71,7 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
             <nav className="app-sidebar__nav" aria-label="Основная навигация">
               <ul className="app-sidebar__list">
                 {navItems.map((item) => {
-                  const isActive = location.pathname === item.path
+                  const isActive = currentPath === item.path
                   return (
                     <li key={item.path}>
                       <button
@@ -125,12 +125,12 @@ const sidebarStyles = `
 
 .app-sidebar {
   position: fixed;
-  top: 0;
+  top: 64px; /* Header height offset */
   left: 0;
   bottom: 0;
   width: 280px;
-  background-color: var(--color-surface-base);
-  border-right: 1px solid var(--color-border-light);
+  background-color: var(--color-neutral-10);
+  border-right: 1px solid var(--color-border-base);
   z-index: var(--z-index-modal);
   overflow-y: auto;
 }
@@ -138,8 +138,10 @@ const sidebarStyles = `
 @media (min-width: 1024px) {
   .app-sidebar {
     position: relative;
+    top: 0;
     width: 280px;
     flex-shrink: 0;
+    background-color: var(--color-surface-base);
   }
 }
 
@@ -150,7 +152,7 @@ const sidebarStyles = `
 .app-sidebar__list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: var(--spacing-8);
   list-style: none;
 }
 
@@ -159,13 +161,13 @@ const sidebarStyles = `
   padding: var(--spacing-12) var(--spacing-16);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary);
   background-color: transparent;
-  border: none;
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
   text-align: left;
   cursor: pointer;
-  transition: all var(--motion-duration-base) ease;
+  transition: all var(--motion-duration-base) var(--motion-easing-out);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -173,27 +175,20 @@ const sidebarStyles = `
 
 .app-sidebar__item:hover:not(:disabled) {
   background-color: var(--color-neutral-20);
-}
-
-.app-sidebar__item:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring-offset);
-}
-
-.app-sidebar__item--disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.app-sidebar__item--disabled:hover {
-  background-color: transparent;
+  color: var(--color-text-primary);
+  transform: translateX(4px);
 }
 
 .app-sidebar__item--active {
   background-color: var(--color-accent-light);
   color: var(--color-accent-base);
-  font-weight: var(--font-weight-semibold);
+  border-color: var(--color-accent-base);
+  font-weight: var(--font-weight-bold);
+}
+
+.app-sidebar__item--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .app-sidebar__item-label {
@@ -204,6 +199,9 @@ const sidebarStyles = `
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
   font-weight: var(--font-weight-normal);
+  background: var(--color-neutral-20);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
 }
 `
 
@@ -216,4 +214,3 @@ if (typeof document !== 'undefined') {
     document.head.appendChild(style)
   }
 }
-

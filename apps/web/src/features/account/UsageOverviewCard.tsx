@@ -3,7 +3,7 @@
  * Карточка с обзором использования (токены и стоимость)
  */
 
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { Card, Progress, Tooltip } from '@/ui'
 import type { UsageInfo } from './types'
@@ -13,7 +13,7 @@ interface UsageOverviewCardProps {
 }
 
 function UsageOverviewCard({ usage }: UsageOverviewCardProps) {
-  const shouldReduceMotion = useReducedMotion()
+  const shouldReduceMotion = false
   const tokensPercentage = Math.min((usage.tokensUsed / usage.tokensLimit) * 100, 100)
   const costPercentage = Math.min((usage.costRub / usage.costLimitRub) * 100, 100)
 

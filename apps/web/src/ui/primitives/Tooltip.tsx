@@ -8,7 +8,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import clsx from 'clsx'
 
 interface TooltipProps {
-  content: string
+  content: string | React.ReactNode
   children: React.ReactElement
   position?: 'top' | 'bottom' | 'left' | 'right'
 }

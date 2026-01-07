@@ -3,15 +3,13 @@
  * Главный компонент приложения с роутингом
  */
 
-import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { AuthProvider } from './auth/authContext'
-import AppErrorBoundary from './errors/AppErrorBoundary'
-import AppBoundary from './AppBoundary'
+import { useState } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import GlobalLoading from './layout/GlobalLoading'
-import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import LogoutPage from './pages/LogoutPage'
+import ProfilePage from './pages/ProfilePage'
+import BillingPage from './pages/BillingPage'
 import GenerationsPage from '@/features/generations/GenerationsPage'
 import CreateGenerationPage from '@/features/create-generation/CreateGenerationPage'
 import GenerationProgressPage from '@/features/generation-progress/GenerationProgressPage'
@@ -20,39 +18,17 @@ import GenerationRecoveryPage from '@/features/generation-recovery/GenerationRec
 import AccountPage from '@/features/account/AccountPage'
 
 function AppRoutes() {
-  const location = useLocation()
-  const [isLoading, setIsLoading] = useState(false)
-
-  useEffect(() => {
-    // Показываем loading только если переход занимает > 300ms
-    const timeout = setTimeout(() => {
-      setIsLoading(true)
-    }, 300)
-
-    return () => {
-      clearTimeout(timeout)
-      setIsLoading(false)
-    }
-  }, [location.pathname])
-
-  useEffect(() => {
-    // Скрываем loading после завершения перехода
-    if (isLoading) {
-      const hideTimeout = setTimeout(() => {
-        setIsLoading(false)
-      }, 100)
-
-      return () => clearTimeout(hideTimeout)
-    }
-  }, [location.pathname, isLoading])
+  const [isLoading] = useState(false)
 
   return (
-    <AppBoundary>
+    <>
       <GlobalLoading isLoading={isLoading} />
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<CreateGenerationPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/logout" element={<LogoutPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/billing" element={<BillingPage />} />
         <Route path="/generations" element={<GenerationsPage />} />
         <Route path="/generations/new" element={<CreateGenerationPage />} />
         <Route path="/generations/:id/recovery" element={<GenerationRecoveryPage />} />
@@ -61,20 +37,12 @@ function AppRoutes() {
         <Route path="/account" element={<AccountPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </AppBoundary>
+    </>
   )
 }
 
 function App() {
-  return (
-    <AppErrorBoundary>
-      <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </AuthProvider>
-    </AppErrorBoundary>
-  )
+  return <AppRoutes />
 }
 
 export default App

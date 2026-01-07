@@ -11,7 +11,7 @@ import { fetchHealth } from '@/shared/api/health'
 import { ApiError } from '@/shared/api/http'
 
 function HomePage() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
 
   useEffect(() => {
     fetchHealth()
@@ -29,7 +29,7 @@ function HomePage() {
 
   if (!isAuthenticated) {
     return (
-      <AppShell>
+      <AppShell isAuthenticated={isAuthenticated} user={user}>
         <EmptyState
           title="Войдите через лэндинг"
           description="Для доступа к продукту необходимо войти через лэндинг"
@@ -39,7 +39,7 @@ function HomePage() {
   }
 
   return (
-    <AppShell>
+    <AppShell isAuthenticated={isAuthenticated} user={user}>
       <EmptyState
         title="Вы успешно вошли в продукт"
         description="Продукт загружается. Функции скоро станут доступны"
