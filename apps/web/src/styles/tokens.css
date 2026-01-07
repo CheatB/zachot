@@ -68,12 +68,12 @@
   
   --font-size-xs: 0.8125rem;  /* 13px */
   --font-size-sm: 0.9375rem;  /* 15px */
-  --font-size-base: 1.1875rem; /* 19px - Match landing body */
-  --font-size-lg: 1.25rem;    /* 20px */
-  --font-size-xl: 1.5rem;     /* 24px */
-  --font-size-2xl: 2.5rem;    /* 40px - Match landing H2 */
-  --font-size-3xl: 3.75rem;    /* 60px - Match landing H1 */
-  --font-size-4xl: 4.5rem;
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.75rem;   /* 28px */
+  --font-size-3xl: 2.25rem;   /* 36px */
+  --font-size-4xl: 3rem;      /* 48px */
   
   --line-height-tight: 1.05;
   --line-height-normal: 1.15;

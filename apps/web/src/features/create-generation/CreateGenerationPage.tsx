@@ -7,8 +7,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useAuth } from '@/app/auth/useAuth'
-import AppShell from '@/app/layout/AppShell'
 import { Container, Stack, Button } from '@/ui'
 import clsx from 'clsx'
 import GenerationTypeStep from './GenerationTypeStep'
@@ -30,7 +28,6 @@ import { createGeneration } from '@/shared/api/generations'
 type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 2 | 3 | 4 | 5 | 6
 
 function CreateGenerationPage() {
-  const { isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState<WizardStep>(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -236,32 +233,31 @@ function CreateGenerationPage() {
   }
 
   return (
-    <AppShell isAuthenticated={isAuthenticated} user={user}>
-      <Container size="lg">
-        <Stack gap="xl" style={{ paddingTop: 'var(--spacing-48)', paddingBottom: 'var(--spacing-48)' }}>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            key={`header-${currentStep}`}
-            transition={{
-              duration: motionTokens.duration.slow,
-              ease: motionTokens.easing.out,
-            }}
-          >
-            <h1 style={{ marginBottom: 'var(--spacing-12)', color: 'var(--color-neutral-100)' }}>
-              {title}
-            </h1>
-            <p style={{ 
-              fontSize: 'var(--font-size-base)', 
-              color: 'var(--color-text-secondary)', 
-              lineHeight: 'var(--line-height-relaxed)', 
-              marginBottom: 'var(--spacing-48)',
-              maxWidth: '800px'
-            }}>
-              {subtitle}
-            </p>
-          </motion.div>
+    <Container size="lg">
+      <Stack gap="xl" style={{ paddingTop: 'var(--spacing-48)', paddingBottom: 'var(--spacing-48)' }}>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          key={`header-${currentStep}`}
+          transition={{
+            duration: motionTokens.duration.slow,
+            ease: motionTokens.easing.out,
+          }}
+        >
+          <h1 style={{ marginBottom: 'var(--spacing-12)', color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>
+            {title}
+          </h1>
+          <p style={{ 
+            fontSize: 'var(--font-size-base)', 
+            color: 'var(--color-text-secondary)', 
+            lineHeight: 'var(--line-height-relaxed)', 
+            marginBottom: 'var(--spacing-48)',
+            maxWidth: '800px'
+          }}>
+            {subtitle}
+          </p>
+        </motion.div>
 
           <div className="wizard-progress">
             {[1, 1.2, 1.3, 1.5, 1.6, 1.7, 2, 3, 4, 5, 6].map((step) => {
@@ -327,7 +323,6 @@ function CreateGenerationPage() {
           )}
         </Stack>
       </Container>
-    </AppShell>
   )
 }
 

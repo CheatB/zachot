@@ -9,7 +9,6 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { useAuth } from '@/app/auth/useAuth'
-import AppShell from '@/app/layout/AppShell'
 import { Container, Stack, Button, EmptyState, Input } from '@/ui'
 import GenerationsList from './GenerationsList'
 import FirstTimeEmptyState from './FirstTimeEmptyState'
@@ -20,7 +19,7 @@ const FIRST_TIME_KEY = 'zachot_first_time'
 const HAS_GENERATIONS_KEY = 'zachot_has_generations'
 
 function GenerationsPage() {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const shouldReduceMotion = false
   
@@ -72,13 +71,13 @@ function GenerationsPage() {
   }
 
   return (
-    <AppShell isAuthenticated={isAuthenticated} user={user}>
+    <>
       {isAuthenticated ? (
         isLoading ? (
           <Container size="lg">
             <Stack gap="xl">
               <div>
-                <h1 style={{ color: 'var(--color-neutral-100)' }}>Загрузка...</h1>
+                <h1 style={{ color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>Загрузка...</h1>
               </div>
             </Stack>
           </Container>
@@ -107,7 +106,7 @@ function GenerationsPage() {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'var(--spacing-24)', gap: 'var(--spacing-24)', flexWrap: 'wrap' }}>
                   <div>
-                    <h1 style={{ marginBottom: 'var(--spacing-12)', color: 'var(--color-neutral-100)' }}>
+                    <h1 style={{ marginBottom: 'var(--spacing-12)', color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>
                       Мои генерации
                     </h1>
                     <p style={{ 
@@ -154,7 +153,7 @@ function GenerationsPage() {
           description="Для доступа к генерациям необходимо войти"
         />
       )}
-    </AppShell>
+    </>
   )
 }
 

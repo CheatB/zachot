@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import Header from './Header'
 import Sidebar from './Sidebar'
 import MobileNav from './MobileNav'
@@ -20,25 +21,8 @@ interface AppShellProps {
 function AppShell({ isAuthenticated, user, children }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
-  const [currentPath, setCurrentPath] = useState(window.location.pathname)
-
-  // Синхронизация пути без использования роутера
-  useEffect(() => {
-    const handlePopState = () => setCurrentPath(window.location.pathname)
-    window.addEventListener('popstate', handlePopState)
-    
-    // Интервал для отслеживания изменений, сделанных программно через history.pushState
-    const interval = setInterval(() => {
-      if (window.location.pathname !== currentPath) {
-        setCurrentPath(window.location.pathname)
-      }
-    }, 500)
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState)
-      clearInterval(interval)
-    }
-  }, [currentPath])
+  const location = useLocation()
+  const currentPath = location.pathname
 
   // Определение размера экрана
   useEffect(() => {

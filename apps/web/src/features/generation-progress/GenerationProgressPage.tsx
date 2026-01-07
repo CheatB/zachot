@@ -9,7 +9,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { useAuth } from '@/app/auth/useAuth'
-import AppShell from '@/app/layout/AppShell'
 import { Container, Stack, Button, Badge, EmptyState, Tooltip, Card } from '@/ui'
 import ProgressSteps from './ProgressSteps'
 import GenerationInfo from './GenerationInfo'
@@ -36,7 +35,7 @@ import { getGenerationById, type Generation } from '@/shared/api/generations'
 function GenerationProgressPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated } = useAuth()
   const shouldReduceMotion = false
 
   const [generation, setGeneration] = useState<Generation | null>(null)
@@ -104,7 +103,7 @@ function GenerationProgressPage() {
       : `${Math.floor(elapsedTime / 60)} ${Math.floor(elapsedTime / 60) === 1 ? 'минуту' : Math.floor(elapsedTime / 60) < 5 ? 'минуты' : 'минут'} назад`
 
   return (
-    <AppShell isAuthenticated={isAuthenticated} user={user}>
+    <>
       {isAuthenticated ? (
         <Container size="lg">
           <Stack gap="xl" style={{ paddingTop: 'var(--spacing-48)', paddingBottom: 'var(--spacing-48)' }}>
@@ -119,7 +118,7 @@ function GenerationProgressPage() {
             >
               <div className="generation-progress-header">
                 <div className="generation-progress-header__main">
-                  <h1 style={{ marginBottom: 'var(--spacing-16)', color: 'var(--color-neutral-100)' }}>
+                  <h1 style={{ marginBottom: 'var(--spacing-16)', color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>
                     {generation?.title || 'Подготовка работы...'}
                   </h1>
                   <div className="generation-progress-header__meta" style={{ display: 'flex', gap: 'var(--spacing-16)', alignItems: 'center' }}>
@@ -190,7 +189,7 @@ function GenerationProgressPage() {
           description="Для просмотра генерации необходимо войти"
         />
       )}
-    </AppShell>
+    </>
   )
 }
 
