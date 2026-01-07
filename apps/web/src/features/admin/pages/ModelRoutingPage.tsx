@@ -18,10 +18,20 @@ const ModelRoutingPage: React.FC = () => {
 
   useEffect(() => {
     const defaultConfig: ModelRoutingConfig = {
-      essay: { structure: 'openai/o1-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      diploma: { structure: 'openai/o3-mini', sources: 'openai/gpt-4o', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      presentation: { structure: 'openai/gpt-4o-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'openai/gpt-4o-mini' },
-      task: { task_solve: 'openai/o1-mini' },
+      // Текстовые работы
+      referat: { structure: 'openai/o1-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
+      kursach: { structure: 'openai/o3-mini', sources: 'openai/gpt-4o', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
+      essay: { structure: 'openai/o1-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
+      doklad: { structure: 'openai/gpt-4o-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'openai/gpt-4o-mini' },
+      article: { structure: 'openai/o3-mini', sources: 'openai/gpt-4o', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
+      composition: { structure: 'openai/gpt-4o-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
+      other: { structure: 'openai/o1-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
+      
+      // Презентации
+      presentation: { structure: 'openai/o1-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
+      
+      // Задачи
+      task: { task_solve: 'deepseek/deepseek-r1' },
     };
     fetchModelRouting().then(data => setConfig({ ...defaultConfig, ...data }));
   }, []);
@@ -92,18 +102,53 @@ const ModelRoutingPage: React.FC = () => {
             </thead>
             <tbody>
               <tr>
-                <td>Реферат / Курсовая</td>
+                <td>Реферат</td>
+                <td><ModelSelect workType="referat" stage="structure" /></td>
+                <td><ModelSelect workType="referat" stage="sources" /></td>
+                <td><ModelSelect workType="referat" stage="generation" /></td>
+                <td className="refine-cell-v2"><ModelSelect workType="referat" stage="refine" /></td>
+              </tr>
+              <tr>
+                <td>Курсовая работа</td>
+                <td><ModelSelect workType="kursach" stage="structure" /></td>
+                <td><ModelSelect workType="kursach" stage="sources" /></td>
+                <td><ModelSelect workType="kursach" stage="generation" /></td>
+                <td className="refine-cell-v2"><ModelSelect workType="kursach" stage="refine" /></td>
+              </tr>
+              <tr>
+                <td>Эссе</td>
                 <td><ModelSelect workType="essay" stage="structure" /></td>
                 <td><ModelSelect workType="essay" stage="sources" /></td>
                 <td><ModelSelect workType="essay" stage="generation" /></td>
                 <td className="refine-cell-v2"><ModelSelect workType="essay" stage="refine" /></td>
               </tr>
               <tr>
-                <td>Диплом (ВКР)</td>
-                <td><ModelSelect workType="diploma" stage="structure" /></td>
-                <td><ModelSelect workType="diploma" stage="sources" /></td>
-                <td><ModelSelect workType="diploma" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="diploma" stage="refine" /></td>
+                <td>Доклад</td>
+                <td><ModelSelect workType="doklad" stage="structure" /></td>
+                <td><ModelSelect workType="doklad" stage="sources" /></td>
+                <td><ModelSelect workType="doklad" stage="generation" /></td>
+                <td className="refine-cell-v2"><ModelSelect workType="doklad" stage="refine" /></td>
+              </tr>
+              <tr>
+                <td>Научная статья</td>
+                <td><ModelSelect workType="article" stage="structure" /></td>
+                <td><ModelSelect workType="article" stage="sources" /></td>
+                <td><ModelSelect workType="article" stage="generation" /></td>
+                <td className="refine-cell-v2"><ModelSelect workType="article" stage="refine" /></td>
+              </tr>
+              <tr>
+                <td>Сочинение</td>
+                <td><ModelSelect workType="composition" stage="structure" /></td>
+                <td><ModelSelect workType="composition" stage="sources" /></td>
+                <td><ModelSelect workType="composition" stage="generation" /></td>
+                <td className="refine-cell-v2"><ModelSelect workType="composition" stage="refine" /></td>
+              </tr>
+              <tr>
+                <td>Другое</td>
+                <td><ModelSelect workType="other" stage="structure" /></td>
+                <td><ModelSelect workType="other" stage="sources" /></td>
+                <td><ModelSelect workType="other" stage="generation" /></td>
+                <td className="refine-cell-v2"><ModelSelect workType="other" stage="refine" /></td>
               </tr>
             </tbody>
           </table>
