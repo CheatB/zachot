@@ -27,15 +27,15 @@ console.log('[main.tsx] Structure: AppErrorBoundary -> AuthProvider -> AppBounda
 
 root.render(
   <AppErrorBoundary>
-    <ToastProvider>
-      <AuthProvider>
-        <AppBoundary>
-          <BrowserRouter>
+    <BrowserRouter>
+      <ToastProvider>
+        <AuthProvider>
+          <AppBoundary>
             <App />
-          </BrowserRouter>
-        </AppBoundary>
-      </AuthProvider>
-    </ToastProvider>
+          </AppBoundary>
+        </AuthProvider>
+      </ToastProvider>
+    </BrowserRouter>
   </AppErrorBoundary>
 )
 
