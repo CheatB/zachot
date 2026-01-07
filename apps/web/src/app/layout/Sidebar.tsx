@@ -30,6 +30,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
     { label: 'Аккаунт', path: '/account', disabled: !isAuthenticated },
     { label: 'Оплата', path: '/billing', disabled: !isAuthenticated },
     { label: 'Профиль', path: '/profile', disabled: !isAuthenticated },
+    { label: '⚙️ Админка', path: '/admin', disabled: !isAuthenticated },
   ]
 
   const handleNavClick = (item: NavItem) => {

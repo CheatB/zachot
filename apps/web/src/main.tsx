@@ -28,4 +28,3 @@ root.render(
 )
 
 console.log('[main.tsx] Render called')
-// Build trigger comment

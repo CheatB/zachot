@@ -23,8 +23,7 @@ function MobileNav({ isAuthenticated, currentPath }: MobileNavProps) {
   const navItems: NavItem[] = [
     { label: 'Generations', path: '/generations', disabled: !isAuthenticated },
     { label: 'Account', path: '/account', disabled: !isAuthenticated },
-    { label: 'Billing', path: '/billing', disabled: true },
-    { label: 'Profile', path: '/profile', disabled: true },
+    { label: 'Admin', path: '/admin', disabled: !isAuthenticated },
   ]
 
   const handleNavClick = (item: NavItem) => {
