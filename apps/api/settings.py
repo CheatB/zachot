@@ -6,7 +6,10 @@
 
 import os
 from typing import Literal
+from dotenv import load_dotenv
 
+# Загружаем переменные из .env файла
+load_dotenv()
 
 class Settings:
     """

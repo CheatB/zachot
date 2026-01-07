@@ -1,0 +1,3 @@
+[2026-01-07 19:20:15,029] [PID 206487] [MainThread] [dramatiq.MainProcess] [INFO] Dramatiq '2.0.0' is booting up.
+[2026-01-07 19:20:15,027] [PID 206509] [MainThread] [dramatiq.WorkerProcess(0)] [INFO] Worker process is ready for action.
+[2026-01-07 19:20:15,028] [PID 206510] [MainThread] [dramatiq.WorkerProcess(1)] [INFO] Worker process is ready for action.

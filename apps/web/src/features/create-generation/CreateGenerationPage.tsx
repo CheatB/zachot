@@ -24,6 +24,7 @@ import type { CreateGenerationForm, GenerationType, WorkType, PresentationStyle,
 import { workTypeConfigs } from './types'
 import { motion as motionTokens } from '@/design-tokens'
 import { createGeneration, executeAction, createJob } from '@/shared/api/generations'
+import { suggestDetails } from '@/shared/api/admin'
 
 type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 2 | 3 | 4 | 5 | 6
 
@@ -31,6 +32,7 @@ function CreateGenerationPage() {
   const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState<WizardStep>(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSuggesting, setIsSuggesting] = useState(false)
   const [form, setForm] = useState<CreateGenerationForm>({
     type: null,
     workType: null,
@@ -154,7 +156,14 @@ function CreateGenerationPage() {
     } else if (currentStep === 1.7) {
       setCurrentStep(2)
     } else if (currentStep === 2 && form.input.trim()) {
-      setCurrentStep(3)
+      // Предлагаем детали через AI при переходе с темы на цель/идею
+      setIsSuggesting(true)
+      suggestDetails(form.input)
+        .then(details => {
+          setForm(prev => ({ ...prev, ...details }))
+          setCurrentStep(3)
+        })
+        .finally(() => setIsSuggesting(false))
     } else if (currentStep === 3) {
       setCurrentStep(4)
     } else if (currentStep === 4) {
@@ -305,7 +314,7 @@ function CreateGenerationPage() {
             {currentStep === 1.6 && <PresentationStyleStep key="step-1-6" selectedStyle={form.presentationStyle} onSelect={handlePresentationStyleSelect} />}
             {currentStep === 1.7 && <GenerationStyleStep key="step-1-7" complexity={form.complexityLevel} humanity={form.humanityLevel} onChange={(updates) => setForm(prev => ({...prev, ...updates}))} />}
             {currentStep === 2 && form.type && <GenerationInputStep key="step-2" type={form.type} input={form.input} onInputChange={handleInputChange} />}
-            {currentStep === 3 && <GenerationGoalStep key="step-3" form={form} onChange={(updates) => setForm(prev => ({ ...prev, ...updates }))} />}
+            {currentStep === 3 && <GenerationGoalStep key="step-3" form={form} isLoading={isSuggesting} onChange={(updates) => setForm(prev => ({ ...prev, ...updates }))} />}
             {currentStep === 4 && <GenerationStructureStep key="step-4" structure={form.structure} onChange={(structure) => setForm(prev => ({ ...prev, structure }))} />}
             {currentStep === 5 && <GenerationSourcesStep key="step-5" sources={form.sources} onChange={(sources) => setForm(prev => ({ ...prev, sources }))} />}
             {currentStep === 6 && form.type && (
@@ -325,8 +334,8 @@ function CreateGenerationPage() {
 
           {currentStep < 6 && (
             <div className="wizard-navigation" style={{ marginTop: 'var(--spacing-32)' }}>
-              {currentStep > 1 && <Button variant="secondary" size="lg" onClick={handleBack} disabled={isSubmitting}>Назад</Button>}
-              <Button variant="primary" size="lg" onClick={handleNext} disabled={!canProceed() || isSubmitting}>Далее</Button>
+              {currentStep > 1 && <Button variant="secondary" size="lg" onClick={handleBack} disabled={isSubmitting || isSuggesting}>Назад</Button>}
+              <Button variant="primary" size="lg" onClick={handleNext} loading={isSuggesting} disabled={!canProceed() || isSubmitting || isSuggesting}>Далее</Button>
             </div>
           )}
         </Stack>

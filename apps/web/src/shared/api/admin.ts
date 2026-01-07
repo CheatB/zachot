@@ -94,3 +94,13 @@ export async function fetchAdminAnalytics(): Promise<AdminAnalytics> {
   };
 }
 
+/**
+ * Предложить детали работы на основе темы
+ */
+export async function suggestDetails(topic: string): Promise<{ goal: string; idea: string }> {
+  return apiFetch<{ goal: string; idea: string }>('/admin/suggest-details', {
+    method: 'POST',
+    body: JSON.stringify({ topic }),
+  });
+}
+

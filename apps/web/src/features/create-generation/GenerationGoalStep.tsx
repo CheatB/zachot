@@ -12,9 +12,10 @@ import type { CreateGenerationForm } from './types'
 interface GenerationGoalStepProps {
   form: CreateGenerationForm
   onChange: (updates: Partial<CreateGenerationForm>) => void
+  isLoading?: boolean
 }
 
-function GenerationGoalStep({ form, onChange }: GenerationGoalStepProps) {
+function GenerationGoalStep({ form, onChange, isLoading }: GenerationGoalStepProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -27,7 +28,24 @@ function GenerationGoalStep({ form, onChange }: GenerationGoalStepProps) {
     >
       <div className="wizard-step">
         <Stack gap="xl">
-          <Card variant="default" style={{ borderLeft: '4px solid var(--color-accent-base)' }}>
+          <Card variant="default" style={{ borderLeft: '4px solid var(--color-accent-base)', position: 'relative' }}>
+            {isLoading && (
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(255,255,255,0.7)',
+                zIndex: 10,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 'inherit'
+              }}>
+                <div style={{ color: 'var(--color-accent-base)', fontWeight: 'bold' }}>🪄 Генерируем идеи...</div>
+              </div>
+            )}
             <Stack gap="lg">
               <Input
                 label="Цель работы"

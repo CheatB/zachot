@@ -2,7 +2,9 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Depends, Header
 from ..schemas import UsersAdminResponse, UserRoleUpdateRequest, UserAdminResponse
 from ..database import SessionLocal, User as UserDB
+from ..services.openai_service import openai_service
 from .generations import get_current_user
+import json
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -44,3 +46,33 @@ async def update_user_role(
         session.commit()
         return {"status": "success", "role": user.role}
 
+@router.post("/suggest-details")
+async def suggest_details(request: dict, user: UserDB = Depends(get_current_user)):
+    """
+    Предлагает цель и идею работы на основе темы.
+    """
+    topic = request.get("topic")
+    if not topic:
+        raise HTTPException(status_code=400, detail="Topic is required")
+
+    prompt = f"""
+    Ты — академический консультант. На основе темы "{topic}" предложи:
+    1. Цель работы (1 предложение)
+    2. Основную идею (тезис) работы (1-2 предложения)
+    
+    Верни результат в формате JSON: {{"goal": "...", "idea": "..."}}
+    """
+
+    try:
+        raw_response = await openai_service.chat_completion(
+            model="openai/gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            json_mode=True
+        )
+        
+        if not raw_response:
+            raise ValueError("Failed to get response from AI")
+            
+        return json.loads(raw_response)
+    except Exception as e:
+        return {"goal": "Исследовать основные аспекты темы", "idea": "Работа направлена на глубокий анализ выбранного направления."}
