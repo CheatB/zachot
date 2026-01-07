@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import Header from './Header'
 import Sidebar from './Sidebar'
 import MobileNav from './MobileNav'
@@ -20,54 +21,8 @@ interface AppShellProps {
 function AppShell({ isAuthenticated, user, children }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
-  const [currentPath, setCurrentPath] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.location.pathname
-    }
-    return '/'
-  })
-
-  // Синхронизация с window.location (не требует Router контекста)
-  useEffect(() => {
-    const updatePath = () => {
-      if (typeof window !== 'undefined') {
-        setCurrentPath(window.location.pathname)
-      }
-    }
-
-    // Обновляем при изменении пути через history API
-    const originalPushState = history.pushState
-    const originalReplaceState = history.replaceState
-
-    history.pushState = function(...args) {
-      originalPushState.apply(history, args)
-      updatePath()
-    }
-
-    history.replaceState = function(...args) {
-      originalReplaceState.apply(history, args)
-      updatePath()
-    }
-
-    // Слушаем popstate (назад/вперед)
-    window.addEventListener('popstate', updatePath)
-
-    // Логирование для отладки
-    if (typeof window !== 'undefined') {
-      console.log('[AppShell] Render:', {
-        isAuthenticated,
-        user: user?.id,
-        pathname: currentPath,
-        timestamp: new Date().toISOString(),
-      })
-    }
-
-    return () => {
-      history.pushState = originalPushState
-      history.replaceState = originalReplaceState
-      window.removeEventListener('popstate', updatePath)
-    }
-  }, [isAuthenticated, user, currentPath])
+  const location = useLocation()
+  const currentPath = location.pathname
 
   // Определение размера экрана
   useEffect(() => {
