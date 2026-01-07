@@ -11,10 +11,11 @@ import Header from './Header'
 import Sidebar from './Sidebar'
 import MobileNav from './MobileNav'
 import Stack from '@/ui/layout/Stack'
+import { type User } from '../auth/authTypes'
 
 interface AppShellProps {
   isAuthenticated: boolean
-  user: { id: string } | null
+  user: User | null
   children: ReactNode
 }
 
