@@ -6,10 +6,7 @@ import './styles/globals.css'
 import 'katex/dist/katex.min.css'
 
 import App from './app/App'
-import { AuthProvider } from './app/auth/authContext'
 import AppErrorBoundary from './app/errors/AppErrorBoundary'
-import AppBoundary from './app/AppBoundary'
-import { ToastProvider } from './ui/primitives/Toast'
 
 console.log('[main.tsx] ====== STARTING APP ======')
 
@@ -28,13 +25,7 @@ console.log('[main.tsx] Structure: AppErrorBoundary -> AuthProvider -> AppBounda
 root.render(
   <AppErrorBoundary>
     <BrowserRouter>
-      <ToastProvider>
-        <AuthProvider>
-          <AppBoundary>
-            <App />
-          </AppBoundary>
-        </AuthProvider>
-      </ToastProvider>
+      <App />
     </BrowserRouter>
   </AppErrorBoundary>
 )
