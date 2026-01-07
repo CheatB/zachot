@@ -31,6 +31,7 @@ const stages: { value: Stage; label: string }[] = [
 const ModelRoutingPage: React.FC = () => {
   const [config, setConfig] = useState<ModelRoutingConfig | null>(null);
   const [isSaving, setIsSubmitting] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     // Временно используем дефолтные значения OpenRouter, пока API не отдает реальные
@@ -59,7 +60,8 @@ const ModelRoutingPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       await saveModelRouting(config);
-      alert('Настройки роутинга сохранены!');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
     } catch (error) {
       alert('Ошибка при сохранении');
     } finally {
@@ -72,19 +74,22 @@ const ModelRoutingPage: React.FC = () => {
   return (
     <Stack gap="xl">
       <header>
-        <h1 style={{ color: 'var(--color-neutral-100)', marginBottom: 'var(--spacing-8)' }}>Управление моделями</h1>
+        <h1 style={{ color: 'var(--color-neutral-100)', marginBottom: 'var(--spacing-8)' }}>Модели и роутинг</h1>
         <p style={{ color: 'var(--color-text-secondary)' }}>
           Настройте, какая модель будет отвечать за каждый этап генерации работы.
         </p>
       </header>
 
-      <Card>
+      <Card style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Тип работы</th>
-                {stages.map(s => <th key={s.value}>{s.label}</th>)}
+                <th style={{ minWidth: '240px' }}>Тип работы</th>
+                <th style={{ minWidth: '200px' }}>План работы</th>
+                <th style={{ minWidth: '200px' }}>Источники</th>
+                <th style={{ minWidth: '200px' }}>Написание текста</th>
+                <th style={{ minWidth: '200px' }} className="refine-col">Очеловечивание</th>
               </tr>
             </thead>
             <tbody>
@@ -92,7 +97,7 @@ const ModelRoutingPage: React.FC = () => {
                 <tr key={wt.value}>
                   <td style={{ fontWeight: 'bold' }}>{wt.label}</td>
                   {stages.map(s => (
-                    <td key={s.value}>
+                    <td key={s.value} className={clsx(s.value === 'refine' && 'refine-cell')}>
                       <select 
                         className="admin-select"
                         value={config[wt.value][s.value]}
@@ -111,11 +116,103 @@ const ModelRoutingPage: React.FC = () => {
         </div>
       </Card>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <Button variant="primary" size="lg" onClick={handleSave} loading={isSaving}>
-          Сохранить настройки
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--spacing-48)' }}>
+        <Button 
+          variant="primary" 
+          size="lg" 
+          onClick={handleSave} 
+          loading={isSaving}
+          style={{ minWidth: '240px' }}
+        >
+          Сохранить
         </Button>
       </div>
+
+      {showToast && (
+        <div className="admin-alert-toast">
+          <div className="admin-alert-toast__icon">✅</div>
+          <div className="admin-alert-toast__text">Настройки роутинга успешно сохранены!</div>
+        </div>
+      )}
+
+      <style>{`
+        .admin-table {
+          width: 100%;
+          border-collapse: collapse;
+          text-align: left;
+        }
+        .admin-table th {
+          padding: var(--spacing-20) var(--spacing-24);
+          background-color: var(--color-neutral-10);
+          color: var(--color-text-secondary);
+          font-size: var(--font-size-xs);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          border-bottom: 1px solid var(--color-border-base);
+        }
+        .admin-table td {
+          padding: var(--spacing-20) var(--spacing-24);
+          border-bottom: 1px solid var(--color-border-base);
+        }
+        .refine-col {
+          background-color: var(--color-neutral-20) !important;
+        }
+        .refine-cell {
+          background-color: rgba(0, 0, 0, 0.03);
+          animation: pulse-bg 2s infinite ease-in-out;
+        }
+        @keyframes pulse-bg {
+          0% { background-color: rgba(0, 0, 0, 0.02); }
+          50% { background-color: rgba(0, 0, 0, 0.05); }
+          100% { background-color: rgba(0, 0, 0, 0.02); }
+        }
+        .admin-select {
+          width: 100%;
+          padding: var(--spacing-12) var(--spacing-16);
+          border-radius: var(--radius-md);
+          border: 1px solid var(--color-border-base);
+          background-color: var(--color-surface-base);
+          font-family: inherit;
+          font-size: var(--font-size-sm);
+          cursor: pointer;
+          outline: none;
+          transition: all 0.2s ease;
+        }
+        .admin-select:focus {
+          border-color: var(--color-accent-base);
+          box-shadow: 0 0 0 3px var(--color-accent-light);
+        }
+        .admin-alert-toast {
+          position: fixed;
+          bottom: var(--spacing-48);
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: var(--color-neutral-100);
+          color: white;
+          padding: var(--spacing-16) var(--spacing-32);
+          border-radius: var(--radius-full);
+          display: flex;
+          align-items: center;
+          gap: var(--spacing-16);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+          z-index: 10000;
+          animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slide-up {
+          from { transform: translate(-50%, 100%); opacity: 0; }
+          to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        .admin-alert-toast__icon {
+          font-size: 20px;
+        }
+        .admin-alert-toast__text {
+          font-weight: var(--font-weight-medium);
+          font-size: var(--font-size-base);
+        }
+      `}</style>
+    </Stack>
+  );
+};
 
       <style>{`
         .admin-table {
