@@ -140,10 +140,7 @@ button:disabled {
 
 /* Gradients */
 .text-gradient {
-  background: var(--color-accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-neutral-100);
 }
 
 /* Screen reader only */

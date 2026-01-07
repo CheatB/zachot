@@ -19,4 +19,3 @@ export async function fetchHealth(): Promise<HealthResponse> {
   return apiFetch<HealthResponse>('/health')
 }
 
-

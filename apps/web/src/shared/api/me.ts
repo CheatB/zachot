@@ -30,4 +30,3 @@ export async function fetchMe(): Promise<MeResponse> {
   return apiFetch<MeResponse>('/me')
 }
 
-

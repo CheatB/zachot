@@ -145,7 +145,7 @@ const headerStyles = `
   width: 44px;
   height: 44px;
   border-radius: var(--radius-full);
-  background: var(--color-accent-gradient);
+  background: var(--color-accent-base);
   color: var(--color-text-inverse);
   display: flex;
   align-items: center;
@@ -154,7 +154,7 @@ const headerStyles = `
   font-weight: var(--font-weight-bold);
   cursor: pointer;
   transition: all var(--motion-duration-base) var(--motion-easing-out);
-  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+  box-shadow: 0 4px 12px var(--color-accent-shadow);
 }
 
 .app-header__avatar:hover {

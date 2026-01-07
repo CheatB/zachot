@@ -175,7 +175,7 @@ const stepStyles = `
   right: var(--spacing-24);
   width: 28px;
   height: 28px;
-  background: var(--color-accent-gradient);
+  background: var(--color-accent-base);
   color: white;
   border-radius: var(--radius-full);
   display: flex;
@@ -183,7 +183,7 @@ const stepStyles = `
   justify-content: center;
   font-size: 14px;
   font-weight: bold;
-  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.3);
+  box-shadow: 0 4px 10px var(--color-accent-shadow);
 }
 `
 

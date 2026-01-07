@@ -79,7 +79,7 @@ const stepStyles = `
 .work-type-card--selected {
   background-color: var(--color-accent-base);
   color: var(--color-text-inverse);
-  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+  box-shadow: 0 4px 12px var(--color-accent-shadow);
 }
 
 .work-type-card__title {

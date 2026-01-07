@@ -136,14 +136,14 @@ const buttonStyles = `
 
 /* Variants */
 .ui-button--primary {
-  background: var(--color-accent-gradient);
+  background-color: var(--color-accent-base);
   color: var(--color-text-inverse);
   box-shadow: 0 4px 14px 0 var(--color-accent-shadow);
   border: none;
 }
 
 .ui-button--primary:hover:not(:disabled) {
-  background: var(--color-accent-gradient-hover);
+  background-color: var(--color-accent-hover);
   box-shadow: 0 6px 20px 0 var(--color-accent-shadow);
   transform: translateY(-2px);
 }

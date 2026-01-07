@@ -12,12 +12,11 @@
   /* Primary (CTA Green) */
   --color-accent-light: #f0fdf4;
   --color-accent-base: #16a34a;
+  --color-accent-hover: #15803d;
   --color-accent-dark: #15803d;
   --color-accent-darker: #166534;
   
-  /* Accent Gradient */
-  --color-accent-gradient: linear-gradient(135deg, #16a34a 0%, #a3e635 100%);
-  --color-accent-gradient-hover: linear-gradient(135deg, #15803d 0%, #84cc16 100%);
+  /* Accent Shadow */
   --color-accent-shadow: rgba(22, 163, 74, 0.4);
   
   /* Neutral / Muted */

@@ -114,15 +114,6 @@ function CreateGenerationPage() {
 
   const handleTypeSelect = (type: GenerationType) => {
     setForm((prev) => ({ ...prev, type }))
-    setTimeout(() => {
-      if (type === 'text') {
-        setCurrentStep(1.5)
-      } else if (type === 'presentation') {
-        setCurrentStep(1.6)
-      } else if (type === 'task') {
-        setCurrentStep(1.2)
-      }
-    }, 300)
   }
 
   const handleWorkTypeSelect = (workType: WorkType) => {
@@ -132,16 +123,10 @@ function CreateGenerationPage() {
       workType,
       volume: config.defaultVolume
     }))
-    setTimeout(() => {
-      setCurrentStep(1.7)
-    }, 300)
   }
 
   const handlePresentationStyleSelect = (presentationStyle: PresentationStyle) => {
     setForm((prev) => ({ ...prev, presentationStyle }))
-    setTimeout(() => {
-      setCurrentStep(2)
-    }, 300)
   }
 
   const handleTaskFilesChange = (files: File[]) => {
@@ -150,9 +135,6 @@ function CreateGenerationPage() {
 
   const handleTaskModeSelect = (taskMode: TaskMode) => {
     setForm((prev) => ({ ...prev, taskMode }))
-    setTimeout(() => {
-      setCurrentStep(6)
-    }, 300)
   }
 
   const handleInputChange = (value: string) => {
