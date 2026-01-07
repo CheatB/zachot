@@ -48,78 +48,67 @@ class TextStructureWorker(BaseWorker):
             
             classification = json.loads(raw_class or '{"type": "task"}')
             if classification.get("type") == "chat":
-                # Если пользователь просто болтает, мы можем либо отказать, 
-                # либо попытаться интерпретировать это как тему, но лучше отказать
-                # чтобы не тратить дорогие токены на нецелевое использование.
                 error_msg = "Этот раздел предназначен для создания академических работ. Пожалуйста, введите тему для реферата, статьи или курсовой."
                 generation_store.update(job.generation_id, result_content=error_msg, status="failed")
                 return JobResult(job_id=job.id, success=False, output_payload={"reason": "not_a_topic"}, finished_at=datetime.now())
 
             # --- ОСНОВНАЯ ЛОГИКА ГЕНЕРАЦИИ ---
-            # 1. Генерация структуры (План)
-            model_config = model_router.get_model_for_step("structure", generation.complexity_level)
-            model_name = model_config["model"]
             
-            prompt = prompt_service.construct_structure_prompt(generation)
-            
-            logger.info(f"Step 1: Generating structure using {model_name}")
-            
-            raw_response = loop.run_until_complete(
-                openai_service.chat_completion(
-                    model=model_name,
-                    messages=[{"role": "user", "content": prompt}],
-                    json_mode=True
-                )
-            )
-            
-            if not raw_response:
-                raise ValueError("Failed to get response from OpenAI for structure")
+            # 1. Генерация структуры (План), если её еще нет
+            structure = generation.settings_payload.get("structure", [])
+            if not structure:
+                model_config = model_router.get_model_for_step("structure", generation.complexity_level)
+                model_name = model_config["model"]
+                prompt = prompt_service.construct_structure_prompt(generation)
                 
-            structure_data = json.loads(raw_response)
-            structure = structure_data.get("structure", [])
-            
-            # Сохраняем структуру в настройки генерации
-            generation_store.update(job.generation_id, settings_payload={"structure": structure})
-            logger.info(f"Step 1: Structure generated with {len(structure)} sections")
-
-            # 2. Подбор источников
-            logger.info("Step 2: Selecting sources...")
-            sources_model = model_router.get_model_for_step("sources", generation.complexity_level)["model"]
-            sources_prompt = prompt_service.construct_sources_prompt(generation)
-            raw_sources = loop.run_until_complete(
-                openai_service.chat_completion(
-                    model=sources_model,
-                    messages=[{"role": "user", "content": sources_prompt}],
-                    json_mode=True
+                logger.info(f"Step 1: Generating structure using {model_name}")
+                raw_response = loop.run_until_complete(
+                    openai_service.chat_completion(model=model_name, messages=[{"role": "user", "content": prompt}], json_mode=True)
                 )
-            )
-            
-            if raw_sources:
-                sources_data = json.loads(raw_sources)
-                sources = sources_data.get("sources", [])
-                generation_store.update(job.generation_id, settings_payload={"sources": sources})
-                logger.info(f"Step 2: {len(sources)} sources found")
+                if not raw_response:
+                    raise ValueError("Failed to get response from OpenAI for structure")
+                structure_data = json.loads(raw_response)
+                structure = structure_data.get("structure", [])
+                generation_store.update(job.generation_id, settings_payload={**generation.settings_payload, "structure": structure})
+                logger.info(f"Step 1: Structure generated with {len(structure)} sections")
+            else:
+                logger.info(f"Step 1: Using existing structure ({len(structure)} sections)")
 
-            # 3. Генерация текста (СЛОЙ 4: Ограничение ширины)
+            # 2. Подбор источников, если их еще нет
+            sources = generation.settings_payload.get("sources", [])
+            if not sources:
+                logger.info("Step 2: Selecting sources...")
+                sources_model = model_router.get_model_for_step("sources", generation.complexity_level)["model"]
+                sources_prompt = prompt_service.construct_sources_prompt(generation)
+                raw_sources = loop.run_until_complete(
+                    openai_service.chat_completion(model=sources_model, messages=[{"role": "user", "content": sources_prompt}], json_mode=True)
+                )
+                if raw_sources:
+                    sources_data = json.loads(raw_sources)
+                    sources = sources_data.get("sources", [])
+                    generation_store.update(job.generation_id, settings_payload={**generation.settings_payload, "sources": sources})
+                    logger.info(f"Step 2: {len(sources)} sources found")
+            else:
+                logger.info(f"Step 2: Using existing sources ({len(sources)} sources)")
+
+            # 3. Генерация текста (поглавно)
             logger.info("Step 3: Generating full text...")
             gen_model = model_router.get_model_for_step("draft", generation.complexity_level)["model"]
-
+            
+            # Собираем контекст из плана
+            structure_titles = "\n".join([f"- {s.get('title')}" for s in structure])
             generation_prompt = prompt_service.construct_generation_prompt(
                 generation, 
-                section_title="Вся работа (основные главы)",
+                section_title=f"Все разделы согласно плану:\n{structure_titles}",
                 previous_context=""
             )
             
             raw_text = loop.run_until_complete(
-                openai_service.chat_completion(
-                    model=gen_model,
-                    messages=[{"role": "user", "content": generation_prompt}]
-                )
+                openai_service.chat_completion(model=gen_model, messages=[{"role": "user", "content": generation_prompt}])
             )
             
             if not raw_text:
                 raise ValueError("Failed to generate content")
-                
             full_text = raw_text
             
             # 4. Очеловечивание
@@ -128,10 +117,7 @@ class TextStructureWorker(BaseWorker):
             humanize_prompt = prompt_service.construct_humanize_prompt(full_text, generation.humanity_level)
             
             refined_text = loop.run_until_complete(
-                openai_service.chat_completion(
-                    model=refine_model,
-                    messages=[{"role": "user", "content": humanize_prompt}]
-                )
+                openai_service.chat_completion(model=refine_model, messages=[{"role": "user", "content": humanize_prompt}])
             )
             
             final_content = refined_text or full_text

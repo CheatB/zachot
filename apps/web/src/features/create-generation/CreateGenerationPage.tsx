@@ -23,7 +23,7 @@ import GenerationConfirmStep from './GenerationConfirmStep'
 import type { CreateGenerationForm, GenerationType, WorkType, PresentationStyle, TaskMode } from './types'
 import { workTypeConfigs } from './types'
 import { motion as motionTokens } from '@/design-tokens'
-import { createGeneration } from '@/shared/api/generations'
+import { createGeneration, executeAction, createJob } from '@/shared/api/generations'
 
 type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 2 | 3 | 4 | 5 | 6
 
@@ -193,6 +193,7 @@ function CreateGenerationPage() {
     
     setIsSubmitting(true)
     try {
+      // 1. Создаем Generation (статус DRAFT)
       const result = await createGeneration({
         type: form.type.toUpperCase(),
         work_type: form.workType,
@@ -212,6 +213,13 @@ function CreateGenerationPage() {
           sources: form.sources,
         }
       })
+
+      // 2. Переводим в статус RUNNING
+      await executeAction(result.id, 'next')
+
+      // 3. Запускаем фоновую задачу (Worker)
+      await createJob(result.id)
+
       navigate(`/generations/${result.id}`)
     } catch (error) {
       console.error('Failed to create generation:', error)

@@ -3,9 +3,10 @@
  * Интерактивный разбор задачи по шагам
  */
 
-import { useState, Fragment } from 'react'
+import { useState, Fragment, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, Button, Stack, Badge, Formula } from '@/ui'
+import { getGenerationById } from '@/shared/api/generations'
 
 interface Choice {
   id: string
@@ -25,37 +26,58 @@ interface TutorSectionProps {
   generationId: string
 }
 
-function TutorSection({ }: TutorSectionProps) {
+function TutorSection({ generationId }: TutorSectionProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null)
   const [isAnswered, setIsAnswered] = useState(false)
+  const [steps, setSteps] = useState<Step[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Mock-данные шагов (в реальности приходят с бэкенда)
-  const steps: Step[] = [
-    {
-      id: 1,
-      title: 'Шаг 1. Анализ условия',
-      content: 'Для решения квадратного уравнения $ax^2 + bx + c = 0$ первым делом нужно найти дискриминант. Какая формула для него верна?',
-      choices: [
-        { id: 'a', text: '$D = b^2 - 4ac$', isCorrect: true, explanation: 'Это классическая формула дискриминанта.' },
-        { id: 'b', text: '$D = b^2 + 4ac$', isCorrect: false, explanation: 'Знак должен быть минус.' },
-        { id: 'c', text: '$D = a^2 - 4bc$', isCorrect: false, explanation: 'Вы перепутали коэффициенты.' },
-      ]
-    },
-    {
-      id: 2,
-      title: 'Шаг 2. Вычисление корней',
-      content: 'Отлично! Дискриминант найден. Теперь выберем формулу для поиска корней $x$.',
-      choices: [
-        { id: 'd', text: '$x = \\frac{-b \\pm \\sqrt{D}}{2a}$', isCorrect: true, explanation: 'Верно, это общая формула корней.' },
-        { id: 'e', text: '$x = \\frac{b \\pm \\sqrt{D}}{2a}$', isCorrect: false, explanation: 'Перед b должен стоять минус.' },
-      ]
+  useEffect(() => {
+    const loadResult = async () => {
+      try {
+        const data = await getGenerationById(generationId)
+        if (data.result_content) {
+          // Если контент — это JSON (структурированный разбор), парсим его
+          // Иначе пытаемся создать один шаг из текста
+          try {
+            const parsed = JSON.parse(data.result_content)
+            if (Array.isArray(parsed.steps)) {
+              setSteps(parsed.steps)
+            } else {
+              throw new Error('Not a structured tutor result')
+            }
+          } catch {
+            // Фолбэк: превращаем обычный текст в один интерактивный шаг
+            setSteps([{
+              id: 1,
+              title: 'Разбор решения',
+              content: data.result_content,
+              choices: [
+                { id: 'ok', text: 'Понятно, спасибо!', isCorrect: true, explanation: 'Отлично, двигаемся дальше!' }
+              ]
+            }])
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load tutor steps:', error)
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
+    loadResult()
+  }, [generationId])
+
+  if (loading) return <div>Загрузка разбора...</div>
+  if (steps.length === 0) return <div>Разбор скоро появится</div>
 
   const renderTextWithFormulas = (text: string) => {
-    const parts = text.split(/(\$.*?\$)/g)
+    // Поддержка и $...$ и $$...$$
+    const parts = text.split(/(\$\$.*?\$\$|\$.*?\$)/g)
     return parts.map((part, i) => {
+      if (part.startsWith('$$') && part.endsWith('$$')) {
+        return <Formula key={i} tex={part.slice(2, -2)} block />
+      }
       if (part.startsWith('$') && part.endsWith('$')) {
         return <Formula key={i} tex={part.slice(1, -1)} />
       }
@@ -90,7 +112,7 @@ function TutorSection({ }: TutorSectionProps) {
         >
           <Card style={{ padding: 'var(--spacing-24)', borderLeft: '4px solid var(--color-accent-base)' }}>
             <h3 style={{ marginBottom: 'var(--spacing-12)' }}>{step.title}</h3>
-            <div style={{ fontSize: 'var(--font-size-lg)', marginBottom: 'var(--spacing-24)', color: 'var(--color-text-primary)' }}>
+            <div style={{ fontSize: 'var(--font-size-base)', marginBottom: 'var(--spacing-24)', color: 'var(--color-text-primary)', whiteSpace: 'pre-wrap' }}>
               {renderTextWithFormulas(step.content)}
             </div>
 
@@ -123,7 +145,7 @@ function TutorSection({ }: TutorSectionProps) {
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 'var(--font-size-base)', fontWeight: isSelected ? 'bold' : 'normal' }}>
+                      <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: isSelected ? 'bold' : 'normal' }}>
                         {renderTextWithFormulas(choice.text)}
                       </span>
                       {isAnswered && choice.isCorrect && <Badge status="success">Верно</Badge>}
@@ -144,7 +166,7 @@ function TutorSection({ }: TutorSectionProps) {
                   <p style={{ fontWeight: 'bold', marginBottom: 'var(--spacing-8)' }}>
                     {selectedChoice.isCorrect ? '💡 Почему это верно:' : '❌ Ошибка:'}
                   </p>
-                  <p>{selectedChoice.explanation}</p>
+                  <p style={{ fontSize: 'var(--font-size-sm)' }}>{selectedChoice.explanation}</p>
                   
                   {selectedChoice.isCorrect && (
                     <Button 

@@ -62,3 +62,16 @@ export async function smartEdit(id: string, action: string, content: string): Pr
     body: JSON.stringify({ action, content }),
   });
 }
+
+export async function executeAction(id: string, action: 'next' | 'confirm' | 'cancel'): Promise<Generation> {
+  return apiFetch<Generation>(`/generations/${id}/actions`, {
+    method: 'POST',
+    body: JSON.stringify({ action }),
+  });
+}
+
+export async function createJob(id: string): Promise<{ job_id: string; status: string }> {
+  return apiFetch<{ job_id: string; status: string }>(`/generations/${id}/jobs`, {
+    method: 'POST',
+  });
+}
