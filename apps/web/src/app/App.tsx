@@ -21,10 +21,10 @@ import { AuthProvider } from './auth/authContext'
 import AppBoundary from './AppBoundary'
 
 // Admin features
-import AdminPage from '@/features/admin/AdminPage'
-import ModelRoutingPage from '@/features/admin/ModelRoutingPage'
-import UsersPage from '@/features/admin/UsersPage'
-import AnalyticsPage from '@/features/admin/AnalyticsPage'
+import AdminLayout from '@/features/admin/components/AdminLayout'
+import ModelRoutingPage from '@/features/admin/pages/ModelRoutingPage'
+import AdminUsersPage from '@/features/admin/pages/AdminUsersPage'
+import AdminAnalyticsPage from '@/features/admin/pages/AdminAnalyticsPage'
 
 function AppRoutes() {
   const [isLoading] = useState(false)
@@ -46,11 +46,11 @@ function AppRoutes() {
         <Route path="/account" element={<AccountPage />} />
         
         {/* Admin Routes */}
-        <Route path="/admin" element={<AdminPage />}>
+        <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/models" replace />} />
           <Route path="models" element={<ModelRoutingPage />} />
-          <Route path="users" element={<UsersPage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="analytics" element={<AdminAnalyticsPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
