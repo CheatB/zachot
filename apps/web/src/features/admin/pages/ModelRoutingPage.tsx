@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Stack } from '@/ui';
+import { Button, Stack } from '@/ui';
 import { fetchModelRouting, saveModelRouting, type ModelRoutingConfig } from '@/shared/api/admin';
-import clsx from 'clsx';
-
-type WorkType = 'essay' | 'diploma' | 'presentation' | 'task';
-type Stage = 'structure' | 'sources' | 'generation' | 'refine';
 
 const modelOptions = [
   { value: 'openai/o3-mini', label: 'o3-mini (Reasoning High)' },
@@ -13,20 +9,6 @@ const modelOptions = [
   { value: 'openai/gpt-4o-mini', label: 'gpt-4o-mini (Economy)' },
   { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet (Best for Refine)' },
   { value: 'deepseek/deepseek-chat', label: 'DeepSeek V3 (Ultra Economy)' },
-];
-
-const workTypes: { value: WorkType; label: string }[] = [
-  { value: 'essay', label: 'Реферат / Курсовая' },
-  { value: 'diploma', label: 'Диплом (ВКР)' },
-  { value: 'presentation', label: 'Презентация' },
-  { value: 'task', label: 'Решение задачи' },
-];
-
-const stages: { value: Stage; label: string }[] = [
-  { value: 'structure', label: 'План работы' },
-  { value: 'sources', label: 'Источники' },
-  { value: 'generation', label: 'Написание текста' },
-  { value: 'refine', label: 'Очеловечивание' },
 ];
 
 const ModelRoutingPage: React.FC = () => {
@@ -39,7 +21,7 @@ const ModelRoutingPage: React.FC = () => {
       essay: { structure: 'openai/o1-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
       diploma: { structure: 'openai/o3-mini', sources: 'openai/gpt-4o', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
       presentation: { structure: 'openai/gpt-4o-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'openai/gpt-4o-mini' },
-      task: { structure: 'openai/o1-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/o1-mini', refine: 'openai/gpt-4o-mini' },
+      task: { task_solve: 'openai/o1-mini' },
     };
     fetchModelRouting().then(data => setConfig({ ...defaultConfig, ...data }));
   }, []);
@@ -71,58 +53,116 @@ const ModelRoutingPage: React.FC = () => {
 
   if (!config) return <div>Загрузка настроек...</div>;
 
+  const ModelSelect = ({ workType, stage }: { workType: string, stage: string }) => (
+    <div className="admin-select-wrapper">
+      <select 
+        className="admin-select-minimal"
+        value={config[workType]?.[stage] || ''}
+        onChange={(e) => handleModelChange(workType, stage, e.target.value)}
+      >
+        {modelOptions.map(opt => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+      <span className="admin-select-arrow">▾</span>
+    </div>
+  );
+
   return (
-    <Stack gap="xl">
+    <Stack gap="xl" style={{ maxWidth: '100%' }}>
       <header>
         <h1 style={{ color: 'var(--color-neutral-100)', marginBottom: 'var(--spacing-8)' }}>Модели и роутинг</h1>
         <p style={{ color: 'var(--color-text-secondary)' }}>
-          Настройте, какая модель будет отвечать за каждый этап генерации работы.
+          Персональные настройки AI-движка для каждого типа работ.
         </p>
       </header>
 
-      <Card style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="admin-table">
+      <section className="routing-section">
+        <h2 className="routing-section__title">Текстовые работы</h2>
+        <div className="admin-table-container">
+          <table className="admin-table-v2">
             <thead>
               <tr>
-                <th style={{ minWidth: '240px' }}>Тип работы</th>
-                <th style={{ minWidth: '200px' }}>План работы</th>
-                <th style={{ minWidth: '200px' }}>Источники</th>
-                <th style={{ minWidth: '200px' }}>Написание текста</th>
-                <th style={{ minWidth: '200px' }} className="refine-col">Очеловечивание</th>
+                <th style={{ width: '20%' }}>Вид работы</th>
+                <th>План работы</th>
+                <th>Источники</th>
+                <th>Написание текста</th>
+                <th className="refine-col-header">Очеловечивание</th>
               </tr>
             </thead>
             <tbody>
-              {workTypes.map(wt => (
-                <tr key={wt.value}>
-                  <td style={{ fontWeight: 'bold' }}>{wt.label}</td>
-                  {stages.map(s => (
-                    <td key={s.value} className={clsx(s.value === 'refine' && 'refine-cell')}>
-                      <select 
-                        className="admin-select"
-                        value={config[wt.value][s.value]}
-                        onChange={(e) => handleModelChange(wt.value, s.value, e.target.value)}
-                      >
-                        {modelOptions.map(opt => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                    </td>
-                  ))}
-                </tr>
-              ))}
+              <tr>
+                <td>Реферат / Курсовая</td>
+                <td><ModelSelect workType="essay" stage="structure" /></td>
+                <td><ModelSelect workType="essay" stage="sources" /></td>
+                <td><ModelSelect workType="essay" stage="generation" /></td>
+                <td className="refine-cell-v2"><ModelSelect workType="essay" stage="refine" /></td>
+              </tr>
+              <tr>
+                <td>Диплом (ВКР)</td>
+                <td><ModelSelect workType="diploma" stage="structure" /></td>
+                <td><ModelSelect workType="diploma" stage="sources" /></td>
+                <td><ModelSelect workType="diploma" stage="generation" /></td>
+                <td className="refine-cell-v2"><ModelSelect workType="diploma" stage="refine" /></td>
+              </tr>
             </tbody>
           </table>
         </div>
-      </Card>
+      </section>
 
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--spacing-48)' }}>
+      <section className="routing-section">
+        <h2 className="routing-section__title">Презентации</h2>
+        <div className="admin-table-container">
+          <table className="admin-table-v2">
+            <thead>
+              <tr>
+                <th style={{ width: '20%' }}>Вид работы</th>
+                <th>План работы</th>
+                <th>Источники</th>
+                <th>Содержание слайдов</th>
+                <th>Визуальный стиль</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Презентация</td>
+                <td><ModelSelect workType="presentation" stage="structure" /></td>
+                <td><ModelSelect workType="presentation" stage="sources" /></td>
+                <td><ModelSelect workType="presentation" stage="generation" /></td>
+                <td><ModelSelect workType="presentation" stage="refine" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="routing-section">
+        <h2 className="routing-section__title">Решение задач</h2>
+        <div className="admin-table-container">
+          <table className="admin-table-v2">
+            <thead>
+              <tr>
+                <th style={{ width: '20%' }}>Вид работы</th>
+                <th>Решение задачи</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Задача</td>
+                <td><ModelSelect workType="task" stage="task_solve" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--spacing-64)' }}>
         <Button 
           variant="primary" 
           size="lg" 
           onClick={handleSave} 
           loading={isSaving}
-          style={{ minWidth: '240px' }}
+          style={{ minWidth: '280px', height: '56px', fontSize: 'var(--font-size-base)' }}
         >
           Сохранить
         </Button>
@@ -131,57 +171,87 @@ const ModelRoutingPage: React.FC = () => {
       {showToast && (
         <div className="admin-alert-toast">
           <div className="admin-alert-toast__icon">✅</div>
-          <div className="admin-alert-toast__text">Настройки роутинга успешно сохранены!</div>
+          <div className="admin-alert-toast__text">Настройки успешно обновлены</div>
         </div>
       )}
 
       <style>{`
-        .admin-table {
+        .routing-section {
+          margin-bottom: var(--spacing-48);
+        }
+        .routing-section__title {
+          font-size: var(--font-size-xl);
+          color: var(--color-neutral-100);
+          margin-bottom: var(--spacing-24);
+          padding-left: var(--spacing-8);
+          border-left: 4px solid var(--color-accent-base);
+        }
+        .admin-table-container {
+          background: transparent;
           width: 100%;
-          border-collapse: collapse;
+        }
+        .admin-table-v2 {
+          width: 100%;
+          border-collapse: separate;
+          border-spacing: 0;
           text-align: left;
         }
-        .admin-table th {
-          padding: var(--spacing-20) var(--spacing-24);
-          background-color: var(--color-neutral-10);
+        .admin-table-v2 th {
+          padding: var(--spacing-16) var(--spacing-24);
           color: var(--color-text-secondary);
           font-size: var(--font-size-xs);
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          border-bottom: 1px solid var(--color-border-base);
+          border-bottom: 2px solid var(--color-border-light);
         }
-        .admin-table td {
+        .admin-table-v2 td {
           padding: var(--spacing-20) var(--spacing-24);
-          border-bottom: 1px solid var(--color-border-base);
+          border-bottom: 1px solid var(--color-border-light);
+          background-color: transparent;
         }
-        .refine-col {
-          background-color: var(--color-neutral-20) !important;
+        .admin-table-v2 tr:last-child td {
+          border-bottom: none;
         }
-        .refine-cell {
-          background-color: rgba(0, 0, 0, 0.03);
-          animation: pulse-bg 2s infinite ease-in-out;
+        
+        .refine-col-header {
+          color: var(--color-accent-base) !important;
         }
-        @keyframes pulse-bg {
-          0% { background-color: rgba(0, 0, 0, 0.02); }
-          50% { background-color: rgba(0, 0, 0, 0.05); }
-          100% { background-color: rgba(0, 0, 0, 0.02); }
+        .refine-cell-v2 {
+          background-color: rgba(22, 163, 74, 0.03);
+          position: relative;
         }
-        .admin-select {
+        
+        .admin-select-wrapper {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
           width: 100%;
-          padding: var(--spacing-12) var(--spacing-16);
-          border-radius: var(--radius-md);
-          border: 1px solid var(--color-border-base);
-          background-color: var(--color-surface-base);
-          font-family: inherit;
+        }
+        .admin-select-minimal {
+          appearance: none;
+          background: transparent;
+          border: none;
+          color: var(--color-neutral-100);
           font-size: var(--font-size-sm);
+          font-family: inherit;
+          font-weight: var(--font-weight-medium);
           cursor: pointer;
+          width: 100%;
+          padding-right: 20px;
           outline: none;
-          transition: all 0.2s ease;
+          transition: color 0.2s ease;
         }
-        .admin-select:focus {
-          border-color: var(--color-accent-base);
-          box-shadow: 0 0 0 3px var(--color-accent-light);
+        .admin-select-minimal:hover {
+          color: var(--color-accent-base);
         }
+        .admin-select-arrow {
+          position: absolute;
+          right: 0;
+          pointer-events: none;
+          font-size: 10px;
+          color: var(--color-text-muted);
+        }
+
         .admin-alert-toast {
           position: fixed;
           bottom: var(--spacing-48);
@@ -194,7 +264,7 @@ const ModelRoutingPage: React.FC = () => {
           display: flex;
           align-items: center;
           gap: var(--spacing-16);
-          box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.3);
           z-index: 10000;
           animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
