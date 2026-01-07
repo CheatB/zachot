@@ -6,3 +6,5 @@ dramatiq
 python-docx
 fpdf
 python-pptx
+sqlalchemy
+psycopg2-binary
