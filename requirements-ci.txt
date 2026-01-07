@@ -3,3 +3,6 @@ pytest
 fastapi
 httpx
 dramatiq
+python-docx
+fpdf
+python-pptx
