@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, BrowserRouter } from 'react-router-dom'
 import GlobalLoading from './layout/GlobalLoading'
 import LoginPage from './pages/LoginPage'
 import LogoutPage from './pages/LogoutPage'
@@ -16,6 +16,9 @@ import GenerationProgressPage from '@/features/generation-progress/GenerationPro
 import GenerationResultPage from '@/features/generation-result/GenerationResultPage'
 import GenerationRecoveryPage from '@/features/generation-recovery/GenerationRecoveryPage'
 import AccountPage from '@/features/account/AccountPage'
+import { ToastProvider } from '@/ui/primitives/Toast'
+import { AuthProvider } from './auth/authContext'
+import AppBoundary from './AppBoundary'
 
 function AppRoutes() {
   const [isLoading] = useState(false)
@@ -42,7 +45,17 @@ function AppRoutes() {
 }
 
 function App() {
-  return <AppRoutes />
+  return (
+    <BrowserRouter>
+      <ToastProvider>
+        <AuthProvider>
+          <AppBoundary>
+            <AppRoutes />
+          </AppBoundary>
+        </AuthProvider>
+      </ToastProvider>
+    </BrowserRouter>
+  )
 }
 
 export default App

@@ -1,5 +1,4 @@
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
 
 import './styles/tokens.css'
 import './styles/globals.css'
@@ -24,9 +23,7 @@ console.log('[main.tsx] Structure: AppErrorBoundary -> AuthProvider -> AppBounda
 
 root.render(
   <AppErrorBoundary>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <App />
   </AppErrorBoundary>
 )
 

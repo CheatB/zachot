@@ -26,11 +26,7 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  console.log('[AuthProvider] ====== MOUNTING ======')
-  console.log('[AuthProvider] Props:', { hasChildren: !!children })
-  
   const [authState, setAuthState] = useState<AuthState>(() => {
-    console.log('[AuthProvider] Initializing state...')
     return {
       isAuthenticated: false,
       isAuthResolved: false,
@@ -38,8 +34,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       token: null,
     }
   })
-  
-  console.log('[AuthProvider] State initialized:', authState)
 
   /**
    * Bootstrap auth:
@@ -189,31 +183,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 }
 
 export function useAuthContext() {
-  console.log('[useAuthContext] Called')
   const ctx = useContext(AuthContext)
-  console.log('[useAuthContext] Context value:', ctx)
-  
-  // Если контекст еще не установлен, возвращаем дефолтные значения
-  // Это может произойти при первом рендере, до того как AuthProvider установит контекст
   if (!ctx) {
-    console.warn('[useAuthContext] Context is undefined, returning default values. This may happen during initial render.')
-    console.warn('[useAuthContext] AuthProvider may not be mounted yet or is not in the component tree.')
-    
-    // Возвращаем дефолтные значения вместо ошибки
-    // AppBoundary будет ждать, пока isAuthResolved станет true
-    const defaultValue = {
-      isAuthenticated: false,
-      isAuthResolved: false,
-      user: null,
-      token: null,
-      loginFromLanding: async () => {},
-      logout: () => {},
-    } as AuthContextValue
-    
-    console.warn('[useAuthContext] Returning default value:', defaultValue)
-    return defaultValue
+    throw new Error('useAuthContext must be used within AuthProvider')
   }
-  
-  console.log('[useAuthContext] Returning context:', ctx)
   return ctx
 }
