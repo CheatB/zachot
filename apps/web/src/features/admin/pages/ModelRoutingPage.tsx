@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Stack } from '@/ui';
 import { fetchModelRouting, saveModelRouting, type ModelRoutingConfig } from '@/shared/api/admin';
+import clsx from 'clsx';
 
 type WorkType = 'essay' | 'diploma' | 'presentation' | 'task';
 type Stage = 'structure' | 'sources' | 'generation' | 'refine';
@@ -34,7 +35,6 @@ const ModelRoutingPage: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    // Временно используем дефолтные значения OpenRouter, пока API не отдает реальные
     const defaultConfig: ModelRoutingConfig = {
       essay: { structure: 'openai/o1-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
       diploma: { structure: 'openai/o3-mini', sources: 'openai/gpt-4o', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
@@ -214,43 +214,4 @@ const ModelRoutingPage: React.FC = () => {
   );
 };
 
-      <style>{`
-        .admin-table {
-          width: 100%;
-          border-collapse: collapse;
-          text-align: left;
-        }
-        .admin-table th {
-          padding: var(--spacing-16);
-          background-color: var(--color-neutral-10);
-          color: var(--color-text-secondary);
-          font-size: var(--font-size-xs);
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          border-bottom: 1px solid var(--color-border-base);
-        }
-        .admin-table td {
-          padding: var(--spacing-16);
-          border-bottom: 1px solid var(--color-border-base);
-        }
-        .admin-select {
-          width: 100%;
-          padding: var(--spacing-8) var(--spacing-12);
-          border-radius: var(--radius-md);
-          border: 1px solid var(--color-border-base);
-          background-color: var(--color-surface-base);
-          font-family: inherit;
-          font-size: var(--font-size-sm);
-          cursor: pointer;
-          outline: none;
-        }
-        .admin-select:focus {
-          border-color: var(--color-accent-base);
-        }
-      `}</style>
-    </Stack>
-  );
-};
-
 export default ModelRoutingPage;
-
