@@ -9,10 +9,17 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    dedupe: ['react', 'react-dom', 'react-router-dom'],
   },
   server: {
     port: 3000,
     open: true,
+  },
+  build: {
+    minify: 'esbuild', // Используем esbuild вместо terser
+  },
+  esbuild: {
+    drop: [], // Не удалять console.log и debugger
   },
 })
 
