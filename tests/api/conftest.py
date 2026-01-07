@@ -2,12 +2,19 @@
 Pytest fixtures для API тестов.
 """
 
+import os
 import pytest
-from fastapi.testclient import TestClient
 
+# Устанавливаем окружение для тестов ПЕРЕД импортом приложения
+os.environ["ENV"] = "test"
+
+from fastapi.testclient import TestClient
 from apps.api.main import app
 from apps.api.storage import generation_store
+from apps.api.database import init_db
 
+# Инициализируем базу данных для тестов
+init_db()
 
 @pytest.fixture
 def client():

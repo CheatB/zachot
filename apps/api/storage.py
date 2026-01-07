@@ -133,5 +133,17 @@ class SQLGenerationStore:
             if not self._subscribers[generation_id]:
                 del self._subscribers[generation_id]
 
+    def clear(self) -> None:
+        """
+        Очищает хранилище (для тестирования).
+        
+        Удаляет все записи из таблиц generations и users.
+        """
+        with SessionLocal() as session:
+            session.query(GenerationDB).delete()
+            session.query(UserDB).delete()
+            session.commit()
+        self._subscribers.clear()
+
 # Глобальный экземпляр хранилища
 generation_store = SQLGenerationStore()
