@@ -1,10 +1,13 @@
-import time
+import asyncio
 import logging
+import json
 from datetime import datetime
 from packages.jobs import Job, JobResult
 from packages.jobs.enums import JobType
 from .base import BaseWorker
 from apps.api.storage import generation_store
+from apps.api.services.openai_service import openai_service
+from apps.api.services.model_router import model_router
 
 logger = logging.getLogger(__name__)
 
@@ -13,43 +16,61 @@ class TaskWorker(BaseWorker):
         return job.type == JobType.TASK_SOLVE
     
     def execute(self, job: Job) -> JobResult:
-        logger.info(f"Starting Task solving pipeline for job {job.id}")
+        logger.info(f"Starting AI Task solving for job {job.id}")
         
-        # 1. Распознавание (OCR)
-        time.sleep(4)
-        logger.info("Step 1: OCR completed")
-        
-        # 2. Понимание условия
-        time.sleep(3)
-        logger.info("Step 2: Logic analysis completed")
-        
-        # 3. Составление плана
-        time.sleep(3)
-        logger.info("Step 3: Plan created")
-        
-        # 4. Решение
-        time.sleep(5)
-        logger.info("Step 4: Problem solved")
-        
-        # 5. Проверка
-        time.sleep(2)
-        logger.info("Step 5: Verification completed")
+        generation = generation_store.get(job.generation_id)
+        if not generation:
+            raise ValueError(f"Generation {job.generation_id} not found")
+
+        # 1. Выбор модели (Умный каскад)
+        model_config = model_router.get_model_for_step("task_solve", generation.complexity_level)
+        model_name = model_config["model"]
         
         topic = job.input_payload.get("topic", "задачу")
         task_mode = job.input_payload.get("task_mode", "quick")
         
+        # Конструируем промпт
+        mode_instruction = ""
         if task_mode == "quick":
-            result_text = f"# Решение задачи: {topic}\n\n## Условие\n{topic}\n\n## Пошаговое решение\n1. Проанализируем исходные данные. Используем формулу дискриминанта:\n$$D = b^2 - 4ac$$\n\n2. Подставим значения и найдем корни:\n$x = \\frac{{-b \\pm \\sqrt{{D}}}}{{2a}}$\n\n## Ответ\nИтоговый результат получен и проверен."
+            mode_instruction = "Выдай краткое, точное решение и финальный ответ."
         else:
-            result_text = f"# Разбор задачи: {topic}\n\n## Шаг 1. Анализ условия\nПервым делом нам нужно понять, что дано. Допустим, у нас есть уравнение типа $ax^2 + bx + c = 0$...\n\n[Интерактивный режим обучения активирован]"
-            
-        # Обновляем контент в базе
-        generation_store.update(job.generation_id, result_content=result_text)
+            mode_instruction = "Выдай максимально подробный пошаговый разбор с объяснением теории."
+
+        prompt = f"""
+        Реши следующую задачу:
+        {topic}
         
-        return JobResult(
-            job_id=job.id,
-            success=True,
-            output_payload={"status": "task_solved"},
-            finished_at=datetime.now(),
-        )
+        ИНСТРУКЦИЯ:
+        - Используй академический стиль.
+        - Для формул используй LaTeX разметку (например, $x^2$ или $$D = b^2 - 4ac$$).
+        - {mode_instruction}
+        """
+
+        logger.info(f"Solving task using {model_name}...")
+        
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result_text = loop.run_until_complete(
+                openai_service.chat_completion(
+                    model=model_name,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+            )
+            
+            if not result_text:
+                raise ValueError("Failed to get solution from AI")
+                
+            # Обновляем контент в базе
+            generation_store.update(job.generation_id, result_content=result_text, status="completed")
+            logger.info("Task solved successfully")
+            
+            return JobResult(
+                job_id=job.id,
+                success=True,
+                output_payload={"status": "task_solved", "model": model_name},
+                finished_at=datetime.now(),
+            )
+        finally:
+            loop.close()
 
