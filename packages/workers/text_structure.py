@@ -4,7 +4,7 @@ from datetime import datetime
 from packages.jobs import Job, JobResult
 from packages.jobs.enums import JobType
 from .base import BaseWorker
-from ...api.storage import generation_store
+from apps.api.storage import generation_store
 
 logger = logging.getLogger(__name__)
 

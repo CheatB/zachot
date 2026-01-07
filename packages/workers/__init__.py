@@ -17,6 +17,8 @@ from .registry import WorkerNotFoundError, WorkerRegistry
 from .retry import RetryableRunner, RetryPolicy
 from .runner import WorkerRunner
 from .text_structure import TextStructureWorker
+from .task_worker import TaskWorker
+from .text_refining import TextRefiningWorker
 
 __all__ = [
     # Base
@@ -33,5 +35,7 @@ __all__ = [
     "CircuitBreaker",
     # Workers
     "TextStructureWorker",
+    "TaskWorker",
+    "TextRefiningWorker",
 ]
 
