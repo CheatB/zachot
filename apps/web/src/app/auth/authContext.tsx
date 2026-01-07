@@ -91,7 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setAuthState({
         isAuthenticated: true,
         isAuthResolved: true,
-        user: { id: 'integration-user' },
+        user: { id: 'integration-user', role: 'admin' },
         token: 'integration-token',
       })
       return
@@ -117,7 +117,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setAuthState({
       isAuthenticated: true,
       isAuthResolved: true,
-      user: { id: userId },
+      user: { id: userId, role: 'user' },
       token,
     })
   }

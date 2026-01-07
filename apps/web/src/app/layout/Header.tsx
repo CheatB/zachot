@@ -7,9 +7,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import { type User } from '../auth/authTypes'
 
 interface HeaderProps {
-  user: { id: string } | null
+  user: User | null
   onMenuClick?: () => void
 }
 
