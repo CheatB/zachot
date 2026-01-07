@@ -130,3 +130,7 @@ from apps.worker.broker import setup_broker
 
 В production: используйте systemd/docker для управления процессами API и worker.
 
+
+
+
+

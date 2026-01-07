@@ -24,6 +24,11 @@ class Generation(BaseModel):
     module: GenerationModule = Field(..., description="Тип модуля генерации")
     status: GenerationStatus = Field(..., description="Текущий статус генерации")
     
+    title: Optional[str] = Field(None, description="Заголовок/тема генерации")
+    work_type: Optional[str] = Field(None, description="Тип академической работы")
+    complexity_level: str = Field("student", description="Уровень сложности")
+    humanity_level: int = Field(50, description="Уровень очеловечивания")
+    
     created_at: datetime = Field(..., description="Время создания генерации")
     updated_at: datetime = Field(..., description="Время последнего обновления")
     started_at: Optional[datetime] = Field(None, description="Время начала генерации")

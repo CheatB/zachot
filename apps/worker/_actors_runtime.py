@@ -17,6 +17,8 @@ from packages.workers.runner import WorkerRunner
 from packages.workers.retry import RetryableRunner, RetryPolicy
 from packages.workers.circuit_breaker import CircuitBreaker
 from packages.workers.text_structure import TextStructureWorker
+from packages.workers.task_worker import TaskWorker
+from packages.workers.text_refining import TextRefiningWorker
 
 # Опциональный импорт для интеграции с domain
 try:
@@ -112,8 +114,9 @@ def execute_job_impl(job_dict: Dict[str, Any]) -> Dict[str, Any]:
         registry = WorkerRegistry()
         
         # Регистрируем все существующие воркеры
-        # Минимум TextStructureWorker
         registry.register(TextStructureWorker())
+        registry.register(TaskWorker())
+        registry.register(TextRefiningWorker())
         # TODO: Добавить другие воркеры по мере их реализации
         # registry.register(TextSourcesWorker())
         # registry.register(TextGenerationWorker())
@@ -178,4 +181,5 @@ def execute_job_impl(job_dict: Dict[str, Any]) -> Dict[str, Any]:
         )
         
         return error_result.model_dump()
+
 

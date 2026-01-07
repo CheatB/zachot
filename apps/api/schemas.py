@@ -14,12 +14,7 @@ from packages.core_domain.enums import GenerationModule, GenerationStatus
 class JobQueuedResponse(BaseModel):
     """
     Ответ на постановку Job в очередь.
-    
-    Attributes:
-        job_id: Идентификатор задачи, поставленной в очередь
-        status: Статус задачи (всегда "queued" при постановке в очередь)
     """
-    
     job_id: UUID = Field(..., description="Идентификатор задачи")
     status: Literal["queued"] = Field("queued", description="Статус задачи")
 
@@ -27,14 +22,11 @@ class JobQueuedResponse(BaseModel):
 class GenerationCreateRequest(BaseModel):
     """
     Запрос на создание Generation.
-    
-    Attributes:
-        module: Тип модуля генерации (TEXT, PRESENTATION, TASK)
-        input_payload: Входные данные для генерации
-        settings_payload: Настройки генерации (опционально)
     """
-    
     module: GenerationModule = Field(..., description="Тип модуля генерации")
+    work_type: Optional[str] = Field(None, description="Тип академической работы")
+    complexity_level: str = Field("student", description="Уровень сложности")
+    humanity_level: int = Field(50, description="Уровень очеловечивания (0-100)")
     input_payload: dict = Field(default_factory=dict, description="Входные данные для генерации")
     settings_payload: Optional[dict] = Field(None, description="Настройки генерации")
 
@@ -42,15 +34,7 @@ class GenerationCreateRequest(BaseModel):
 class GenerationUpdateRequest(BaseModel):
     """
     Запрос на обновление Generation.
-    
-    Позволяет обновить input_payload и/или settings_payload.
-    Обновляются только переданные поля (partial update).
-    
-    Attributes:
-        input_payload: Новые входные данные (опционально)
-        settings_payload: Новые настройки генерации (опционально)
     """
-    
     input_payload: Optional[dict] = Field(None, description="Входные данные для генерации")
     settings_payload: Optional[dict] = Field(None, description="Настройки генерации")
 
@@ -58,16 +42,7 @@ class GenerationUpdateRequest(BaseModel):
 class ActionRequest(BaseModel):
     """
     Запрос на выполнение действия над Generation.
-    
-    Поддерживаемые действия:
-    - "next": переход DRAFT → RUNNING
-    - "confirm": переход WAITING_USER → RUNNING
-    - "cancel": переход любого статуса → CANCELED
-    
-    Attributes:
-        action: Тип действия для выполнения
     """
-    
     action: Literal["next", "confirm", "cancel"] = Field(
         ...,
         description="Действие для выполнения над Generation"
@@ -77,26 +52,45 @@ class ActionRequest(BaseModel):
 class GenerationResponse(BaseModel):
     """
     Ответ с информацией о Generation.
-    
-    Attributes:
-        id: Уникальный идентификатор генерации
-        module: Тип модуля генерации
-        status: Текущий статус генерации
-        created_at: Время создания
-        updated_at: Время последнего обновления
-        input_payload: Входные данные
-        settings_payload: Настройки генерации
     """
-    
     id: UUID = Field(..., description="Уникальный идентификатор генерации")
     module: GenerationModule = Field(..., description="Тип модуля генерации")
     status: GenerationStatus = Field(..., description="Текущий статус генерации")
+    title: Optional[str] = Field(None, description="Заголовок/тема генерации")
+    work_type: Optional[str] = Field(None, description="Тип академической работы")
+    complexity_level: str = Field("student", description="Уровень сложности")
+    humanity_level: int = Field(50, description="Уровень очеловечивания")
     created_at: datetime = Field(..., description="Время создания генерации")
     updated_at: datetime = Field(..., description="Время последнего обновления")
     input_payload: dict = Field(..., description="Входные данные для генерации")
     settings_payload: dict = Field(default_factory=dict, description="Настройки генерации")
     
     class Config:
-        """Конфигурация Pydantic."""
         from_attributes = True
 
+
+class GenerationsResponse(BaseModel):
+    """
+    Ответ со списком генераций.
+    """
+    items: list[GenerationResponse]
+
+
+class UserSubscriptionInfo(BaseModel):
+    planName: str
+    status: Literal["active", "expiring", "paused"]
+    monthlyPriceRub: int
+    nextBillingDate: Optional[datetime] = None
+
+
+class UserUsageInfo(BaseModel):
+    generationsUsed: int
+    generationsLimit: int
+    tokensUsed: int = 0
+    tokensLimit: int
+
+
+class MeResponse(BaseModel):
+    id: UUID
+    subscription: UserSubscriptionInfo
+    usage: UserUsageInfo

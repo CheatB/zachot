@@ -9,9 +9,10 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
+from ..services.export_service import export_service
 
-from ..schemas import ActionRequest, GenerationCreateRequest, GenerationResponse, GenerationUpdateRequest
+from ..schemas import ActionRequest, GenerationCreateRequest, GenerationResponse, GenerationsResponse, GenerationUpdateRequest
 from ..storage import generation_store
 from packages.core_domain import Generation
 from packages.core_domain import GenerationStateMachine, InvalidGenerationTransitionError
@@ -22,21 +23,40 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/generations", tags=["generations"])
 
 
+@router.get("", response_model=GenerationsResponse)
+async def list_generations() -> GenerationsResponse:
+    """
+    Получает список всех генераций.
+    """
+    try:
+        generations = generation_store.get_all()
+        # Сортируем по дате создания (новые сверху)
+        generations.sort(key=lambda x: x.created_at, reverse=True)
+        return GenerationsResponse(items=generations)
+    except Exception as e:
+        logger.error(f"Unexpected error listing generations: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error",
+        )
+
+
 @router.post("", response_model=GenerationResponse, status_code=status.HTTP_201_CREATED)
 async def create_generation(request: GenerationCreateRequest) -> GenerationResponse:
     """
     Создаёт новую Generation со статусом DRAFT.
-    
-    Args:
-        request: Данные для создания Generation
-    
-    Returns:
-        Созданная Generation
-    
-    Raises:
-        HTTPException: При ошибке валидации или сохранения
     """
     try:
+        # 1. Жесткая проверка лимитов (согласно User Spec)
+        # В будущем здесь будет запрос к базе пользователей
+        current_used = 2 # Mock
+        limit = 5 # Mock
+        if current_used >= limit:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Лимит генераций на этот месяц исчерпан. Пожалуйста, обновите тариф."
+            )
+
         # Генерируем UUID для новой генерации
         generation_id = uuid4()
         # TODO: В будущем user_id должен браться из аутентификации
@@ -49,6 +69,10 @@ async def create_generation(request: GenerationCreateRequest) -> GenerationRespo
             user_id=user_id,
             module=request.module,
             status=GenerationStatus.DRAFT,
+            title=request.input_payload.get("topic") or request.input_payload.get("input"),
+            work_type=request.work_type,
+            complexity_level=request.complexity_level,
+            humanity_level=request.humanity_level,
             created_at=now,
             updated_at=now,
             input_payload=request.input_payload,
@@ -295,6 +319,63 @@ async def execute_action(
             detail="Internal server error",
         )
 
+
+
+@router.get("/{generation_id}/export/{format}")
+async def export_generation(generation_id: UUID, format: str):
+    """
+    Экспортирует результат генерации в файл (.docx или .pdf).
+    """
+    generation = generation_store.get(generation_id)
+    if not generation:
+        raise HTTPException(status_code=404, detail="Generation not found")
+    
+    # Пытаемся найти контент в input_payload или settings_payload
+    # В будущем это должно быть в Artifacts
+    content = generation.input_payload.get("result_content") or \
+              generation.settings_payload.get("result_content") or \
+              "Содержимое результата пока отсутствует."
+    
+    if format.lower() == "docx":
+        file_stream = export_service.generate_docx(generation, content)
+        filename = f"zachet_{generation_id}.docx"
+        media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    elif format.lower() == "pdf":
+        file_stream = export_service.generate_pdf(generation, content)
+        filename = f"zachet_{generation_id}.pdf"
+        media_type = "application/pdf"
+    elif format.lower() == "pptx":
+        file_stream = export_service.generate_pptx(generation, content)
+        filename = f"zachet_{generation_id}.pptx"
+        media_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported format. Use 'docx', 'pdf' or 'pptx'")
+    
+    return StreamingResponse(
+        file_stream,
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@router.post("/{generation_id}/smart-edit", response_model=GenerationResponse)
+async def smart_edit(generation_id: UUID, request: dict):
+    """
+    Выполняет 'умное редактирование' текста (рерайт).
+    """
+    generation = generation_store.get(generation_id)
+    if not generation:
+        raise HTTPException(status_code=404, detail="Generation not found")
+    
+    action = request.get("action")
+    content = request.get("content", "")
+    
+    # Имитация работы LLM для разных экшенов
+    edited_content = f"{content}\n\n[Текст был обработан: {action}]"
+    
+    # Сохраняем обновленный результат
+    updated = generation_store.update(generation_id, result_content=edited_content)
+    return GenerationResponse.model_validate(updated)
 
 
 @router.get("/{generation_id}/events")
