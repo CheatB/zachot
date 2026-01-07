@@ -17,7 +17,7 @@ import GenerationResultPage from '@/features/generation-result/GenerationResultP
 import GenerationRecoveryPage from '@/features/generation-recovery/GenerationRecoveryPage'
 import AccountPage from '@/features/account/AccountPage'
 import { ToastProvider } from '@/ui/primitives/Toast'
-import { AuthProvider } from './auth/authContext'
+import { AuthProvider, useAuthContext } from './auth/authContext'
 import AppBoundary from './AppBoundary'
 
 // Admin features
@@ -25,6 +25,25 @@ import AdminLayout from '@/features/admin/components/AdminLayout'
 import ModelRoutingPage from '@/features/admin/pages/ModelRoutingPage'
 import AdminUsersPage from '@/features/admin/pages/AdminUsersPage'
 import AdminAnalyticsPage from '@/features/admin/pages/AdminAnalyticsPage'
+
+interface ProtectedRouteProps {
+  children: React.ReactNode
+  requiredRole?: 'admin' | 'user'
+}
+
+const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
+  const { user, isAuthenticated } = useAuthContext()
+
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />
+  }
+
+  if (requiredRole && user?.role !== requiredRole) {
+    return <Navigate to="/" replace />
+  }
+
+  return <>{children}</>
+}
 
 function AppRoutes() {
   const [isLoading] = useState(false)
@@ -46,7 +65,14 @@ function AppRoutes() {
         <Route path="/account" element={<AccountPage />} />
         
         {/* Admin Routes */}
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<Navigate to="/admin/models" replace />} />
           <Route path="models" element={<ModelRoutingPage />} />
           <Route path="users" element={<AdminUsersPage />} />

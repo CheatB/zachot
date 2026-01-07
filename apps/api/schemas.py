@@ -92,5 +92,26 @@ class UserUsageInfo(BaseModel):
 
 class MeResponse(BaseModel):
     id: UUID
+    role: str
     subscription: UserSubscriptionInfo
     usage: UserUsageInfo
+
+
+class UserAdminResponse(BaseModel):
+    id: UUID
+    email: str
+    role: str
+    created_at: datetime
+    generations_used: int
+    generations_limit: int
+    tokens_used: int
+    tokens_limit: int
+    subscription_status: str
+
+
+class UsersAdminResponse(BaseModel):
+    items: list[UserAdminResponse]
+
+
+class UserRoleUpdateRequest(BaseModel):
+    role: Literal["admin", "user"]

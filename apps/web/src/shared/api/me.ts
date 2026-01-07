@@ -7,6 +7,7 @@ import { apiFetch } from './http'
 
 export interface MeResponse {
   id: string;
+  role: 'admin' | 'user';
   subscription: {
     planName: string;
     status: 'active' | 'expiring' | 'paused';

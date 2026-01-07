@@ -5,6 +5,7 @@
 
 export interface User {
   id: string // UUID
+  role: 'admin' | 'user'
 }
 
 export interface AuthState {

@@ -117,9 +117,11 @@ function Header({ user, onMenuClick }: HeaderProps) {
                     <Link to="/profile" className="app-header__dropdown-item" onClick={() => setIsMenuOpen(false)}>
                       ⚙️ Профиль
                     </Link>
-                    <Link to="/admin" className="app-header__dropdown-item" onClick={() => setIsMenuOpen(false)}>
-                      🛡️ Админ-панель
-                    </Link>
+                    {user.role === 'admin' && (
+                      <Link to="/admin" className="app-header__dropdown-item" onClick={() => setIsMenuOpen(false)}>
+                        🛡️ Админ-панель
+                      </Link>
+                    )}
                     <div className="app-header__dropdown-divider" />
                     <button className="app-header__dropdown-item app-header__dropdown-item--danger" onClick={handleLogout}>
                       🚪 Выйти

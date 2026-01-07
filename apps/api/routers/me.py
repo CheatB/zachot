@@ -42,6 +42,7 @@ async def get_me(authorization: str = Header(None)):
 
         return MeResponse(
             id=user.id,
+            role=user.role,
             subscription={
                 "planName": user.plan_name,
                 "status": user.subscription_status,

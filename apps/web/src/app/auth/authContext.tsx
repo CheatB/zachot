@@ -54,7 +54,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setAuthState({
         isAuthenticated: true,
         isAuthResolved: true,
-        user: { id: userIdFromUrl },
+        user: { id: userIdFromUrl, role: 'user' }, // По умолчанию user, обновится через /me
         token: tokenFromUrl,
       })
 
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setAuthState({
             isAuthenticated: true,
             isAuthResolved: true,
-            user: { id: response.id },
+            user: { id: response.id, role: response.role },
             token: storedToken,
           })
         })
@@ -105,7 +105,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setAuthState({
       isAuthenticated: true,
       isAuthResolved: true,
-      user: { id: anonymousId },
+      user: { id: anonymousId, role: 'user' },
       token: anonymousId,
     })
   }, [])

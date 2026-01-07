@@ -1,4 +1,4 @@
-// import { apiFetch } from './http';
+import { apiFetch } from './http';
 
 export interface ModelRoutingConfig {
   [workType: string]: {
@@ -9,10 +9,13 @@ export interface ModelRoutingConfig {
 export interface AdminUser {
   id: string;
   email: string;
-  regDate: string;
-  jobsCount: number;
-  tokensUsed: number;
-  subscriptionStatus: string;
+  role: 'admin' | 'user';
+  created_at: string;
+  generations_used: number;
+  generations_limit: number;
+  tokens_used: number;
+  tokens_limit: number;
+  subscription_status: string;
 }
 
 export interface AdminAnalytics {
@@ -56,15 +59,18 @@ export async function saveModelRouting(config: ModelRoutingConfig): Promise<void
  * Получить список пользователей (админ)
  */
 export async function fetchAdminUsers(): Promise<AdminUser[]> {
-  // Имитация задержки сети
-  await new Promise(r => setTimeout(r, 500));
-  
-  return [
-    { id: '1', email: 'student1@university.ru', regDate: '2026-01-01', jobsCount: 5, tokensUsed: 120000, subscriptionStatus: 'active' },
-    { id: '2', email: 'test_user@gmail.com', regDate: '2026-01-03', jobsCount: 2, tokensUsed: 45000, subscriptionStatus: 'active' },
-    { id: '3', email: 'pro_writer@mail.ru', regDate: '2026-01-05', jobsCount: 12, tokensUsed: 480000, subscriptionStatus: 'expired' },
-    { id: '4', email: 'ivanov@itmo.ru', regDate: '2026-01-06', jobsCount: 0, tokensUsed: 0, subscriptionStatus: 'none' },
-  ];
+  const response = await apiFetch<{ items: AdminUser[] }>('/admin/users');
+  return response.items;
+}
+
+/**
+ * Обновить роль пользователя
+ */
+export async function updateUserRole(userId: string, role: 'admin' | 'user'): Promise<void> {
+  await apiFetch(`/admin/users/${userId}/role`, {
+    method: 'PATCH',
+    body: JSON.stringify({ role }),
+  });
 }
 
 /**

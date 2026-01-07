@@ -46,6 +46,7 @@ class User(Base):
     
     id = Column(GUID(), primary_key=True, default=uuid4)
     email = Column(String, unique=True, index=True)
+    role = Column(String, default="user") # 'admin' or 'user'
     plan_name = Column(String, default="BASE 499")
     subscription_status = Column(String, default="active")
     monthly_price_rub = Column(Integer, default=499)
