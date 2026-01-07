@@ -51,8 +51,6 @@ function GenerationProgressPage() {
   useEffect(() => {
     if (!id || !isAuthenticated) return
 
-    let pollInterval: any
-
     const checkStatus = async () => {
       try {
         const data = await getGenerationById(id)
@@ -67,7 +65,7 @@ function GenerationProgressPage() {
     }
 
     checkStatus()
-    pollInterval = setInterval(checkStatus, 3000)
+    const pollInterval = setInterval(checkStatus, 3000)
 
     return () => clearInterval(pollInterval)
   }, [id, isAuthenticated, navigate])
