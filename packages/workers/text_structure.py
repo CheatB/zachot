@@ -23,19 +23,47 @@ class TextStructureWorker(BaseWorker):
         if not generation:
             raise ValueError(f"Generation {job.generation_id} not found")
 
-        # 1. Генерация структуры (План)
-        # Берем модель из роутера (в будущем из админки)
-        model_config = model_router.get_model_for_step("structure", generation.complexity_level)
-        model_name = model_config["model"]
+        topic = job.input_payload.get("topic", "")
         
-        prompt = prompt_service.construct_structure_prompt(generation)
-        
-        logger.info(f"Step 1: Generating structure using {model_name}")
-        
-        # Запускаем асинхронный запрос в синхронном контексте воркера
+        # --- СЛОЙ 1 & 3: Защита от пустых запросов и болтовни ---
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+        
         try:
+            # 1. Проверка на минимальный ввод
+            if len(topic.strip()) < 5:
+                error_msg = "Пожалуйста, введите тему работы для начала генерации."
+                generation_store.update(job.generation_id, result_content=error_msg, status="failed")
+                return JobResult(job_id=job.id, success=False, output_payload={"reason": "empty"}, finished_at=datetime.now())
+
+            # 2. Быстрая классификация (задача ли это?)
+            classifier_prompt = prompt_service.construct_classifier_prompt(topic)
+            raw_class = loop.run_until_complete(
+                openai_service.chat_completion(
+                    model="openai/gpt-4o-mini",
+                    messages=[{"role": "user", "content": classifier_prompt}],
+                    json_mode=True
+                )
+            )
+            
+            classification = json.loads(raw_class or '{"type": "task"}')
+            if classification.get("type") == "chat":
+                # Если пользователь просто болтает, мы можем либо отказать, 
+                # либо попытаться интерпретировать это как тему, но лучше отказать
+                # чтобы не тратить дорогие токены на нецелевое использование.
+                error_msg = "Этот раздел предназначен для создания академических работ. Пожалуйста, введите тему для реферата, статьи или курсовой."
+                generation_store.update(job.generation_id, result_content=error_msg, status="failed")
+                return JobResult(job_id=job.id, success=False, output_payload={"reason": "not_a_topic"}, finished_at=datetime.now())
+
+            # --- ОСНОВНАЯ ЛОГИКА ГЕНЕРАЦИИ ---
+            # 1. Генерация структуры (План)
+            model_config = model_router.get_model_for_step("structure", generation.complexity_level)
+            model_name = model_config["model"]
+            
+            prompt = prompt_service.construct_structure_prompt(generation)
+            
+            logger.info(f"Step 1: Generating structure using {model_name}")
+            
             raw_response = loop.run_until_complete(
                 openai_service.chat_completion(
                     model=model_name,
@@ -72,9 +100,8 @@ class TextStructureWorker(BaseWorker):
                 generation_store.update(job.generation_id, settings_payload={"sources": sources})
                 logger.info(f"Step 2: {len(sources)} sources found")
 
-            # 3. Генерация текста (поглавно)
+            # 3. Генерация текста (СЛОЙ 4: Ограничение ширины)
             logger.info("Step 3: Generating full text...")
-            
             gen_model = model_router.get_model_for_step("draft", generation.complexity_level)["model"]
 
             generation_prompt = prompt_service.construct_generation_prompt(

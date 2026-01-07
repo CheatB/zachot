@@ -22,35 +22,61 @@ class TaskWorker(BaseWorker):
         if not generation:
             raise ValueError(f"Generation {job.generation_id} not found")
 
-        # 1. Выбор модели (Умный каскад)
-        model_config = model_router.get_model_for_step("task_solve", generation.complexity_level)
-        model_name = model_config["model"]
+        topic = job.input_payload.get("topic", "")
         
-        topic = job.input_payload.get("topic", "задачу")
-        task_mode = job.input_payload.get("task_mode", "quick")
-        
-        # Конструируем промпт
-        mode_instruction = ""
-        if task_mode == "quick":
-            mode_instruction = "Выдай краткое, точное решение и финальный ответ."
-        else:
-            mode_instruction = "Выдай максимально подробный пошаговый разбор с объяснением теории."
-
-        prompt = f"""
-        Реши следующую задачу:
-        {topic}
-        
-        ИНСТРУКЦИЯ:
-        - Используй академический стиль.
-        - Для формул используй LaTeX разметку (например, $x^2$ или $$D = b^2 - 4ac$$).
-        - {mode_instruction}
-        """
-
-        logger.info(f"Solving task using {model_name}...")
-        
+        # --- СЛОЙ 1 & 3: Классификатор и защита от болтовни ---
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+        
         try:
+            # 1. Быстрая проверка на пустой или слишком короткий ввод
+            if len(topic.strip()) < 10:
+                error_msg = "Слишком короткое условие. Пожалуйста, пришлите текст задачи или фото."
+                generation_store.update(job.generation_id, result_content=error_msg, status="failed")
+                return JobResult(job_id=job.id, success=False, output_payload={"reason": "too_short"}, finished_at=datetime.now())
+
+            # 2. Семантическая классификация через дешевую модель
+            classifier_prompt = prompt_service.construct_classifier_prompt(topic)
+            raw_class = loop.run_until_complete(
+                openai_service.chat_completion(
+                    model="openai/gpt-4o-mini",
+                    messages=[{"role": "user", "content": classifier_prompt}],
+                    json_mode=True
+                )
+            )
+            
+            classification = json.loads(raw_class or '{"type": "task"}')
+            if classification.get("type") == "chat":
+                error_msg = "Я решаю конкретные учебные задачи. Для общих вопросов или написания текстов используйте соответствующие разделы."
+                generation_store.update(job.generation_id, result_content=error_msg, status="failed")
+                return JobResult(job_id=job.id, success=False, output_payload={"reason": "not_a_task"}, finished_at=datetime.now())
+
+            # --- ОСНОВНАЯ ЛОГИКА РЕШЕНИЯ ---
+            # Выбор модели (Умный каскад)
+            model_config = model_router.get_model_for_step("task_solve", generation.complexity_level)
+            model_name = model_config["model"]
+            
+            task_mode = job.input_payload.get("task_mode", "quick")
+            
+            # Конструируем промпт (СЛОЙ 4: Ограничение ширины)
+            mode_instruction = ""
+            if task_mode == "quick":
+                mode_instruction = "Выдай КРАТКОЕ, точное решение и финальный ответ. Без лишних вступлений."
+            else:
+                mode_instruction = "Выдай максимально подробный пошаговый разбор. Каждый шаг должен содержать формулы и логику. Не пиши общих лекций."
+
+            prompt = f"""
+            Реши задачу из условия: {topic}
+            
+            ПРАВИЛА (АНТИ-ХАК):
+            - СТРОГО академический стиль.
+            - Для формул используй LaTeX.
+            - {mode_instruction}
+            - Если в условии нет задачи — вежливо откажи.
+            """
+
+            logger.info(f"Solving task using {model_name}...")
+            
             result_text = loop.run_until_complete(
                 openai_service.chat_completion(
                     model=model_name,
