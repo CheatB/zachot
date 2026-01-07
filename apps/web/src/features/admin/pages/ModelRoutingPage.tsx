@@ -6,12 +6,12 @@ type WorkType = 'essay' | 'diploma' | 'presentation' | 'task';
 type Stage = 'structure' | 'sources' | 'generation' | 'refine';
 
 const modelOptions = [
-  { value: 'gpt-5.2', label: 'gpt-5.2 (Premium)' },
-  { value: 'gpt-5', label: 'gpt-5 (Standard)' },
-  { value: 'o3', label: 'o3 (Reasoning High)' },
-  { value: 'o4-mini', label: 'o4-mini (Reasoning Mini)' },
-  { value: 'gpt-5-mini', label: 'gpt-5-mini (Economy)' },
-  { value: 'gpt-5-nano', label: 'gpt-5-nano (Ultra Economy)' },
+  { value: 'openai/o3-mini', label: 'o3-mini (Reasoning High)' },
+  { value: 'openai/o1-mini', label: 'o1-mini (Reasoning Mini)' },
+  { value: 'openai/gpt-4o', label: 'gpt-4o (Standard)' },
+  { value: 'openai/gpt-4o-mini', label: 'gpt-4o-mini (Economy)' },
+  { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet (Best for Refine)' },
+  { value: 'deepseek/deepseek-chat', label: 'DeepSeek V3 (Ultra Economy)' },
 ];
 
 const workTypes: { value: WorkType; label: string }[] = [
@@ -33,7 +33,14 @@ const ModelRoutingPage: React.FC = () => {
   const [isSaving, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchModelRouting().then(data => setConfig(data));
+    // Временно используем дефолтные значения OpenRouter, пока API не отдает реальные
+    const defaultConfig: ModelRoutingConfig = {
+      essay: { structure: 'openai/o1-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
+      diploma: { structure: 'openai/o3-mini', sources: 'openai/gpt-4o', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
+      presentation: { structure: 'openai/gpt-4o-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'openai/gpt-4o-mini' },
+      task: { structure: 'openai/o1-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/o1-mini', refine: 'openai/gpt-4o-mini' },
+    };
+    fetchModelRouting().then(data => setConfig({ ...defaultConfig, ...data }));
   }, []);
 
   const handleModelChange = (workType: string, stage: string, model: string) => {

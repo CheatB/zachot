@@ -15,44 +15,44 @@ class ModelRouter:
     
     @staticmethod
     def get_model_for_step(step_type: str, complexity: str = "student") -> dict:
-        if step_type == "search":
+        if step_type == "sources":
             return {
-                "provider": AIModelProvider.PERPLEXITY,
-                "model": "sonar-pro",
-                "cost_priority": "medium"
+                "provider": "openrouter",
+                "model": "openai/gpt-4o-mini",
+                "cost_priority": "low"
             }
         
         if step_type == "structure":
             return {
-                "provider": AIModelProvider.OPENAI,
-                "model": "gpt-4o-mini",
-                "cost_priority": "low"
+                "provider": "openrouter",
+                "model": "openai/o1-mini",
+                "cost_priority": "medium"
             }
             
         if step_type == "draft":
-            return {
-                "provider": AIModelProvider.DEEPSEEK,
-                "model": "deepseek-v3",
-                "cost_priority": "low"
-            }
-            
-        if step_type == "refine":
-            # Для высокого качества и Anti-AI используем Claude
+            # Для высокого качества используем старшие модели
             if complexity == "research":
                 return {
-                    "provider": AIModelProvider.ANTHROPIC,
-                    "model": "claude-3-5-sonnet-latest",
+                    "provider": "openrouter",
+                    "model": "openai/gpt-4o",
                     "cost_priority": "high"
                 }
             return {
-                "provider": AIModelProvider.DEEPSEEK,
-                "model": "deepseek-v3",
+                "provider": "openrouter",
+                "model": "openai/gpt-4o",
+                "cost_priority": "medium"
+            }
+            
+        if step_type == "refine":
+            return {
+                "provider": "openrouter",
+                "model": "anthropic/claude-3.5-sonnet",
                 "cost_priority": "medium"
             }
             
         return {
-            "provider": AIModelProvider.OPENAI,
-            "model": "gpt-4o-mini",
+            "provider": "openrouter",
+            "model": "openai/gpt-4o-mini",
             "cost_priority": "low"
         }
 

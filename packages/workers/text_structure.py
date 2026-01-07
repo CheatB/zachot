@@ -1,10 +1,14 @@
-import time
+import asyncio
 import logging
+import json
 from datetime import datetime
 from packages.jobs import Job, JobResult
 from packages.jobs.enums import JobType
 from .base import BaseWorker
 from apps.api.storage import generation_store
+from apps.api.services.openai_service import openai_service
+from apps.api.services.prompt_service import prompt_service
+from apps.api.services.model_router import model_router
 
 logger = logging.getLogger(__name__)
 
@@ -13,28 +17,108 @@ class TextStructureWorker(BaseWorker):
         return job.type == JobType.TEXT_STRUCTURE
     
     def execute(self, job: Job) -> JobResult:
-        logger.info(f"Starting simulated pipeline for job {job.id}")
+        logger.info(f"Starting AI-powered pipeline for job {job.id}")
         
-        # 1. Симуляция этапа 'Анализ'
-        time.sleep(3)
-        logger.info("Step 1: Analysis completed")
+        generation = generation_store.get(job.generation_id)
+        if not generation:
+            raise ValueError(f"Generation {job.generation_id} not found")
+
+        # 1. Генерация структуры (План)
+        # Берем модель из роутера (в будущем из админки)
+        model_config = model_router.get_model_for_step("structure", generation.complexity_level)
+        model_name = model_config["model"]
         
-        # 2. Симуляция этапа 'Источники'
-        time.sleep(5)
-        logger.info("Step 2: Sources found")
+        prompt = prompt_service.construct_structure_prompt(generation)
         
-        # 3. Симуляция этапа 'Написание текста'
-        topic = job.input_payload.get("topic", "тему")
-        time.sleep(5)
+        logger.info(f"Step 1: Generating structure using {model_name}")
         
-        result_text = f"# {topic}\n\n## Введение\nДанная работа посвящена исследованию {topic}. Мы проанализировали основные аспекты...\n\n## Глава 1. Теоретические основы\nВ этой главе рассматриваются фундаментальные принципы {topic}...\n\n## Заключение\nТаким образом, можно сделать вывод, что {topic} является важным направлением развития..."
-        
-        # Обновляем контент в базе
-        generation_store.update(job.generation_id, result_content=result_text)
-        
-        return JobResult(
-            job_id=job.id,
-            success=True,
-            output_payload={"status": "all_steps_completed"},
-            finished_at=datetime.now(),
-        )
+        # Запускаем асинхронный запрос в синхронном контексте воркера
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            raw_response = loop.run_until_complete(
+                openai_service.chat_completion(
+                    model=model_name,
+                    messages=[{"role": "user", "content": prompt}],
+                    json_mode=True
+                )
+            )
+            
+            if not raw_response:
+                raise ValueError("Failed to get response from OpenAI for structure")
+                
+            structure_data = json.loads(raw_response)
+            structure = structure_data.get("structure", [])
+            
+            # Сохраняем структуру в настройки генерации
+            generation_store.update(job.generation_id, settings_payload={"structure": structure})
+            logger.info(f"Step 1: Structure generated with {len(structure)} sections")
+
+            # 2. Подбор источников
+            logger.info("Step 2: Selecting sources...")
+            sources_model = model_router.get_model_for_step("sources", generation.complexity_level)["model"]
+            sources_prompt = prompt_service.construct_sources_prompt(generation)
+            raw_sources = loop.run_until_complete(
+                openai_service.chat_completion(
+                    model=sources_model,
+                    messages=[{"role": "user", "content": sources_prompt}],
+                    json_mode=True
+                )
+            )
+            
+            if raw_sources:
+                sources_data = json.loads(raw_sources)
+                sources = sources_data.get("sources", [])
+                generation_store.update(job.generation_id, settings_payload={"sources": sources})
+                logger.info(f"Step 2: {len(sources)} sources found")
+
+            # 3. Генерация текста (поглавно)
+            logger.info("Step 3: Generating full text...")
+            
+            gen_model = model_router.get_model_for_step("draft", generation.complexity_level)["model"]
+
+            generation_prompt = prompt_service.construct_generation_prompt(
+                generation, 
+                section_title="Вся работа (основные главы)",
+                previous_context=""
+            )
+            
+            raw_text = loop.run_until_complete(
+                openai_service.chat_completion(
+                    model=gen_model,
+                    messages=[{"role": "user", "content": generation_prompt}]
+                )
+            )
+            
+            if not raw_text:
+                raise ValueError("Failed to generate content")
+                
+            full_text = raw_text
+            
+            # 4. Очеловечивание
+            logger.info(f"Step 4: Humanizing text (level: {generation.humanity_level}%)...")
+            refine_model = model_router.get_model_for_step("refine", generation.complexity_level)["model"]
+            humanize_prompt = prompt_service.construct_humanize_prompt(full_text, generation.humanity_level)
+            
+            refined_text = loop.run_until_complete(
+                openai_service.chat_completion(
+                    model=refine_model,
+                    messages=[{"role": "user", "content": humanize_prompt}]
+                )
+            )
+            
+            final_content = refined_text or full_text
+            
+            # Финальное сохранение
+            generation_store.update(job.generation_id, result_content=final_content, status="completed")
+            logger.info("Pipeline completed successfully")
+
+            return JobResult(
+                job_id=job.id,
+                success=True,
+                output_payload={"status": "completed", "sections_count": len(structure)},
+                finished_at=datetime.now(),
+            )
+            
+        finally:
+            loop.close()

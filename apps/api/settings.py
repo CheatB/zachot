@@ -34,6 +34,10 @@ class Settings:
         # Хост для запуска сервера
         self.host: str = os.getenv("HOST", "0.0.0.0")
 
+        # OpenAI / OpenRouter
+        self.openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
+        self.openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")
+
 
 # Глобальный экземпляр настроек
 settings = Settings()
