@@ -21,14 +21,14 @@ const typeOptions: (GenerationTypeOption & { illustration?: string })[] = [
     title: 'Создать текстовую работу',
     description: 'Любой вид работы с реальными источниками, оформлением по ГОСТу и защитой от проверки на ИИ',
     icon: '',
-    illustration: '/assets/illustrations/text-work.png?v=9'
+    illustration: '/assets/illustrations/text-work.png'
   },
   {
     type: 'presentation',
     title: 'Подготовить презентацию',
-    description: 'презентация по заданной теме в разных стилях оформления',
+    description: 'Презентации по заданной теме в разных стилях оформления',
     icon: '',
-    illustration: '/assets/illustrations/presentation.png?v=9'
+    illustration: '/assets/illustrations/presentation.png'
   },
   {
     type: 'task',
@@ -81,7 +81,7 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
           style={{
             fontSize: 'var(--font-size-sm)',
             color: 'var(--color-text-secondary)',
-            marginBottom: 'var(--spacing-48)',
+            marginBottom: 'var(--spacing-40)',
             lineHeight: 'var(--line-height-relaxed)',
             textAlign: 'center'
           }}
@@ -95,7 +95,11 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
             return (
               <motion.button
                 key={option.type}
-                className={clsx('wizard-type-card', isSelected && 'wizard-type-card--selected')}
+                className={clsx(
+                  'wizard-type-card', 
+                  isSelected && 'wizard-type-card--selected',
+                  option.type === 'presentation' && 'wizard-type-card--presentation'
+                )}
                 onClick={() => onSelect(option.type)}
                 whileHover={{ y: -8, scale: 1.01 }}
                 whileTap={{ y: 0, scale: 0.99 }}
@@ -140,8 +144,9 @@ const stepStyles = `
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-24);
-  max-width: 1100px;
+  max-width: 1320px; /* Увеличено на ~20% (было 1100) */
   margin: 0 auto;
+  padding: 0 var(--spacing-12);
 }
 
 @media (max-width: 1024px) {
@@ -161,7 +166,7 @@ const stepStyles = `
   position: relative;
   width: 100%;
   min-height: 200px;
-  padding: var(--spacing-24);
+  padding: var(--spacing-24) var(--spacing-8); /* Боковые отступы уменьшены вдвое (было 16) */
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
@@ -171,6 +176,7 @@ const stepStyles = `
   box-shadow: var(--elevation-1);
   display: flex;
   flex-direction: column;
+  justify-content: flex-start; /* Выравнивание по верху */
   overflow: hidden;
   isolation: isolate;
 }
@@ -195,6 +201,7 @@ const stepStyles = `
   flex-direction: column;
   gap: var(--spacing-8);
   max-width: 70%;
+  height: 100%; /* Чтобы занять всю высоту для выравнивания */
 }
 
 .wizard-type-card__title {
@@ -202,6 +209,9 @@ const stepStyles = `
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
+  margin-top: 0;
+  display: block;
+  min-height: 3em; /* Фиксированная высота для заголовка, чтобы описания начинались на одном уровне */
 }
 
 .wizard-type-card__description {
@@ -221,6 +231,11 @@ const stepStyles = `
   justify-content: flex-end;
   pointer-events: none;
   z-index: 1;
+}
+
+/* Опускаем иллюстрацию во втором блоке на 5 пикселей */
+.wizard-type-card--presentation .wizard-type-card__illustration {
+  bottom: -20px;
 }
 
 .wizard-type-card__illustration img {

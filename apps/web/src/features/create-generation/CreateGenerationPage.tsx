@@ -301,7 +301,7 @@ function CreateGenerationPage() {
 
   return (
     <Container size="lg">
-      <Stack gap="lg" style={{ paddingTop: 'var(--spacing-32)', paddingBottom: 'var(--spacing-32)' }}>
+      <Stack gap="xl" style={{ paddingTop: 'var(--spacing-48)', paddingBottom: 'var(--spacing-40)' }}>
         
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -312,21 +312,21 @@ function CreateGenerationPage() {
             ease: motionTokens.easing.out,
           }}
         >
-          <h1 style={{ marginBottom: 'var(--spacing-8)', color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>
+          <h1 style={{ marginBottom: 'var(--spacing-12)', color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>
             {title}
           </h1>
           <p style={{ 
-            fontSize: 'var(--font-size-sm)', 
+            fontSize: 'var(--font-size-base)', 
             color: 'var(--color-text-secondary)', 
-            lineHeight: 'var(--line-height-tight)', 
-            marginBottom: 'var(--spacing-32)',
+            lineHeight: 'var(--line-height-relaxed)', 
+            marginBottom: 'var(--spacing-40)',
             maxWidth: '800px'
           }}>
             {subtitle}
           </p>
         </motion.div>
 
-          <div className="wizard-progress" style={{ marginBottom: 'var(--spacing-32)' }}>
+          <div className="wizard-progress" style={{ marginBottom: 'var(--spacing-40)' }}>
             {[1, 1.2, 1.3, 1.5, 1.6, 1.7, 2, 3, 4, 5, 6].map((step) => {
               const shouldShow = (s: number) => {
                 if (s === 1.5 || s === 1.7) return form.type === 'text'
@@ -399,7 +399,7 @@ function CreateGenerationPage() {
           </AnimatePresence>
 
           {!transitionState && currentStep < 6 && (
-            <div className="wizard-navigation" style={{ marginTop: 'var(--spacing-32)' }}>
+            <div className="wizard-navigation" style={{ marginTop: 'var(--spacing-40)' }}>
               {currentStep > 1 && <Button variant="secondary" size="lg" onClick={handleBack} disabled={isSubmitting || isSuggesting}>Назад</Button>}
               <Button variant="primary" size="lg" onClick={handleNext} loading={isSuggesting} disabled={!canProceed() || isSubmitting || isSuggesting}>Далее</Button>
             </div>
