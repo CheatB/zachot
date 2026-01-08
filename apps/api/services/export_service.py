@@ -1,6 +1,7 @@
 import io
+from datetime import datetime
 from docx import Document
-from docx.shared import Pt, mm
+from docx.shared import Pt, Mm
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
 from fpdf import FPDF
 from pptx import Presentation
@@ -15,10 +16,10 @@ class ExportService:
         # --- Настройки страницы по ГОСТ (поля) ---
         sections = doc.sections
         for section in sections:
-            section.top_margin = mm(20)
-            section.bottom_margin = mm(20)
-            section.left_margin = mm(30)
-            section.right_margin = mm(10)
+            section.top_margin = Mm(20)
+            section.bottom_margin = Mm(20)
+            section.left_margin = Mm(30)
+            section.right_margin = Mm(10)
 
         # --- Настройка стиля по умолчанию (Times New Roman 14, 1.5 интервал) ---
         style = doc.styles['Normal']
@@ -28,7 +29,7 @@ class ExportService:
         
         paragraph_format = style.paragraph_format
         paragraph_format.line_spacing_rule = WD_LINE_SPACING.ONE_POINT_FIVE
-        paragraph_format.first_line_indent = mm(12.5) # Абзацный отступ
+        paragraph_format.first_line_indent = Mm(12.5) # Абзацный отступ
         paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY # По ширине
 
         # --- Title Page (ГОСТ-титульник) ---
@@ -52,9 +53,10 @@ class ExportService:
         p = doc.add_paragraph(f'{work_type}')
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.first_line_indent = 0
-        run = p.runs[0]
-        run.bold = True
-        run.font.size = Pt(16)
+        if p.runs:
+            run = p.runs[0]
+            run.bold = True
+            run.font.size = Pt(16)
 
         p = doc.add_paragraph('по теме:')
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -63,9 +65,10 @@ class ExportService:
         p = doc.add_paragraph(generation.title or 'Без названия')
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.first_line_indent = 0
-        run = p.runs[0]
-        run.bold = True
-        run.font.size = Pt(16)
+        if p.runs:
+            run = p.runs[0]
+            run.bold = True
+            run.font.size = Pt(16)
         
         doc.add_paragraph('\n' * 8)
         
@@ -103,7 +106,7 @@ class ExportService:
             elif part.startswith('## '):
                 h = doc.add_heading(part.replace('## ', ''), level=2)
                 h.alignment = WD_ALIGN_PARAGRAPH.LEFT
-                h.paragraph_format.first_line_indent = mm(12.5)
+                h.paragraph_format.first_line_indent = Mm(12.5)
             else:
                 p = doc.add_paragraph(part)
         

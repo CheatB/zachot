@@ -20,6 +20,7 @@ import GenerationGoalStep from './GenerationGoalStep'
 import GenerationStructureStep from './GenerationStructureStep'
 import GenerationSourcesStep from './GenerationSourcesStep'
 import GenerationConfirmStep from './GenerationConfirmStep'
+import StepLoader, { StepLoaderTask } from './components/StepLoader'
 import type { CreateGenerationForm, GenerationType, WorkType, PresentationStyle, TaskMode } from './types'
 import { workTypeConfigs } from './types'
 import { motion as motionTokens } from '@/design-tokens'
@@ -33,6 +34,7 @@ function CreateGenerationPage() {
   const [currentStep, setCurrentStep] = useState<WizardStep>(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuggesting, setIsSuggesting] = useState(false)
+  const [transitionState, setTransitionState] = useState<{ title: string; tasks: StepLoaderTask[] } | null>(null)
   const [form, setForm] = useState<CreateGenerationForm>({
     type: null,
     workType: null,
@@ -158,16 +160,50 @@ function CreateGenerationPage() {
     } else if (currentStep === 2 && form.input.trim()) {
       // Предлагаем детали через AI при переходе с темы на цель/идею
       setIsSuggesting(true)
+      setTransitionState({
+        title: 'Анализирую тему',
+        tasks: [
+          { id: '1', label: 'Изучаю контекст темы...' },
+          { id: '2', label: 'Подбираю академический стиль...' },
+          { id: '3', label: 'Формулирую научную цель...' },
+          { id: '4', label: 'Выделяю главный тезис...' }
+        ]
+      })
+      
       suggestDetails(form.input)
         .then(details => {
           setForm(prev => ({ ...prev, ...details }))
+          setTransitionState(null)
           setCurrentStep(3)
         })
         .finally(() => setIsSuggesting(false))
     } else if (currentStep === 3) {
-      setCurrentStep(4)
+      setTransitionState({
+        title: 'Проектирую структуру',
+        tasks: [
+          { id: '1', label: 'Сверяюсь с требованиями ГОСТ...' },
+          { id: '2', label: 'Выстраиваю логику глав...' },
+          { id: '3', label: 'Распределяю объем разделов...' },
+          { id: '4', label: 'Проверяю связность введения...' }
+        ]
+      })
+      setTimeout(() => {
+        setTransitionState(null)
+        setCurrentStep(4)
+      }, 3000)
     } else if (currentStep === 4) {
-      setCurrentStep(5)
+      setTransitionState({
+        title: 'Подбираю литературу',
+        tasks: [
+          { id: '1', label: 'Сканирую научные базы данных...' },
+          { id: '2', label: 'Проверяю актуальность публикаций...' },
+          { id: '3', label: 'Оформляю список по стандарту...' }
+        ]
+      })
+      setTimeout(() => {
+        setTransitionState(null)
+        setCurrentStep(5)
+      }, 3000)
     } else if (currentStep === 5) {
       setCurrentStep(6)
     }
@@ -307,32 +343,46 @@ function CreateGenerationPage() {
           </div>
 
           <AnimatePresence mode="wait">
-            {currentStep === 1 && <GenerationTypeStep key="step-1" selectedType={form.type} onSelect={handleTypeSelect} />}
-            {currentStep === 1.2 && <TaskInputStep key="step-1-2" input={form.input} files={form.taskFiles} onInputChange={handleInputChange} onFilesChange={handleTaskFilesChange} />}
-            {currentStep === 1.3 && <TaskModeStep key="step-1-3" selectedMode={form.taskMode} onSelect={handleTaskModeSelect} />}
-            {currentStep === 1.5 && <WorkTypeStep key="step-1-5" selectedWorkType={form.workType} onSelect={handleWorkTypeSelect} />}
-            {currentStep === 1.6 && <PresentationStyleStep key="step-1-6" selectedStyle={form.presentationStyle} onSelect={handlePresentationStyleSelect} />}
-            {currentStep === 1.7 && <GenerationStyleStep key="step-1-7" complexity={form.complexityLevel} humanity={form.humanityLevel} onChange={(updates) => setForm(prev => ({...prev, ...updates}))} />}
-            {currentStep === 2 && form.type && <GenerationInputStep key="step-2" type={form.type} input={form.input} onInputChange={handleInputChange} />}
-            {currentStep === 3 && <GenerationGoalStep key="step-3" form={form} isLoading={isSuggesting} onChange={(updates) => setForm(prev => ({ ...prev, ...updates }))} />}
-            {currentStep === 4 && <GenerationStructureStep key="step-4" structure={form.structure} onChange={(structure) => setForm(prev => ({ ...prev, structure }))} />}
-            {currentStep === 5 && <GenerationSourcesStep key="step-5" sources={form.sources} onChange={(sources) => setForm(prev => ({ ...prev, sources }))} />}
-            {currentStep === 6 && form.type && (
-              <GenerationConfirmStep 
-                key="step-6" 
-                type={form.type} 
-                workType={form.workType}
-                taskMode={form.taskMode}
-                input={form.input} 
-                hasFiles={form.taskFiles.length > 0}
-                onConfirm={handleConfirm} 
-                onBack={handleBack} 
-                isSubmitting={isSubmitting} 
-              />
+            {transitionState ? (
+              <motion.div
+                key="step-loader"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.05 }}
+                transition={{ duration: 0.3 }}
+              >
+                <StepLoader title={transitionState.title} tasks={transitionState.tasks} />
+              </motion.div>
+            ) : (
+              <>
+                {currentStep === 1 && <GenerationTypeStep key="step-1" selectedType={form.type} onSelect={handleTypeSelect} />}
+                {currentStep === 1.2 && <TaskInputStep key="step-1-2" input={form.input} files={form.taskFiles} onInputChange={handleInputChange} onFilesChange={handleTaskFilesChange} />}
+                {currentStep === 1.3 && <TaskModeStep key="step-1-3" selectedMode={form.taskMode} onSelect={handleTaskModeSelect} />}
+                {currentStep === 1.5 && <WorkTypeStep key="step-1-5" selectedWorkType={form.workType} onSelect={handleWorkTypeSelect} />}
+                {currentStep === 1.6 && <PresentationStyleStep key="step-1-6" selectedStyle={form.presentationStyle} onSelect={handlePresentationStyleSelect} />}
+                {currentStep === 1.7 && <GenerationStyleStep key="step-1-7" complexity={form.complexityLevel} humanity={form.humanityLevel} onChange={(updates) => setForm(prev => ({...prev, ...updates}))} />}
+                {currentStep === 2 && form.type && <GenerationInputStep key="step-2" type={form.type} input={form.input} onInputChange={handleInputChange} />}
+                {currentStep === 3 && <GenerationGoalStep key="step-3" form={form} isLoading={isSuggesting} onChange={(updates) => setForm(prev => ({ ...prev, ...updates }))} />}
+                {currentStep === 4 && <GenerationStructureStep key="step-4" structure={form.structure} onChange={(structure) => setForm(prev => ({ ...prev, structure }))} />}
+                {currentStep === 5 && <GenerationSourcesStep key="step-5" sources={form.sources} onChange={(sources) => setForm(prev => ({ ...prev, sources }))} />}
+                {currentStep === 6 && form.type && (
+                  <GenerationConfirmStep 
+                    key="step-6" 
+                    type={form.type} 
+                    workType={form.workType}
+                    taskMode={form.taskMode}
+                    input={form.input} 
+                    hasFiles={form.taskFiles.length > 0}
+                    onConfirm={handleConfirm} 
+                    onBack={handleBack} 
+                    isSubmitting={isSubmitting} 
+                  />
+                )}
+              </>
             )}
           </AnimatePresence>
 
-          {currentStep < 6 && (
+          {!transitionState && currentStep < 6 && (
             <div className="wizard-navigation" style={{ marginTop: 'var(--spacing-32)' }}>
               {currentStep > 1 && <Button variant="secondary" size="lg" onClick={handleBack} disabled={isSubmitting || isSuggesting}>Назад</Button>}
               <Button variant="primary" size="lg" onClick={handleNext} loading={isSuggesting} disabled={!canProceed() || isSubmitting || isSuggesting}>Далее</Button>
