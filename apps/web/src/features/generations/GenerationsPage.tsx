@@ -4,7 +4,7 @@
  * Updated for "juicy" landing page feel
  */
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
@@ -24,7 +24,7 @@ function GenerationsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
 
-  const handleGenerationClick = (generation: Generation) => {
+  const handleGenerationClick = useCallback((generation: Generation) => {
     if (generation.status === 'DRAFT') {
       navigate(`/?draftId=${generation.id}`)
     } else if (generation.status === 'RUNNING') {
@@ -32,16 +32,16 @@ function GenerationsPage() {
     } else {
       navigate(`/generations/${generation.id}/result`)
     }
-  }
+  }, [navigate])
 
-  const handleNewGeneration = () => {
+  const handleNewGeneration = useCallback(() => {
     navigate('/')
-  }
+  }, [navigate])
 
-  const handleDataLoaded = (hasData: boolean) => {
+  const handleDataLoaded = useCallback((hasData: boolean) => {
     setHasGenerations(hasData)
     setIsLoading(false)
-  }
+  }, [])
 
   return (
     <>

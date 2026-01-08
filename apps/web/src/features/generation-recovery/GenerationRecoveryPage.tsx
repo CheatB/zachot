@@ -36,7 +36,7 @@ function GenerationRecoveryPage() {
     try {
       // Создаем новую генерацию на основе старых данных (пересборка)
       const newGen = await createGeneration({
-        type: generation.module,
+        module: generation.module,
         work_type: generation.work_type,
         complexity_level: generation.complexity_level,
         humanity_level: generation.humanity_level,

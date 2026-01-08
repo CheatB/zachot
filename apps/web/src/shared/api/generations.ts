@@ -20,7 +20,7 @@ export interface GenerationsResponse {
 }
 
 export interface CreateGenerationData {
-  type: string;
+  module: string;
   work_type?: string | null;
   complexity_level?: string;
   humanity_level?: number;

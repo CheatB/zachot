@@ -141,11 +141,13 @@ function CreateGenerationPage() {
 
   const { title, subtitle } = getStepHeader()
 
+  const isCreatingRef = useRef(false)
+
   const saveDraft = useCallback(async (currentForm: CreateGenerationForm) => {
     if (!currentForm.type) return
 
-    const draftData = {
-      type: currentForm.type.toUpperCase(),
+    const draftData: any = {
+      module: currentForm.type.toUpperCase(),
       work_type: currentForm.workType,
       complexity_level: currentForm.complexityLevel,
       humanity_level: currentForm.humanityLevel,
@@ -168,14 +170,19 @@ function CreateGenerationPage() {
     try {
       if (activeGenerationRef.current) {
         await updateGeneration(activeGenerationRef.current, draftData)
-      } else {
-        const result = await createGeneration(draftData)
-        activeGenerationRef.current = result.id
-        // Update URL so refresh loads this draft
-        const newParams = new URLSearchParams(window.location.search)
-        newParams.set('draftId', result.id)
-        const newUrl = `${window.location.pathname}?${newParams.toString()}`
-        window.history.replaceState(null, '', newUrl)
+      } else if (!isCreatingRef.current) {
+        isCreatingRef.current = true
+        try {
+          const result = await createGeneration(draftData)
+          activeGenerationRef.current = result.id
+          // Update URL so refresh loads this draft
+          const newParams = new URLSearchParams(window.location.search)
+          newParams.set('draftId', result.id)
+          const newUrl = `${window.location.pathname}?${newParams.toString()}`
+          window.history.replaceState(null, '', newUrl)
+        } finally {
+          isCreatingRef.current = false
+        }
       }
     } catch (error) {
       console.error('Failed to save draft:', error)
