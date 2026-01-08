@@ -338,7 +338,7 @@ const sidebarStyles = `
   background-color: white;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border-base);
-  margin-bottom: var(--spacing-24); /* Увеличен отступ до ссылок */
+  margin-bottom: var(--spacing-32); /* Увеличен еще больше (было 24) */
 }
 
 .usage-info {

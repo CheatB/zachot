@@ -22,7 +22,7 @@ const typeOptions: (GenerationTypeOption & { illustration?: string; illustration
     description: 'Любой вид работы с реальными источниками, оформлением по ГОСТу и защитой от проверки на ИИ',
     icon: '',
     illustration: '/assets/illustrations/text-work.png',
-    illustrationOffsetLeft: 5 // Сдвиг влево на 5 пикселей
+    illustrationOffsetLeft: 10 // Сдвиг влево на 5+5=10 пикселей от базы
   },
   {
     type: 'presentation',
@@ -83,7 +83,7 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
           style={{
             fontSize: 'var(--font-size-sm)',
             color: 'var(--color-text-secondary)',
-            marginBottom: '78px',
+            marginBottom: '88px', /* Увеличено еще на 10px (было 78px) */
             lineHeight: 'var(--line-height-relaxed)',
             textAlign: 'left'
           }}
@@ -172,7 +172,7 @@ const stepStyles = `
 .wizard-type-card {
   position: relative;
   width: 100%;
-  min-height: 245px; /* Увеличено на 20px (было 225px) */
+  min-height: 265px; /* Увеличено еще на 20px (было 245px) */
   padding: var(--spacing-24) var(--spacing-16);
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
@@ -212,7 +212,7 @@ const stepStyles = `
 }
 
 .wizard-type-card__title {
-  font-size: calc(var(--font-size-lg) + 3px); /* Увеличено на 3 пикселя */
+  font-size: calc(var(--font-size-lg) + 6px); /* Увеличено еще на 3 пикселя (итого +6) */
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
