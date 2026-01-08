@@ -61,6 +61,7 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
         duration: motionTokens.duration.slow,
         ease: motionTokens.easing.out,
       }}
+      style={{ width: '100%' }}
     >
       <div className="wizard-step">
         <h2
@@ -71,7 +72,7 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
             marginBottom: 'var(--spacing-12)',
             color: 'var(--color-text-primary)',
             letterSpacing: '-0.02em',
-            textAlign: 'center'
+            textAlign: 'left'
           }}
         >
           С чего начнём?
@@ -81,9 +82,9 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
           style={{
             fontSize: 'var(--font-size-sm)',
             color: 'var(--color-text-secondary)',
-            marginBottom: '58px', /* Увеличено на 10px от предыдущего значения */
+            marginBottom: '68px', /* Увеличено еще на 10px (было 58px) */
             lineHeight: 'var(--line-height-relaxed)',
-            textAlign: 'center'
+            textAlign: 'left'
           }}
         >
           Выберите формат работы. На следующем шаге мы уточним тему и детали.
@@ -144,16 +145,15 @@ const stepStyles = `
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-32);
-  max-width: 1800px; /* Увеличено до 1800px для большего растяжения */
+  max-width: 1800px;
   margin: 0;
   width: 100%;
-  padding: 0 var(--spacing-8);
+  padding: 0;
 }
 
 @media (max-width: 1024px) {
   .wizard-type-grid {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    margin: 0 auto;
   }
 }
 
@@ -167,7 +167,7 @@ const stepStyles = `
 .wizard-type-card {
   position: relative;
   width: 100%;
-  min-height: 215px; /* Увеличено на 15px (было 200px) */
+  min-height: 215px;
   padding: var(--spacing-24) var(--spacing-16);
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
@@ -201,8 +201,8 @@ const stepStyles = `
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4); /* Уменьшен отступ между заголовком и подзаголовком (было 8px) */
-  max-width: 75%;
+  gap: var(--spacing-4);
+  max-width: 70%;
   height: 100%;
 }
 
@@ -212,7 +212,7 @@ const stepStyles = `
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
   margin-top: 0;
-  min-height: 2.4em; /* Уменьшено, так как заголовки теперь ближе к описанию */
+  min-height: 2.4em;
   display: flex;
   align-items: flex-start;
 }
@@ -236,7 +236,6 @@ const stepStyles = `
   z-index: 1;
 }
 
-/* Опускаем иллюстрацию во втором блоке еще на 3 пикселя (итого -26px) */
 .wizard-type-card--presentation .wizard-type-card__illustration {
   bottom: -26px;
 }

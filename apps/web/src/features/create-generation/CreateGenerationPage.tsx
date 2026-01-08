@@ -300,8 +300,8 @@ function CreateGenerationPage() {
   }, [])
 
   return (
-    <Container size="lg">
-      <Stack gap="xl" style={{ paddingTop: 'var(--spacing-32)', paddingBottom: 'var(--spacing-64)' }}>
+    <Container size="full">
+      <Stack align="start" gap="xl" style={{ paddingTop: '32px', paddingBottom: 'var(--spacing-64)', paddingLeft: 'var(--spacing-8)' }}>
         
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -311,13 +311,15 @@ function CreateGenerationPage() {
             duration: motionTokens.duration.slow,
             ease: motionTokens.easing.out,
           }}
+          style={{ width: '100%' }}
         >
           <h1 style={{ 
             marginBottom: 'var(--spacing-8)', 
             color: 'var(--color-neutral-100)', 
             fontSize: 'var(--font-size-2xl)',
             fontWeight: 'var(--font-weight-bold)',
-            letterSpacing: '-0.02em'
+            letterSpacing: '-0.02em',
+            textAlign: 'left'
           }}>
             {title}
           </h1>
@@ -326,13 +328,14 @@ function CreateGenerationPage() {
             color: 'var(--color-text-secondary)', 
             lineHeight: 'var(--line-height-relaxed)', 
             marginBottom: 'var(--spacing-40)',
-            maxWidth: '800px'
+            maxWidth: '100%',
+            textAlign: 'left'
           }}>
             {subtitle}
           </p>
         </motion.div>
 
-          <div className="wizard-progress" style={{ marginBottom: 'var(--spacing-64)' }}>
+          <div className="wizard-progress" style={{ marginBottom: 'var(--spacing-40)', width: '100%', justifyContent: 'flex-start' }}>
             {[1, 1.2, 1.3, 1.5, 1.6, 1.7, 2, 3, 4, 5, 6].map((step) => {
               const shouldShow = (s: number) => {
                 if (s === 1.5 || s === 1.7) return form.type === 'text'
@@ -370,11 +373,12 @@ function CreateGenerationPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 1.05 }}
                 transition={{ duration: 0.3 }}
+                style={{ width: '100%' }}
               >
                 <StepLoader title={transitionState.title} tasks={transitionState.tasks} />
               </motion.div>
             ) : (
-              <>
+              <div style={{ width: '100%' }}>
                 {currentStep === 1 && <GenerationTypeStep key="step-1" selectedType={form.type} onSelect={handleTypeSelect} />}
                 {currentStep === 1.2 && <TaskInputStep key="step-1-2" input={form.input} files={form.taskFiles} onInputChange={handleInputChange} onFilesChange={handleTaskFilesChange} />}
                 {currentStep === 1.3 && <TaskModeStep key="step-1-3" selectedMode={form.taskMode} onSelect={handleTaskModeSelect} />}
@@ -400,13 +404,13 @@ function CreateGenerationPage() {
                     isSubmitting={isSubmitting} 
                   />
                 )}
-              </>
+              </div>
             )}
           </AnimatePresence>
 
           {!transitionState && currentStep < 6 && (
-            <div className="wizard-navigation" style={{ marginTop: 'var(--spacing-64)' }}>
-              {currentStep > 1 && <Button variant="secondary" size="lg" onClick={handleBack} disabled={isSubmitting || isSuggesting}>Назад</Button>}
+            <div className="wizard-navigation" style={{ marginTop: 'var(--spacing-40)', width: '100%', display: 'flex', justifyContent: 'flex-start' }}>
+              {currentStep > 1 && <Button variant="secondary" size="lg" onClick={handleBack} disabled={isSubmitting || isSuggesting} style={{ marginRight: '16px' }}>Назад</Button>}
               <Button variant="primary" size="lg" onClick={handleNext} loading={isSuggesting} disabled={!canProceed() || isSubmitting || isSuggesting}>Далее</Button>
             </div>
           )}
@@ -421,7 +425,7 @@ const pageStyles = `
 .wizard-progress {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0;
   margin-bottom: var(--spacing-64);
 }
