@@ -104,12 +104,29 @@ class TextStructureWorker(BaseWorker):
             )
             
             raw_text = loop.run_until_complete(
-                openai_service.chat_completion(model=gen_model, messages=[{"role": "user", "content": generation_prompt}])
+                openai_service.chat_completion(model=gen_model, messages=[{"role": "user", "content": generation_prompt}], json_mode=generation.module.value == "PRESENTATION")
             )
             
             if not raw_text:
                 raise ValueError("Failed to generate content")
-            full_text = raw_text
+            
+            # Если это презентация, парсим JSON и сохраняем метаданные (макеты, иконки, промпты картинок)
+            if generation.module.value == "PRESENTATION":
+                try:
+                    parsed_gen = json.loads(raw_text)
+                    full_text = parsed_gen.get("content", "")
+                    # Сохраняем предложения по картинкам для апселла
+                    if parsed_gen.get("image_prompt"):
+                        generation_store.update(job.generation_id, settings_payload={
+                            **generation.settings_payload,
+                            "visual_upsell_suggestions": [
+                                {"slideId": 1, "description": parsed_gen.get("image_prompt"), "style": "AI Generated"}
+                            ]
+                        })
+                except:
+                    full_text = raw_text
+            else:
+                full_text = raw_text
             
             # 4. Очеловечивание
             logger.info(f"Step 4: Humanizing text (level: {generation.humanity_level}%)...")

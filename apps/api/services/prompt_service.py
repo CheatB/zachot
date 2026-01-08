@@ -82,6 +82,7 @@ class PromptService:
             - Выбери подходящий макет (layout) для этого слайда: "bullets" (список), "grid" (сетка 2х2), "timeline" (шаги), "big_quote" (цитата).
             - Для каждого пункта списка предложи релевантную иконку (название из библиотеки Lucide, например: "trending-up", "users", "shield").
             - Укажи визуальную тему (основной цвет и акцент).
+            - Предложи 1 детальный промпт для генерации фоновой иллюстрации или обложки, если этот слайд является ключевым.
             """
 
         prompt = f"""
@@ -98,7 +99,7 @@ class PromptService:
         
         {f"ПРЕДЫДУЩЕЕ СОДЕРЖАНИЕ: {previous_context}" if previous_context else ""}
         
-        Верни результат в формате JSON: {{"content": "...", "layout": "...", "icons": ["..."], "visual_meta": {{...}}}}
+        Верни результат в формате JSON: {{"content": "...", "layout": "...", "icons": ["..."], "visual_meta": {{...}}, "image_prompt": "..."}}
         """
         return prompt.strip()
 

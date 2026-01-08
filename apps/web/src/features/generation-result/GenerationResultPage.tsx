@@ -15,6 +15,7 @@ import ResultMeta from './ResultMeta'
 import DegradedBanner from './DegradedBanner'
 import PresentationPreview from './PresentationPreview'
 import TutorSection from './TutorSection'
+import VisualUpsellCard from './VisualUpsellCard'
 import { getGenerationById, type Generation } from '@/shared/api/generations'
 import { formatRelativeTime } from '@/utils/format'
 import { ENV } from '@/shared/config/env'
@@ -155,7 +156,17 @@ function GenerationResultPage() {
               {isDegraded && <DegradedBanner onContinue={() => {}} onNewGeneration={handleNewGeneration} />}
 
               {generation.module === 'PRESENTATION' && generation.result_content && (
-                <PresentationPreview content={generation.result_content} style={generation.input_payload.presentation_style || 'academic'} />
+                <>
+                  <PresentationPreview content={generation.result_content} style={generation.input_payload.presentation_style || 'academic'} />
+                  <VisualUpsellCard 
+                    suggestions={generation.settings_payload.visual_upsell_suggestions || [
+                      { slideId: 1, description: 'Футуристичная обложка по теме работы', style: '3D Render' },
+                      { slideId: 3, description: 'Инфографика процессов на темном фоне', style: 'Minimalist' },
+                      { slideId: 7, description: 'Абстрактный фон для выводов', style: 'Soft Gradient' },
+                    ]}
+                    onApprove={() => showToast('Функция оплаты будет добавлена в следующем обновлении', 'info')}
+                  />
+                </>
               )}
 
               {generation.module === 'TASK' && generation.input_payload.task_mode === 'step-by-step' && (
