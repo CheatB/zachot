@@ -221,12 +221,13 @@ const sidebarStyles = `
 
 @media (min-width: 1024px) {
   .app-sidebar {
-    position: sticky;
+    position: relative;
     top: 0;
     height: 100vh;
     width: 300px;
     flex-shrink: 0;
     background-color: var(--color-surface-base);
+    border-right: 1px solid var(--color-border-base);
   }
 }
 
@@ -234,11 +235,22 @@ const sidebarStyles = `
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
+}
+
+.app-sidebar__logo {
+  padding: var(--spacing-32) var(--spacing-24);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+  border-bottom: 1px solid var(--color-border-light);
+  flex-shrink: 0;
 }
 
 .app-sidebar__nav {
   padding: var(--spacing-24);
   flex: 1;
+  overflow-y: auto;
 }
 
 .app-sidebar__list {

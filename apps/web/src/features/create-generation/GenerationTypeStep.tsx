@@ -219,6 +219,7 @@ const stepStyles = `
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  mix-blend-mode: multiply; /* Убирает белый фон, если он чисто белый */
 }
 
 .wizard-type-card__check {

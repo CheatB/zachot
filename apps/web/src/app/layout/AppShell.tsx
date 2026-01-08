@@ -1,7 +1,7 @@
 /**
  * AppShell component
- * Основной shell приложения с Header, Sidebar, MobileNav
- * ❗️НЕ использует useAuth — только props
+ * Основной shell приложения с Sidebar и MobileNav
+ * Header удален, аватар теперь плавает в углу
  */
 
 import { useState, useEffect, useRef } from 'react'
@@ -10,7 +10,7 @@ import { useLocation, Link, useNavigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import MobileNav from './MobileNav'
 import Stack from '@/ui/layout/Stack'
-import { type User } from '../auth/authTypes'
+import { type User } from '../auth/useAuth'
 import { useAuth } from '../auth/useAuth'
 
 interface AppShellProps {
@@ -153,9 +153,7 @@ export default AppShell
 const appShellStyles = `
 .app-shell {
   display: flex;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
+  min-height: 100vh;
   background-color: var(--color-surface-base);
 }
 
@@ -283,21 +281,13 @@ const appShellStyles = `
   display: flex;
   flex: 1;
   width: 100%;
-  height: 100%;
-  overflow: hidden;
 }
 
 .app-shell__main {
   flex: 1;
   background-color: var(--color-surface-base);
+  height: 100vh;
   overflow-y: auto;
-  height: 100%;
-}
-
-@media (min-width: 1024px) {
-  .app-shell__main {
-    /* No margin needed if sidebar is in flex container */
-  }
 }
 
 .app-shell__content-limit {
@@ -307,7 +297,7 @@ const appShellStyles = `
 }
 
 @media (max-width: 1024px) {
-  .app-shell__container {
+  .app-shell {
     flex-direction: column;
   }
 }
