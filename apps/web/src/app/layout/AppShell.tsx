@@ -309,9 +309,8 @@ const appShellStyles = `
 }
 
 .app-shell__content-limit {
-  max-width: 1000px;
-  margin: 0 auto;
   width: 100%;
+  margin: 0;
 }
 
 @media (max-width: 1024px) {
