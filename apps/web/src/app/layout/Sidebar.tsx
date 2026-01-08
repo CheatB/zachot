@@ -352,14 +352,4 @@ const sidebarStyles = `
   color: var(--color-accent-base);
   text-decoration: underline;
 }
-
-if (typeof document !== 'undefined') {
-  const styleId = 'app-sidebar-styles'
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style')
-    style.id = styleId
-    style.textContent = sidebarStyles
-    document.head.appendChild(style)
-  }
-}
 `
