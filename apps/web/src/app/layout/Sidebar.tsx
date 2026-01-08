@@ -104,6 +104,16 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                     )
                   })}
                 </ul>
+
+                <div className="app-sidebar__referral-top">
+                  <button className="referral-block" onClick={() => navigate('/referral')}>
+                    <span className="referral-icon">🎁</span>
+                    <div className="referral-content">
+                      <span className="referral-title">Реферальная ссылка</span>
+                      <span className="referral-subtitle">Пригласи друга и получи бонус</span>
+                    </div>
+                  </button>
+                </div>
               </nav>
 
               <div className="app-sidebar__footer">
@@ -123,16 +133,6 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                       )}
                     </div>
                   )}
-
-                  <div className="app-sidebar__referral">
-                    <button className="referral-block" onClick={() => navigate('/referral')}>
-                      <span className="referral-icon">🎁</span>
-                      <div className="referral-content">
-                        <span className="referral-title">Реферальная ссылка</span>
-                        <span className="referral-subtitle">Пригласи друга и получи бонус</span>
-                      </div>
-                    </button>
-                  </div>
 
                   <div className="app-sidebar__legal">
                     <Link to="/terms" className="legal-link">Пользовательское соглашение сервиса Зачёт</Link>
@@ -205,8 +205,14 @@ const sidebarStyles = `
 .app-sidebar__list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-8);
+  gap: var(--spacing-16);
   list-style: none;
+  margin-bottom: var(--spacing-32);
+}
+
+.app-sidebar__referral-top {
+  width: 100%;
+  margin-top: var(--spacing-16);
 }
 
 .app-sidebar__item {

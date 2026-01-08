@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends, Header
 from ..schemas import UsersAdminResponse, UserRoleUpdateRequest, UserAdminResponse
 from ..database import SessionLocal, User as UserDB
 from ..services.openai_service import openai_service
+from ..services.model_router import model_router
 from .generations import get_current_user
 import json
 
@@ -55,6 +56,10 @@ async def suggest_details(request: dict, user: UserDB = Depends(get_current_user
     if not topic:
         raise HTTPException(status_code=400, detail="Topic is required")
 
+    # Используем динамический роутинг из настроек
+    model_config = model_router.get_model_for_step("suggest_details")
+    model_name = model_config["model"]
+
     prompt = f"""
     Ты — академический консультант. На основе темы "{topic}" предложи:
     1. Цель работы (1 предложение)
@@ -65,7 +70,7 @@ async def suggest_details(request: dict, user: UserDB = Depends(get_current_user
 
     try:
         raw_response = await openai_service.chat_completion(
-            model="openai/gpt-4o-mini",
+            model=model_name,
             messages=[{"role": "user", "content": prompt}],
             json_mode=True
         )

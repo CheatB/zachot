@@ -35,6 +35,13 @@ class ModelRouter:
                 "model": "openai/o1-mini",
                 "cost_priority": "medium"
             }
+
+        if step_type == "suggest_details":
+            return {
+                "provider": "openrouter",
+                "model": "openai/gpt-4o-mini",
+                "cost_priority": "low"
+            }
             
         if step_type == "draft":
             # Для высокого качества используем старшие модели
