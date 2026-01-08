@@ -86,7 +86,7 @@ function GenerationResultPage() {
   return (
     <>
       {isAuthenticated ? (
-        generation.status === 'failed' ? (
+        generation.status === 'FAILED' ? (
           <Container size="lg">
             <Stack gap="xl" style={{ paddingTop: 'var(--spacing-32)', paddingBottom: 'var(--spacing-32)' }}>
               <motion.div

@@ -56,7 +56,7 @@ function GenerationProgressPage() {
         const data = await getGenerationById(id)
         setGeneration(data)
 
-        if (data.status === 'completed') {
+        if (data.status === 'COMPLETED' || data.status === 'GENERATED' || data.status === 'EXPORTED') {
           navigate(`/generations/${id}/result`)
         }
       } catch (error) {
@@ -91,7 +91,7 @@ function GenerationProgressPage() {
         if (prev < steps.length - 1) return prev + 1
         return prev
       })
-    }, 8000)
+    } , 8000)
     return () => clearInterval(interval)
   }, [isAuthenticated, steps.length])
 
@@ -120,8 +120,8 @@ function GenerationProgressPage() {
                     {generation?.title || 'Подготовка работы...'}
                   </h1>
                   <div className="generation-progress-header__meta" style={{ display: 'flex', gap: 'var(--spacing-16)', alignItems: 'center' }}>
-                    <Badge status={generation?.status === 'failed' ? 'danger' : 'warn'}>
-                      {generation?.status === 'failed' ? 'Ошибка' : 'В процессе'}
+                    <Badge status={generation?.status === 'FAILED' ? 'danger' : 'warn'}>
+                      {generation?.status === 'FAILED' ? 'Ошибка' : 'В процессе'}
                     </Badge>
                     <span
                       className="generation-progress-header__time"

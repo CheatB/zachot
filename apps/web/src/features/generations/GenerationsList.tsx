@@ -68,8 +68,12 @@ function GenerationsList({
     g.title?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const activeGenerations = filteredGenerations.filter(g => g.status === 'running' || g.status === 'draft')
-  const historyGenerations = filteredGenerations.filter(g => g.status !== 'running' && g.status !== 'draft')
+  const activeGenerations = filteredGenerations.filter(g => 
+    g.status === 'RUNNING' || g.status === 'DRAFT' || g.status === 'WAITING_USER'
+  )
+  const historyGenerations = filteredGenerations.filter(g => 
+    g.status !== 'RUNNING' && g.status !== 'DRAFT' && g.status !== 'WAITING_USER'
+  )
 
   if (state === 'loading') {
     return (

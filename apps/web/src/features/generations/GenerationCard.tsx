@@ -18,14 +18,18 @@ interface GenerationCardProps {
 function GenerationCard({ generation, onClick }: GenerationCardProps) {
   const getStatusLabel = (status: Generation['status']): string => {
     switch (status) {
-      case 'completed':
+      case 'COMPLETED':
+      case 'GENERATED':
+      case 'EXPORTED':
         return 'Завершено'
-      case 'running':
-        return 'В процессе генерации'
-      case 'failed':
-        return 'Не удалось завершить'
-      case 'draft':
+      case 'RUNNING':
+        return 'В процессе'
+      case 'FAILED':
+        return 'Ошибка'
+      case 'DRAFT':
         return 'Черновик'
+      case 'WAITING_USER':
+        return 'Ожидает вас'
       default:
         return status
     }
@@ -33,13 +37,16 @@ function GenerationCard({ generation, onClick }: GenerationCardProps) {
 
   const getStatusBadgeStatus = (status: Generation['status']): 'neutral' | 'success' | 'warn' | 'danger' => {
     switch (status) {
-      case 'completed':
+      case 'COMPLETED':
+      case 'GENERATED':
+      case 'EXPORTED':
         return 'success'
-      case 'running':
+      case 'RUNNING':
+      case 'WAITING_USER':
         return 'warn'
-      case 'failed':
+      case 'FAILED':
         return 'danger'
-      case 'draft':
+      case 'DRAFT':
         return 'neutral'
       default:
         return 'neutral'
@@ -61,13 +68,16 @@ function GenerationCard({ generation, onClick }: GenerationCardProps) {
 
   const getActionHint = (status: Generation['status']): string => {
     switch (status) {
-      case 'completed':
+      case 'COMPLETED':
+      case 'GENERATED':
+      case 'EXPORTED':
         return 'Открыть'
-      case 'running':
+      case 'RUNNING':
         return 'В процессе…'
-      case 'failed':
-        return 'Не удалось завершить'
-      case 'draft':
+      case 'FAILED':
+        return 'Попробовать снова'
+      case 'DRAFT':
+      case 'WAITING_USER':
         return 'Продолжить'
       default:
         return ''
@@ -78,7 +88,7 @@ function GenerationCard({ generation, onClick }: GenerationCardProps) {
 
   return (
     <motion.button
-      className={clsx('generation-card', `generation-card--${generation.status}`)}
+      className={clsx('generation-card', `generation-card--${generation.status.toLowerCase()}`)}
       onClick={onClick}
       whileHover={
         !shouldReduceMotion

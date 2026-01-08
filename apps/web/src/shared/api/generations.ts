@@ -3,7 +3,7 @@ import { apiFetch } from './http';
 export interface Generation {
   id: string;
   title: string;
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'draft';
+  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'DRAFT' | 'GENERATED' | 'EXPORTED' | 'CANCELED' | 'WAITING_USER';
   module: 'TEXT' | 'PRESENTATION' | 'TASK';
   work_type?: string | null;
   complexity_level?: string;

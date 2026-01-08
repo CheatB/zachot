@@ -4,7 +4,7 @@
  * Updated for "juicy" landing page feel
  */
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
@@ -12,46 +12,22 @@ import { useAuth } from '@/app/auth/useAuth'
 import { Container, Stack, Button, EmptyState, Input } from '@/ui'
 import GenerationsList from './GenerationsList'
 import FirstTimeEmptyState from './FirstTimeEmptyState'
-import EmptyAfterUsageState from './EmptyAfterUsageState'
 import { type Generation } from '@/shared/api/generations'
-
-const FIRST_TIME_KEY = 'zachot_first_time'
-const HAS_GENERATIONS_KEY = 'zachot_has_generations'
 
 function GenerationsPage() {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const shouldReduceMotion = false
   
-  const [isFirstTime, setIsFirstTime] = useState(false)
-  const [showEmptyAfterUsage, setShowEmptyAfterUsage] = useState(false)
-  const [hasGenerations, setHasGenerations] = useState(true)
+  // Состояния для управления пустыми экранами
+  const [hasGenerations, setHasGenerations] = useState<boolean | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
 
-  useEffect(() => {
-    if (!isAuthenticated) return
-
-    const firstTimeFlag = sessionStorage.getItem(FIRST_TIME_KEY)
-    const hasGenerationsFlag = sessionStorage.getItem(HAS_GENERATIONS_KEY)
-
-    if (firstTimeFlag === null) {
-      setIsFirstTime(true)
-      sessionStorage.setItem(FIRST_TIME_KEY, 'true')
-    }
-
-    if (hasGenerationsFlag === 'true') {
-      setShowEmptyAfterUsage(true)
-    }
-
-    setIsLoading(false)
-  }, [isAuthenticated])
-
   const handleGenerationClick = (generation: Generation) => {
-    if (generation.status === 'draft') {
-      // Перенаправляем в визард для продолжения черновика
+    if (generation.status === 'DRAFT') {
       navigate(`/?draftId=${generation.id}`)
-    } else if (generation.status === 'running') {
+    } else if (generation.status === 'RUNNING') {
       navigate(`/generations/${generation.id}`)
     } else {
       navigate(`/generations/${generation.id}/result`)
@@ -62,15 +38,9 @@ function GenerationsPage() {
     navigate('/')
   }
 
-  const handleCreateFirst = () => {
-    sessionStorage.setItem(FIRST_TIME_KEY, 'false')
-    sessionStorage.setItem(HAS_GENERATIONS_KEY, 'true')
-    setIsFirstTime(false)
-    navigate('/')
-  }
-
-  const handleEmptyAfterUsage = () => {
-    setHasGenerations(false)
+  const handleDataLoaded = (hasData: boolean) => {
+    setHasGenerations(hasData)
+    setIsLoading(false)
   }
 
   return (
@@ -78,22 +48,14 @@ function GenerationsPage() {
       {isAuthenticated ? (
         isLoading ? (
           <Container size="lg">
-            <Stack gap="xl">
-              <div>
-                <h1 style={{ color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>Загрузка...</h1>
-              </div>
+            <Stack gap="xl" style={{ paddingTop: 'var(--spacing-32)' }}>
+              <h1 style={{ color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>Загрузка...</h1>
             </Stack>
           </Container>
-        ) : isFirstTime && !hasGenerations ? (
+        ) : hasGenerations === false ? (
           <Container size="lg">
             <Stack gap="xl" style={{ paddingTop: 'var(--spacing-48)', paddingBottom: 'var(--spacing-48)' }}>
-              <FirstTimeEmptyState onCreateFirst={handleCreateFirst} />
-            </Stack>
-          </Container>
-        ) : showEmptyAfterUsage && !hasGenerations ? (
-          <Container size="lg">
-            <Stack gap="xl" style={{ paddingTop: 'var(--spacing-48)', paddingBottom: 'var(--spacing-48)' }}>
-              <EmptyAfterUsageState onCreateNew={handleNewGeneration} />
+              <FirstTimeEmptyState onCreateFirst={handleNewGeneration} />
             </Stack>
           </Container>
         ) : (
@@ -142,19 +104,19 @@ function GenerationsPage() {
 
               <GenerationsList
                 onGenerationClick={handleGenerationClick}
-                isFirstTime={isFirstTime}
-                onEmptyAfterUsage={handleEmptyAfterUsage}
-                onHasGenerations={(has) => setHasGenerations(has)}
+                onHasGenerations={handleDataLoaded}
                 searchQuery={searchQuery}
               />
             </Stack>
           </Container>
         )
       ) : (
-        <EmptyState
-          title="Войдите через лэндинг"
-          description="Для доступа к генерациям необходимо войти"
-        />
+        <div style={{ padding: 'var(--spacing-48)' }}>
+          <EmptyState
+            title="Войдите через лэндинг"
+            description="Для доступа к генерациям необходимо войти"
+          />
+        </div>
       )}
     </>
   )

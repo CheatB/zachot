@@ -4,7 +4,7 @@
  * Updated for "juicy" landing page aesthetic
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Container, Stack, Button } from '@/ui'
@@ -34,7 +34,10 @@ function CreateGenerationPage() {
   const [currentStep, setCurrentStep] = useState<WizardStep>(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuggesting, setIsSuggesting] = useState(false)
-  const [activeGenerationId, setActiveGenerationId] = useState<string | null>(null)
+  
+  // Use ref for activeGenerationId to avoid stale closures in debounced effects
+  const activeGenerationRef = useRef<string | null>(null)
+  
   const [transitionState, setTransitionState] = useState<{ title: string; tasks: StepLoaderTask[] } | null>(null)
   const [form, setForm] = useState<CreateGenerationForm>({
     type: null,
@@ -58,15 +61,15 @@ function CreateGenerationPage() {
     const params = new URLSearchParams(location.search)
     const draftId = params.get('draftId')
     
-    if (draftId && !activeGenerationId) {
+    if (draftId && !activeGenerationRef.current) {
       getGenerationById(draftId).then((gen) => {
-        setActiveGenerationId(gen.id)
+        activeGenerationRef.current = gen.id
         setForm({
           type: gen.module.toLowerCase() as GenerationType,
           workType: (gen.work_type as WorkType) || null,
           presentationStyle: (gen.input_payload.presentation_style as PresentationStyle) || null,
           taskMode: (gen.input_payload.task_mode as TaskMode) || null,
-          taskFiles: [], // Files cannot be easily restored from API yet
+          taskFiles: [], 
           complexityLevel: (gen.complexity_level as any) || 'student',
           humanityLevel: gen.humanity_level || 50,
           input: gen.input_payload.topic || gen.input_payload.input || '',
@@ -79,7 +82,7 @@ function CreateGenerationPage() {
         })
       }).catch(console.error)
     }
-  }, [location.search, activeGenerationId])
+  }, [location.search])
 
   const getStepHeader = (): { title: string; subtitle: string } => {
     if (currentStep === 1) {
@@ -163,31 +166,32 @@ function CreateGenerationPage() {
     }
 
     try {
-      if (activeGenerationId) {
-        await updateGeneration(activeGenerationId, draftData)
+      if (activeGenerationRef.current) {
+        await updateGeneration(activeGenerationRef.current, draftData)
       } else {
         const result = await createGeneration(draftData)
-        setActiveGenerationId(result.id)
-        // Обновляем URL, чтобы при перезагрузке черновик подтянулся
-        const newParams = new URLSearchParams(location.search)
+        activeGenerationRef.current = result.id
+        // Update URL so refresh loads this draft
+        const newParams = new URLSearchParams(window.location.search)
         newParams.set('draftId', result.id)
-        navigate(`?${newParams.toString()}`, { replace: true })
+        const newUrl = `${window.location.pathname}?${newParams.toString()}`
+        window.history.replaceState(null, '', newUrl)
       }
     } catch (error) {
       console.error('Failed to save draft:', error)
     }
-  }, [activeGenerationId, location.search, navigate])
+  }, [])
 
-  // Debounced save for input changes
+  // Debounced save for any form changes
   useEffect(() => {
-    if (!form.type || !activeGenerationId) return
+    if (!form.type) return
 
     const timer = setTimeout(() => {
       saveDraft(form)
     }, 2000)
 
     return () => clearTimeout(timer)
-  }, [form.input, form.goal, form.idea, form.volume, activeGenerationId, saveDraft])
+  }, [form, saveDraft])
 
   const handleTypeSelect = (type: GenerationType) => {
     setForm((prev) => {
@@ -328,14 +332,14 @@ function CreateGenerationPage() {
   }
 
   const handleConfirm = async () => {
-    if (!form.type || !activeGenerationId) return
+    if (!form.type || !activeGenerationRef.current) return
     
     setIsSubmitting(true)
     try {
       await saveDraft(form)
-      await executeAction(activeGenerationId, 'next')
-      await createJob(activeGenerationId)
-      navigate(`/generations/${activeGenerationId}`)
+      await executeAction(activeGenerationRef.current, 'next')
+      await createJob(activeGenerationRef.current)
+      navigate(`/generations/${activeGenerationRef.current}`)
     } catch (error) {
       console.error('Failed to create generation:', error)
       setIsSubmitting(false)
@@ -382,11 +386,11 @@ function CreateGenerationPage() {
           style={{ width: '100%' }}
         >
           <h1 style={{ 
-            marginBottom: 'var(--spacing-16)', 
+            marginBottom: 'var(--spacing-8)', 
             color: 'var(--color-neutral-100)', 
-            fontSize: 'var(--font-size-3xl)',
+            fontSize: 'var(--font-size-2xl)',
             fontWeight: 'var(--font-weight-bold)',
-            letterSpacing: '-0.035em',
+            letterSpacing: '-0.02em',
             textAlign: 'left'
           }}>
             {title}
@@ -415,7 +419,7 @@ function CreateGenerationPage() {
               if (!shouldShow(step)) return null
               
               const isActive = step === currentStep
-              const isCompleted = step < currentStep || (step === 1 && currentStep > 1) || (step === 1.2 && currentStep > 1.2) || (step === 1.3 && currentStep > 1.3) || (step === 1.5 && currentStep > 1.5) || (step === 1.6 && currentStep > 1.6) || (step === 1.7 && currentStep > 1.7) || (step === 3 && currentStep > 3) || (step === 4 && currentStep > 4) || (step === 5 && currentStep > 5)
+              const isCompleted = step < currentStep || (step === 1 && currentStep > 1) || (step === 1.2 && currentStep > 1.2) || (step === 1.3 && currentStep > 1.3) || (step === 1.5 && currentStep > 1.5) || (step === 1.6 && currentStep > 1.6) || (step === 1.7 && currentStep > 1.7) || (step === 2 && currentStep > 2) || (step === 3 && currentStep > 3) || (step === 4 && currentStep > 4) || (step === 5 && currentStep > 5)
 
               return (
                 <div key={step} className="wizard-progress__item">
