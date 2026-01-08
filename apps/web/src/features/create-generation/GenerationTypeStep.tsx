@@ -34,7 +34,6 @@ const typeOptions: (GenerationTypeOption & { illustration?: string })[] = [
     title: 'Решить задачу',
     description: 'Разберись, как решать задачки по вышке, химии или экономике. Больше 100+ предметов',
     icon: '',
-    illustration: '/assets/illustrations/tasks.png'
   },
 ]
 
@@ -147,12 +146,12 @@ const stepStyles = `
 .wizard-type-card {
   position: relative;
   width: 100%;
-  min-height: 300px;
+  min-height: 320px;
   padding: var(--spacing-24);
-  background-color: #ebf0f5; /* Точный цвет фона под иллюстрации */
+  background: var(--color-surface-base);
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
-  text-align: center;
+  text-align: left;
   cursor: pointer;
   transition: all var(--motion-duration-base) var(--motion-easing-out);
   box-shadow: var(--elevation-1);
@@ -165,11 +164,12 @@ const stepStyles = `
   box-shadow: var(--elevation-3);
   border-color: var(--color-accent-base);
   transform: translateY(-4px);
+  background: linear-gradient(135deg, var(--color-surface-base) 0%, var(--color-neutral-10) 100%);
 }
 
 .wizard-type-card--selected {
   border-color: var(--color-accent-base);
-  background-color: #e8f5e9;
+  background: linear-gradient(135deg, var(--color-accent-light) 0%, var(--color-surface-base) 100%);
   box-shadow: 0 10px 30px rgba(22, 163, 74, 0.1);
 }
 
@@ -178,42 +178,47 @@ const stepStyles = `
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-8);
+  gap: var(--spacing-12);
+  max-width: 80%;
 }
 
 .wizard-type-card__title {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
 }
 
 .wizard-type-card__description {
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-  line-height: 1.3;
-  max-width: 90%;
-  margin: 0 auto;
+  line-height: 1.4;
 }
 
 .wizard-type-card__illustration {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 60%;
-  height: 140px;
+  bottom: -20px;
+  right: -20px;
+  width: 200px;
+  height: 200px;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
   pointer-events: none;
   z-index: 1;
+  opacity: 0.9;
+  transition: transform 0.3s ease;
+}
+
+.wizard-type-card:hover .wizard-type-card__illustration {
+  transform: scale(1.05) translate(-5px, -5px);
+  opacity: 1;
 }
 
 .wizard-type-card__illustration img {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  transform: translate(10%, 10%); /* Смещение в угол */
 }
 
 .wizard-type-card__check {

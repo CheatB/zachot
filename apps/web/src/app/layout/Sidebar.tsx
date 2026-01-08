@@ -76,6 +76,44 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
             }}
           >
             <div className="app-sidebar__content">
+              <div 
+                className="app-sidebar__logo" 
+                onClick={() => navigate('/')}
+                style={{ 
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--spacing-12)',
+                  padding: 'var(--spacing-32) var(--spacing-24) var(--spacing-16)'
+                }}
+              >
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  backgroundColor: 'var(--color-neutral-100)',
+                  borderRadius: 'var(--radius-sm)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--color-neutral-0)',
+                  flexShrink: 0
+                }}>
+                  <svg width="18" height="14" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 7.5L6 12.5L17 1.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div 
+                  style={{ 
+                    fontSize: 'var(--font-size-2xl)',
+                    fontWeight: 'var(--font-weight-bold)',
+                    letterSpacing: '-0.02em',
+                    color: 'var(--color-neutral-100)'
+                  }}
+                >
+                  Зачёт
+                </div>
+              </div>
+
               <nav className="app-sidebar__nav" aria-label="Основная навигация">
                 <ul className="app-sidebar__list">
                   {navItems.map((item) => {
