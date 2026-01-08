@@ -81,7 +81,7 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
           style={{
             fontSize: 'var(--font-size-sm)',
             color: 'var(--color-text-secondary)',
-            marginBottom: 'var(--spacing-40)',
+            marginBottom: '58px', /* Увеличено на 10px от предыдущего значения */
             lineHeight: 'var(--line-height-relaxed)',
             textAlign: 'center'
           }}
@@ -144,9 +144,10 @@ const stepStyles = `
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-32);
-  max-width: 1600px; /* Увеличено на 30% от 1320px (~1700px), ограничено 1600px для баланса */
-  margin: 0; /* Прижимаем к левому краю контейнера */
+  max-width: 1720px; /* Увеличено ровно на 30% от базовых 1320px */
+  margin: 0;
   width: 100%;
+  padding: 0 var(--spacing-8);
 }
 
 @media (max-width: 1024px) {
@@ -167,7 +168,7 @@ const stepStyles = `
   position: relative;
   width: 100%;
   min-height: 200px;
-  padding: var(--spacing-24) var(--spacing-16);
+  padding: var(--spacing-24) var(--spacing-8);
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
@@ -235,8 +236,9 @@ const stepStyles = `
   z-index: 1;
 }
 
+/* Опускаем иллюстрацию во втором блоке еще на 3 пикселя (итого -26px) */
 .wizard-type-card--presentation .wizard-type-card__illustration {
-  bottom: -23px;
+  bottom: -26px;
 }
 
 .wizard-type-card__illustration img {
