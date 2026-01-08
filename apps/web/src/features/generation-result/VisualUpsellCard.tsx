@@ -99,3 +99,4 @@ const VisualUpsellCard: React.FC<VisualUpsellCardProps> = ({ suggestions, onAppr
 
 export default VisualUpsellCard;
 
+

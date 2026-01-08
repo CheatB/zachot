@@ -168,11 +168,26 @@ function CreateGenerationPage() {
       } else {
         const result = await createGeneration(draftData)
         setActiveGenerationId(result.id)
+        // Обновляем URL, чтобы при перезагрузке черновик подтянулся
+        const newParams = new URLSearchParams(location.search)
+        newParams.set('draftId', result.id)
+        navigate(`?${newParams.toString()}`, { replace: true })
       }
     } catch (error) {
       console.error('Failed to save draft:', error)
     }
-  }, [activeGenerationId])
+  }, [activeGenerationId, location.search, navigate])
+
+  // Debounced save for input changes
+  useEffect(() => {
+    if (!form.type || !activeGenerationId) return
+
+    const timer = setTimeout(() => {
+      saveDraft(form)
+    }, 2000)
+
+    return () => clearTimeout(timer)
+  }, [form.input, form.goal, form.idea, form.volume, activeGenerationId, saveDraft])
 
   const handleTypeSelect = (type: GenerationType) => {
     setForm((prev) => {

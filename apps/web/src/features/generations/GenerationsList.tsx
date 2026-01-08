@@ -68,8 +68,8 @@ function GenerationsList({
     g.title?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const activeGenerations = filteredGenerations.filter(g => g.status === 'running')
-  const historyGenerations = filteredGenerations.filter(g => g.status !== 'running')
+  const activeGenerations = filteredGenerations.filter(g => g.status === 'running' || g.status === 'draft')
+  const historyGenerations = filteredGenerations.filter(g => g.status !== 'running' && g.status !== 'draft')
 
   if (state === 'loading') {
     return (
@@ -99,7 +99,7 @@ function GenerationsList({
       {activeGenerations.length > 0 && (
         <Stack gap="md">
           <h2 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-secondary)' }}>
-            В процессе
+            В работе
           </h2>
           <Stack gap="md">
             {activeGenerations.map((generation, index) => (
