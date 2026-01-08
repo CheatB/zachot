@@ -84,76 +84,78 @@ function AppShell({ isAuthenticated, user, children }: AppShellProps) {
   }
 
   return (
-    <div className="app-shell">
-      {/* Floating User Avatar - Top Right "in the air" */}
-      <div className="app-shell__floating-user" ref={menuRef}>
-        {!isDesktop && (
-          <button
-            className="app-shell__menu-toggle"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label="Открыть меню"
-          >
-            ☰
-          </button>
-        )}
-        
-        {user ? (
-          <div className="user-dropdown-wrapper">
-            <button 
-              className="user-avatar-btn" 
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label="Открыть меню пользователя"
-              aria-expanded={isMenuOpen}
+    <div className="app-shell-wrapper">
+      <div className="app-shell">
+        {/* Floating User Avatar - Top Right "in the air" */}
+        <div className="app-shell__floating-user" ref={menuRef}>
+          {!isDesktop && (
+            <button
+              className="app-shell__menu-toggle"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Открыть меню"
             >
-              {getInitials(user.id)}
+              ☰
             </button>
+          )}
+          
+          {user ? (
+            <div className="user-dropdown-wrapper">
+              <button 
+                className="user-avatar-btn" 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                aria-label="Открыть меню пользователя"
+                aria-expanded={isMenuOpen}
+              >
+                {getInitials(user.id)}
+              </button>
 
-            {isMenuOpen && (
-              <div className="user-dropdown-menu">
-                <div className="user-dropdown-header">
-                  <span className="user-dropdown-id">ID: {user.id.substring(0, 8)}...</span>
-                </div>
-                <nav className="user-dropdown-nav">
-                  <Link to="/account" className="user-dropdown-item" onClick={() => setIsMenuOpen(false)}>
-                    👤 Аккаунт
-                  </Link>
-                  <Link to="/profile" className="user-dropdown-item" onClick={() => setIsMenuOpen(false)}>
-                    ⚙️ Профиль
-                  </Link>
-                  {user.role === 'admin' && (
-                    <Link to="/admin" className="user-dropdown-item" onClick={() => setIsMenuOpen(false)}>
-                      🛡️ Админ-панель
+              {isMenuOpen && (
+                <div className="user-dropdown-menu">
+                  <div className="user-dropdown-header">
+                    <span className="user-dropdown-id">ID: {user.id.substring(0, 8)}...</span>
+                  </div>
+                  <nav className="user-dropdown-nav">
+                    <Link to="/account" className="user-dropdown-item" onClick={() => setIsMenuOpen(false)}>
+                      👤 Аккаунт
                     </Link>
-                  )}
-                  <div className="user-dropdown-divider" />
-                  <button className="user-dropdown-item user-dropdown-item--danger" onClick={handleLogout}>
-                    🚪 Выйти
-                  </button>
-                </nav>
-              </div>
-            )}
-          </div>
-        ) : null}
+                    <Link to="/profile" className="user-dropdown-item" onClick={() => setIsMenuOpen(false)}>
+                      ⚙️ Профиль
+                    </Link>
+                    {user.role === 'admin' && (
+                      <Link to="/admin" className="user-dropdown-item" onClick={() => setIsMenuOpen(false)}>
+                        🛡️ Админ-панель
+                      </Link>
+                    )}
+                    <div className="user-dropdown-divider" />
+                    <button className="user-dropdown-item user-dropdown-item--danger" onClick={handleLogout}>
+                      🚪 Выйти
+                    </button>
+                  </nav>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="app-shell__container">
+          <Sidebar
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            isAuthenticated={isAuthenticated}
+            currentPath={currentPath}
+          />
+
+          <main className="app-shell__main">
+            <div className="app-shell__content-limit">
+              <Stack gap="lg" style={{ padding: 'var(--spacing-32)' }}>
+                {children}
+              </Stack>
+            </div>
+          </main>
+        </div>
+
+        {!isDesktop && <MobileNav isAuthenticated={isAuthenticated} currentPath={currentPath} />}
       </div>
-
-      <div className="app-shell__container">
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          isAuthenticated={isAuthenticated}
-          currentPath={currentPath}
-        />
-
-        <main className="app-shell__main">
-          <div className="app-shell__content-limit">
-            <Stack gap="lg" style={{ padding: 'var(--spacing-32)' }}>
-              {children}
-            </Stack>
-          </div>
-        </main>
-      </div>
-
-      {!isDesktop && <MobileNav isAuthenticated={isAuthenticated} currentPath={currentPath} />}
     </div>
   )
 }
@@ -164,14 +166,25 @@ export default AppShell
 // Styles
 // --------------------
 const appShellStyles = `
+.app-shell-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--color-surface-base);
+  display: flex;
+  justify-content: center;
+}
+
 .app-shell {
   display: flex;
+  width: 100%;
+  max-width: 1600px; /* Ограничение ширины всего приложения */
   min-height: 100vh;
+  position: relative;
   background-color: var(--color-surface-base);
 }
 
 .app-shell__floating-user {
-  position: fixed;
+  position: absolute; /* Теперь привязан к app-shell, а не к окну */
   top: var(--spacing-16);
   right: var(--spacing-24);
   z-index: 1000;

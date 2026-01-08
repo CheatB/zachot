@@ -409,7 +409,7 @@ function CreateGenerationPage() {
           </AnimatePresence>
 
           {!transitionState && currentStep < 6 && (
-            <div className="wizard-navigation" style={{ marginTop: 'var(--spacing-40)', width: '100%', display: 'flex', justifyContent: 'flex-start' }}>
+            <div className="wizard-navigation" style={{ marginTop: 'var(--spacing-40)', width: '100%', display: 'flex', justifyContent: 'flex-end', maxWidth: '1800px' }}>
               {currentStep > 1 && <Button variant="secondary" size="lg" onClick={handleBack} disabled={isSubmitting || isSuggesting} style={{ marginRight: '16px' }}>Назад</Button>}
               <Button variant="primary" size="lg" onClick={handleNext} loading={isSuggesting} disabled={!canProceed() || isSubmitting || isSuggesting}>Далее</Button>
             </div>
@@ -474,7 +474,6 @@ const pageStyles = `
 .wizard-navigation {
   display: flex;
   gap: var(--spacing-16);
-  justify-content: flex-end;
 }
 
 @media (max-width: 768px) {

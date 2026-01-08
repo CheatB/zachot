@@ -232,7 +232,7 @@ const sidebarStyles = `
 
 @media (min-width: 1024px) {
   .app-sidebar {
-    position: fixed;
+    position: absolute; /* Теперь привязан к контейнеру app-shell */
     top: 0;
     left: 0;
     height: 100vh;

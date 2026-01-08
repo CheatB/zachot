@@ -82,7 +82,7 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
           style={{
             fontSize: 'var(--font-size-sm)',
             color: 'var(--color-text-secondary)',
-            marginBottom: '78px', /* Увеличено еще на 10px (было 68px) */
+            marginBottom: '78px',
             lineHeight: 'var(--line-height-relaxed)',
             textAlign: 'left'
           }}
@@ -167,7 +167,7 @@ const stepStyles = `
 .wizard-type-card {
   position: relative;
   width: 100%;
-  min-height: 215px;
+  min-height: 225px; /* Увеличено на 10px (было 215px) */
   padding: var(--spacing-24) var(--spacing-16);
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
