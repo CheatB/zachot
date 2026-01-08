@@ -27,7 +27,7 @@ function GenerationGoalStep({ form, onChange, isLoading }: GenerationGoalStepPro
       }}
     >
       <div className="wizard-step">
-        <Stack gap="2xl" style={{ position: 'relative' }}>
+        <Stack gap="xl" style={{ position: 'relative' }}>
           {isLoading && (
             <div style={{
               position: 'absolute',
@@ -46,14 +46,15 @@ function GenerationGoalStep({ form, onChange, isLoading }: GenerationGoalStepPro
             </div>
           )}
 
-          <Stack gap="xl">
+          {/* Увеличен отступ между блоками на 5 пикселей через custom gap */}
+          <Stack gap="xl" style={{ gap: '37px' }}> 
             <div className="form-field-group">
               <label style={{ 
                 display: 'block', 
                 fontSize: 'var(--font-size-base)', 
                 color: 'var(--color-text-secondary)',
                 lineHeight: 'var(--line-height-relaxed)',
-                marginBottom: 'var(--spacing-8)'
+                marginBottom: 'var(--spacing-12)'
               }}>
                 Цель работы — поможет системе лучше структурировать материал
               </label>
@@ -71,7 +72,7 @@ function GenerationGoalStep({ form, onChange, isLoading }: GenerationGoalStepPro
                 fontSize: 'var(--font-size-base)', 
                 color: 'var(--color-text-secondary)',
                 lineHeight: 'var(--line-height-relaxed)',
-                marginBottom: 'var(--spacing-8)'
+                marginBottom: 'var(--spacing-12)'
               }}>
                 Основная идея — это фундамент вашей будущей работы
               </label>
@@ -85,36 +86,36 @@ function GenerationGoalStep({ form, onChange, isLoading }: GenerationGoalStepPro
             </div>
           </Stack>
 
-          <div style={{ marginTop: 'var(--spacing-16)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-12)', marginBottom: 'var(--spacing-16)' }}>
+          <div style={{ marginTop: 'var(--spacing-24)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-12)', marginBottom: 'var(--spacing-20)' }}>
               <label
                 style={{
                   display: 'block',
-                  fontSize: 'var(--font-size-sm)',
-                  fontWeight: 'var(--font-weight-bold)',
-                  color: 'var(--color-text-primary)',
+                  fontSize: 'var(--font-size-base)', /* Унифицирован шрифт (было sm) */
+                  fontWeight: 'var(--font-weight-semibold)',
+                  color: 'var(--color-text-secondary)',
                 }}
               >
                 📊 Примерный объём работы
               </label>
               <Tooltip content={
-                <div style={{ padding: '8px' }}>
-                  <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Распределение страниц:</div>
+                <div style={{ padding: '8px', width: '240px' }}>
+                  <div style={{ fontWeight: 'bold', marginBottom: '8px', color: 'white' }}>Распределение страниц:</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+                    <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', gap: '16px', color: 'rgba(255,255,255,0.9)' }}>
                       <span>Титульный лист и Содержание:</span>
                       <span style={{ fontWeight: 'bold' }}>2 стр.</span>
                     </div>
-                    <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+                    <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', gap: '16px', color: 'rgba(255,255,255,0.9)' }}>
                       <span>Основной текст (главы):</span>
                       <span style={{ fontWeight: 'bold' }}>{Math.max(1, form.volume - 3)} стр.</span>
                     </div>
-                    <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+                    <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', gap: '16px', color: 'rgba(255,255,255,0.9)' }}>
                       <span>Список источников:</span>
                       <span style={{ fontWeight: 'bold' }}>1 стр.</span>
                     </div>
                   </div>
-                  <div style={{ marginTop: '12px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.2)', fontSize: '11px', fontStyle: 'italic', opacity: 0.9 }}>
+                  <div style={{ marginTop: '12px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.2)', fontSize: '11px', fontStyle: 'italic', opacity: 0.8, color: 'rgba(255,255,255,0.7)' }}>
                     * Стандарт ГОСТ: Шрифт 14 пт, интервал 1.5
                   </div>
                 </div>
@@ -127,7 +128,7 @@ function GenerationGoalStep({ form, onChange, isLoading }: GenerationGoalStepPro
                   textDecoration: 'underline',
                   textDecorationStyle: 'dotted',
                   backgroundColor: 'var(--color-neutral-10)',
-                  padding: '4px 8px',
+                  padding: '4px 10px',
                   borderRadius: 'var(--radius-sm)'
                 }}>
                   Из чего складывается объём?

@@ -396,7 +396,7 @@ function CreateGenerationPage() {
             {title}
           </h1>
           <p style={{ 
-            fontSize: 'var(--font-size-sm)', 
+            fontSize: 'var(--font-size-base)', 
             color: 'var(--color-text-secondary)', 
             lineHeight: 'var(--line-height-relaxed)', 
             marginBottom: 'var(--spacing-40)',
