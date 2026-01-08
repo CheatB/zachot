@@ -81,7 +81,7 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
           style={{
             fontSize: 'var(--font-size-sm)',
             color: 'var(--color-text-secondary)',
-            marginBottom: 'var(--spacing-48)',
+            marginBottom: 'var(--spacing-40)',
             lineHeight: 'var(--line-height-relaxed)',
             textAlign: 'center'
           }}
@@ -143,15 +143,16 @@ const stepStyles = `
 .wizard-type-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-24);
-  max-width: 1320px; /* Растянуто на 20% от базы 1100px */
-  margin: 0 auto;
-  padding: 0 var(--spacing-8); /* Уменьшено расстояние от боковых краев контейнера */
+  gap: var(--spacing-32);
+  max-width: 1600px; /* Увеличено на 30% от 1320px (~1700px), ограничено 1600px для баланса */
+  margin: 0; /* Прижимаем к левому краю контейнера */
+  width: 100%;
 }
 
 @media (max-width: 1024px) {
   .wizard-type-grid {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    margin: 0 auto;
   }
 }
 
@@ -166,7 +167,7 @@ const stepStyles = `
   position: relative;
   width: 100%;
   min-height: 200px;
-  padding: var(--spacing-24) var(--spacing-8); /* Боковые отступы внутри уменьшены вдвое */
+  padding: var(--spacing-24) var(--spacing-16);
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
@@ -200,7 +201,7 @@ const stepStyles = `
   display: flex;
   flex-direction: column;
   gap: var(--spacing-8);
-  max-width: 70%;
+  max-width: 75%;
   height: 100%;
 }
 
@@ -210,7 +211,7 @@ const stepStyles = `
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
   margin-top: 0;
-  min-height: 3.2em; /* Выравнивание заголовков на одном уровне */
+  min-height: 3.2em;
   display: flex;
   align-items: flex-start;
 }
@@ -225,8 +226,8 @@ const stepStyles = `
   position: absolute;
   bottom: -15px;
   right: -15px;
-  width: 150px;
-  height: 150px;
+  width: 160px;
+  height: 160px;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
@@ -234,7 +235,6 @@ const stepStyles = `
   z-index: 1;
 }
 
-/* Опускаем иллюстрацию во втором блоке на 5+3 = 8 пикселей суммарно */
 .wizard-type-card--presentation .wizard-type-card__illustration {
   bottom: -23px;
 }
