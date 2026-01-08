@@ -15,18 +15,20 @@ interface GenerationTypeStepProps {
   onSelect: (type: GenerationType) => void
 }
 
-const typeOptions: GenerationTypeOption[] = [
+const typeOptions: (GenerationTypeOption & { illustration?: string })[] = [
   {
     type: 'text',
     title: 'Создать текстовую работу',
     description: 'Любой вид работы с реальными источниками, оформлением по ГОСТу и защитой от проверки на ИИ',
     icon: '',
+    illustration: '/assets/illustrations/text-work.png'
   },
   {
     type: 'presentation',
     title: 'Подготовить презентацию',
     description: 'презентация по заданной теме в разных стилях оформления',
     icon: '',
+    illustration: '/assets/illustrations/presentation.png'
   },
   {
     type: 'task',
@@ -109,6 +111,12 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
                   <p className="wizard-type-card__description">{option.description}</p>
                 </div>
 
+                {option.illustration && (
+                  <div className="wizard-type-card__illustration">
+                    <img src={option.illustration} alt="" />
+                  </div>
+                )}
+
                 {isSelected && (
                   <div className="wizard-type-card__check">✓</div>
                 )}
@@ -152,18 +160,17 @@ const stepStyles = `
 .wizard-type-card {
   position: relative;
   width: 100%;
-  min-height: 180px;
-  padding: var(--spacing-20) var(--spacing-16);
+  min-height: 200px;
+  padding: var(--spacing-24);
   background: var(--color-surface-base);
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
-  text-align: center;
+  text-align: left;
   cursor: pointer;
   transition: all var(--motion-duration-base) var(--motion-easing-out);
   box-shadow: var(--elevation-1);
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   overflow: hidden;
 }
 
@@ -186,7 +193,7 @@ const stepStyles = `
   display: flex;
   flex-direction: column;
   gap: var(--spacing-8);
-  width: 100%;
+  max-width: 75%; /* Ограничиваем ширину текста, чтобы не налезал на картинку */
 }
 
 .wizard-type-card__title {
@@ -200,7 +207,26 @@ const stepStyles = `
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   line-height: 1.3;
-  padding: 0 var(--spacing-4);
+}
+
+.wizard-type-card__illustration {
+  position: absolute;
+  bottom: -15px;
+  right: -15px;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.9;
+}
+
+.wizard-type-card__illustration img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .wizard-type-card__check {
