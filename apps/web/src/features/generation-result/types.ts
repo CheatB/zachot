@@ -3,7 +3,7 @@
  * Типы для экрана результата генерации
  */
 
-export type GenerationResultStatus = 'completed' | 'failed'
+export type GenerationResultStatus = 'COMPLETED' | 'FAILED'
 
 export interface GenerationResult {
   id: string

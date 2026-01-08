@@ -25,9 +25,10 @@ function GenerationsPage() {
   const [searchQuery, setSearchQuery] = useState('')
 
   const handleGenerationClick = useCallback((generation: Generation) => {
-    if (generation.status === 'DRAFT') {
+    const status = (generation.status as string).toUpperCase()
+    if (status === 'DRAFT') {
       navigate(`/?draftId=${generation.id}`)
-    } else if (generation.status === 'RUNNING') {
+    } else if (status === 'RUNNING') {
       navigate(`/generations/${generation.id}`)
     } else {
       navigate(`/generations/${generation.id}/result`)

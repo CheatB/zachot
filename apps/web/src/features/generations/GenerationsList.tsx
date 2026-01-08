@@ -3,7 +3,7 @@
  * Список карточек генераций с разделением на активные и историю
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { Stack, Skeleton, EmptyState } from '@/ui'
@@ -29,6 +29,9 @@ function GenerationsList({
 }: GenerationsListProps) {
   const [state, setState] = useState<ListState>('loading')
   const [generations, setGenerations] = useState<Generation[]>([])
+  
+  // Use a ref to prevent multiple calls to onHasGenerations with the same value
+  const reportedHasData = useRef<boolean | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -41,11 +44,19 @@ function GenerationsList({
         if (response.items && response.items.length > 0) {
           setGenerations(response.items)
           setState('success')
-          sessionStorage.setItem('zachot_has_generations', 'true')
-          onHasGenerations?.(true)
+          
+          if (reportedHasData.current !== true) {
+            reportedHasData.current = true
+            onHasGenerations?.(true)
+          }
         } else {
           setState('empty')
-          onHasGenerations?.(false)
+          
+          if (reportedHasData.current !== false) {
+            reportedHasData.current = false
+            onHasGenerations?.(false)
+          }
+          
           if (!isFirstTime && onEmptyAfterUsage) {
             onEmptyAfterUsage()
           }
@@ -65,15 +76,18 @@ function GenerationsList({
   }, [isFirstTime, onEmptyAfterUsage, onHasGenerations])
 
   const filteredGenerations = generations.filter(g => 
-    g.title?.toLowerCase().includes(searchQuery.toLowerCase())
+    (g.title || '').toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const activeGenerations = filteredGenerations.filter(g => 
-    g.status === 'RUNNING' || g.status === 'DRAFT' || g.status === 'WAITING_USER'
-  )
-  const historyGenerations = filteredGenerations.filter(g => 
-    g.status !== 'RUNNING' && g.status !== 'DRAFT' && g.status !== 'WAITING_USER'
-  )
+  const activeGenerations = filteredGenerations.filter(g => {
+    const status = (g.status as string).toUpperCase()
+    return status === 'RUNNING' || status === 'DRAFT' || status === 'WAITING_USER'
+  })
+  
+  const historyGenerations = filteredGenerations.filter(g => {
+    const status = (g.status as string).toUpperCase()
+    return status !== 'RUNNING' && status !== 'DRAFT' && status !== 'WAITING_USER'
+  })
 
   if (state === 'loading') {
     return (

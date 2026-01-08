@@ -3,7 +3,7 @@
  * Типы для экрана восстановления генерации
  */
 
-export type RecoveryStatus = 'failed' | 'canceled' | 'unknown'
+export type RecoveryStatus = 'FAILED' | 'CANCELED' | 'unknown'
 
 export interface GenerationRecoveryData {
   id: string
