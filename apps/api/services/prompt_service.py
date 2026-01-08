@@ -72,22 +72,33 @@ class PromptService:
 
     @staticmethod
     def construct_generation_prompt(generation: Generation, section_title: str, previous_context: str = "") -> str:
-        """Промпт для генерации текста конкретного раздела."""
+        """Промпт для генерации контента раздела (с поддержкой макетов и иконок)."""
+        is_presentation = generation.module.value == "PRESENTATION"
+        
+        layout_instruction = ""
+        if is_presentation:
+            layout_instruction = """
+            ДЛЯ ПРЕЗЕНТАЦИИ:
+            - Выбери подходящий макет (layout) для этого слайда: "bullets" (список), "grid" (сетка 2х2), "timeline" (шаги), "big_quote" (цитата).
+            - Для каждого пункта списка предложи релевантную иконку (название из библиотеки Lucide, например: "trending-up", "users", "shield").
+            - Укажи визуальную тему (основной цвет и акцент).
+            """
+
         prompt = f"""
-        Напиши текст для раздела "{section_title}" в рамках работы на тему "{generation.input_payload.get('topic')}".
+        Напиши контент для раздела "{section_title}" работы на тему "{generation.input_payload.get('topic')}".
         
         КОНТЕКСТ:
         Цель: {generation.input_payload.get('goal')}
         Идея: {generation.input_payload.get('idea')}
         
-        ТРЕБОВАНИЯ К ТЕКСТУ:
-        - СТРОГО академический стиль.
-        - НИКАКОЙ "воды", вводных фраз типа "в данной работе мы рассмотрим" (если это не введение).
-        - Только факты, анализ и логические выводы.
-        - Максимальная плотность информации.
-        - Если есть формулы — используй LaTeX.
+        ТРЕБОВАНИЯ:
+        - Академический стиль.
+        - Плотный текст без воды.
+        {layout_instruction}
         
         {f"ПРЕДЫДУЩЕЕ СОДЕРЖАНИЕ: {previous_context}" if previous_context else ""}
+        
+        Верни результат в формате JSON: {{"content": "...", "layout": "...", "icons": ["..."], "visual_meta": {{...}}}}
         """
         return prompt.strip()
 

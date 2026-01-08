@@ -48,7 +48,8 @@ function CreateGenerationPage() {
     idea: 'Основная идея работы заключается в глубоком анализе существующих материалов и формулировании авторских выводов.',
     volume: 10,
     structure: [],
-    sources: []
+    sources: [],
+    useSmartProcessing: true // Новый флаг
   })
 
   const getStepHeader = (): { title: string; subtitle: string } => {
@@ -373,6 +374,8 @@ function CreateGenerationPage() {
                     taskMode={form.taskMode}
                     input={form.input} 
                     hasFiles={form.taskFiles.length > 0}
+                    useSmartProcessing={form.useSmartProcessing}
+                    onToggleSmartProcessing={(val) => setForm(prev => ({ ...prev, useSmartProcessing: val }))}
                     onConfirm={handleConfirm} 
                     onBack={handleBack} 
                     isSubmitting={isSubmitting} 

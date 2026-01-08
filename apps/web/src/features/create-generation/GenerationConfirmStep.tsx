@@ -15,6 +15,8 @@ interface GenerationConfirmStepProps {
   taskMode: TaskMode | null
   input: string
   hasFiles: boolean
+  useSmartProcessing: boolean
+  onToggleSmartProcessing: (val: boolean) => void
   onConfirm: () => void
   onBack: () => void
   isSubmitting: boolean
@@ -32,6 +34,8 @@ function GenerationConfirmStep({
   taskMode, 
   input, 
   hasFiles, 
+  useSmartProcessing,
+  onToggleSmartProcessing,
   onConfirm, 
   onBack, 
   isSubmitting 
@@ -99,6 +103,34 @@ function GenerationConfirmStep({
                 : 'На следующем этапе вы сможете отредактировать предложенную цель и план работы.'}
             </p>
           </div>
+
+          {type === 'presentation' && (
+            <div className="smart-processing-toggle" style={{ 
+              padding: 'var(--spacing-16) var(--spacing-24)', 
+              backgroundColor: 'var(--color-accent-light)', 
+              borderRadius: 'var(--radius-lg)',
+              border: '1px dashed var(--color-accent-base)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 'var(--spacing-16)'
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 'bold', fontSize: 'var(--font-size-sm)', color: 'var(--color-accent-dark)' }}>
+                  🪄 Smart-обработка изображений
+                </div>
+                <div style={{ fontSize: '10px', color: 'var(--color-text-secondary)' }}>
+                  Автоматическое удаление фона, цветокоррекция и подбор иконок под стиль работы
+                </div>
+              </div>
+              <input 
+                type="checkbox" 
+                checked={useSmartProcessing} 
+                onChange={(e) => onToggleSmartProcessing(e.target.checked)} 
+                style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--color-accent-base)' }}
+              />
+            </div>
+          )}
 
           <div className="wizard-actions" style={{ display: 'flex', gap: 'var(--spacing-16)', justifyContent: 'flex-end' }}>
             <Button variant="secondary" onClick={onBack} disabled={isSubmitting}>Назад</Button>

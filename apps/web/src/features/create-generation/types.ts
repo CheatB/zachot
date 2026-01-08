@@ -148,6 +148,7 @@ export interface CreateGenerationForm {
   volume: number
   structure: StructureItem[]
   sources: SourceItem[]
+  useSmartProcessing: boolean
 }
 
 export interface GenerationTypeInfo {
