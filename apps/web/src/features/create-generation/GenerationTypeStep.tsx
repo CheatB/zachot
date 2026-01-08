@@ -21,14 +21,14 @@ const typeOptions: (GenerationTypeOption & { illustration?: string })[] = [
     title: 'Создать текстовую работу',
     description: 'Любой вид работы с реальными источниками, оформлением по ГОСТу и защитой от проверки на ИИ',
     icon: '',
-    illustration: '/assets/illustrations/text-work.png'
+    illustration: '/assets/illustrations/text-work.png?v=9'
   },
   {
     type: 'presentation',
     title: 'Подготовить презентацию',
     description: 'презентация по заданной теме в разных стилях оформления',
     icon: '',
-    illustration: '/assets/illustrations/presentation.png'
+    illustration: '/assets/illustrations/presentation.png?v=9'
   },
   {
     type: 'task',
@@ -162,7 +162,7 @@ const stepStyles = `
   width: 100%;
   min-height: 200px;
   padding: var(--spacing-24);
-  background: var(--color-surface-base);
+  background: #ffffff !important;
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
   text-align: left;
@@ -172,6 +172,7 @@ const stepStyles = `
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  isolation: isolate;
 }
 
 .wizard-type-card:hover {
@@ -193,7 +194,7 @@ const stepStyles = `
   display: flex;
   flex-direction: column;
   gap: var(--spacing-8);
-  max-width: 75%; /* Ограничиваем ширину текста, чтобы не налезал на картинку */
+  max-width: 70%;
 }
 
 .wizard-type-card__title {
@@ -213,14 +214,13 @@ const stepStyles = `
   position: absolute;
   bottom: -15px;
   right: -15px;
-  width: 140px;
-  height: 140px;
+  width: 150px;
+  height: 150px;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.9;
 }
 
 .wizard-type-card__illustration img {
