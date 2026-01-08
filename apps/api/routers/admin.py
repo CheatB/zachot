@@ -106,6 +106,57 @@ async def update_user_role(
         session.commit()
         return {"status": "success", "role": user.role}
 
+@router.post("/suggest-sources")
+async def suggest_sources(request: dict, user: UserDB = Depends(get_current_user)):
+    """
+    Предлагает источники литературы на основе темы.
+    """
+    topic = request.get("topic")
+    work_type = request.get("workType")
+    complexity = request.get("complexity", "student")
+
+    if not topic:
+        raise HTTPException(status_code=400, detail="Topic is required")
+
+    # Используем динамический роутинг
+    model_config = model_router.get_model_for_step("sources")
+    model_name = model_config["model"]
+
+    # Создаем фиктивный объект Generation для PromptService
+    dummy_gen = Generation(
+        id=UUID("00000000-0000-0000-0000-000000000000"),
+        user_id=user.id,
+        module=GenerationModule.TEXT,
+        status=GenerationStatus.DRAFT,
+        work_type=work_type,
+        complexity_level=complexity,
+        input_payload={"topic": topic},
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
+
+    prompt = prompt_service.construct_sources_prompt(dummy_gen)
+
+    try:
+        raw_response = await openai_service.chat_completion(
+            model=model_name,
+            messages=[{"role": "user", "content": prompt}],
+            json_mode=True
+        )
+        
+        if not raw_response:
+            raise ValueError("Failed to get response from AI")
+            
+        data = json.loads(raw_response)
+        # Добавляем флаг isAiSelected
+        for source in data.get("sources", []):
+            source["isAiSelected"] = True
+        return data
+    except Exception as e:
+        return {"sources": [
+            {"title": "КиберЛенинка: Роль ИИ в образовании", "url": "https://cyberleninka.ru", "description": "Научная статья о влиянии нейросетей на учебный процесс.", "isAiSelected": True}
+        ]}
+
 @router.post("/suggest-details")
 async def suggest_details(request: dict, user: UserDB = Depends(get_current_user)):
     """

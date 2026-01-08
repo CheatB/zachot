@@ -114,3 +114,18 @@ export async function suggestStructure(data: {
     body: JSON.stringify(data),
   });
 }
+
+/**
+ * Предложить источники литературы на основе темы и параметров
+ */
+export async function suggestSources(data: { 
+  topic: string; 
+  workType: string; 
+  volume: number;
+  complexity: string;
+}): Promise<{ sources: { title: string; url: string; description: string; isAiSelected: boolean }[] }> {
+  return apiFetch<{ sources: { title: string; url: string; description: string; isAiSelected: boolean }[] }>('/admin/suggest-sources', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}

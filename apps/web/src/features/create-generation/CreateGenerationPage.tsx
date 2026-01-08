@@ -24,7 +24,7 @@ import type { CreateGenerationForm, GenerationType, WorkType, PresentationStyle,
 import { workTypeConfigs } from './types'
 import { motion as motionTokens } from '@/design-tokens'
 import { createGeneration, updateGeneration, executeAction, createJob, getGenerationById } from '@/shared/api/generations'
-import { suggestDetails, suggestStructure } from '@/shared/api/admin'
+import { suggestDetails, suggestStructure, suggestSources } from '@/shared/api/admin'
 
 type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 3 | 4 | 5 | 6
 
@@ -324,10 +324,31 @@ function CreateGenerationPage() {
           { id: '3', label: 'Оформляю список по стандарту...' }
         ]
       })
-      setTimeout(() => {
-        setTransitionState(null)
-        setCurrentStep(5)
-      }, 3000)
+      
+      suggestSources({
+        topic: form.input,
+        workType: form.workType || 'other',
+        volume: form.volume,
+        complexity: form.complexityLevel
+      })
+        .then(data => {
+          setForm(prev => {
+            const sourcesWithIds = data.sources.map((item, idx) => ({
+              ...item,
+              id: `${idx}-${Date.now()}`
+            }))
+            const newForm = { ...prev, sources: sourcesWithIds }
+            saveDraft(newForm)
+            return newForm
+          })
+          setTransitionState(null)
+          setCurrentStep(5)
+        })
+        .catch(err => {
+          console.error('Failed to suggest sources:', err)
+          setTransitionState(null)
+          setCurrentStep(5)
+        })
     } else if (currentStep === 5) {
       setCurrentStep(6)
     }

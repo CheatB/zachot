@@ -20,31 +20,9 @@ function GenerationSourcesStep({ sources, onChange }: GenerationSourcesStepProps
 
   useEffect(() => {
     if (items.length === 0) {
-      const defaultSources: SourceItem[] = [
-        { 
-          id: '1', 
-          title: 'КиберЛенинка: Роль ИИ в образовании', 
-          url: 'https://cyberleninka.ru/article/1', 
-          description: 'Научная статья о влиянии нейросетей на учебный процесс.',
-          isAiSelected: true 
-        },
-        { 
-          id: '2', 
-          title: 'РБК Тренды: Будущее профессий', 
-          url: 'https://trends.rbc.ru/1', 
-          description: 'Обзор востребованных навыков в эпоху автоматизации.',
-          isAiSelected: true 
-        },
-        { 
-          id: '3', 
-          title: 'Хабр: Как работают LLM', 
-          url: 'https://habr.com/post/1', 
-          description: 'Технический разбор архитектуры больших языковых моделей.',
-          isAiSelected: true 
-        },
-      ]
-      setItems(defaultSources)
-      onChange(defaultSources)
+      const emptySources: SourceItem[] = []
+      setItems(emptySources)
+      onChange(emptySources)
     }
   }, [items.length, onChange])
 
