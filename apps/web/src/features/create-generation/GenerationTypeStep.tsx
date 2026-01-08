@@ -144,7 +144,7 @@ const stepStyles = `
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-32);
-  max-width: 1720px; /* Увеличено ровно на 30% от базовых 1320px */
+  max-width: 1800px; /* Увеличено до 1800px для большего растяжения */
   margin: 0;
   width: 100%;
   padding: 0 var(--spacing-8);
@@ -167,8 +167,8 @@ const stepStyles = `
 .wizard-type-card {
   position: relative;
   width: 100%;
-  min-height: 200px;
-  padding: var(--spacing-24) var(--spacing-8);
+  min-height: 215px; /* Увеличено на 15px (было 200px) */
+  padding: var(--spacing-24) var(--spacing-16);
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
@@ -201,7 +201,7 @@ const stepStyles = `
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-8);
+  gap: var(--spacing-4); /* Уменьшен отступ между заголовком и подзаголовком (было 8px) */
   max-width: 75%;
   height: 100%;
 }
@@ -212,7 +212,7 @@ const stepStyles = `
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
   margin-top: 0;
-  min-height: 3.2em;
+  min-height: 2.4em; /* Уменьшено, так как заголовки теперь ближе к описанию */
   display: flex;
   align-items: flex-start;
 }

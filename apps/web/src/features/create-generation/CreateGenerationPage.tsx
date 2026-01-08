@@ -301,7 +301,7 @@ function CreateGenerationPage() {
 
   return (
     <Container size="lg">
-      <Stack gap="xl" style={{ paddingTop: 'var(--spacing-80)', paddingBottom: 'var(--spacing-80)' }}>
+      <Stack gap="xl" style={{ paddingTop: 'var(--spacing-32)', paddingBottom: 'var(--spacing-64)' }}>
         
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -312,14 +312,20 @@ function CreateGenerationPage() {
             ease: motionTokens.easing.out,
           }}
         >
-          <h1 style={{ marginBottom: 'var(--spacing-24)', color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>
+          <h1 style={{ 
+            marginBottom: 'var(--spacing-8)', 
+            color: 'var(--color-neutral-100)', 
+            fontSize: 'var(--font-size-2xl)',
+            fontWeight: 'var(--font-weight-bold)',
+            letterSpacing: '-0.02em'
+          }}>
             {title}
           </h1>
           <p style={{ 
-            fontSize: 'var(--font-size-base)', 
+            fontSize: 'var(--font-size-sm)', 
             color: 'var(--color-text-secondary)', 
             lineHeight: 'var(--line-height-relaxed)', 
-            marginBottom: 'var(--spacing-64)',
+            marginBottom: 'var(--spacing-40)',
             maxWidth: '800px'
           }}>
             {subtitle}
