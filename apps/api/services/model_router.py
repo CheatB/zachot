@@ -37,10 +37,12 @@ class ModelRouter:
             }
 
         if step_type == "suggest_details":
+            # Используем мощную модель для формулирования цели и идеи,
+            # так как это фундамент всей дальнейшей работы.
             return {
                 "provider": "openrouter",
-                "model": "openai/gpt-4o-mini",
-                "cost_priority": "low"
+                "model": "openai/o1-mini",
+                "cost_priority": "medium"
             }
             
         if step_type == "draft":
