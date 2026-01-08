@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { fetchMe, type MeResponse } from '@/shared/api/me'
 import { Button, Stack } from '@/ui'
@@ -17,10 +17,12 @@ interface NavItem {
   label: string
   path: string
   disabled?: boolean
+  icon?: string
 }
 
 function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   const [userData, setUserData] = useState<MeResponse | null>(null)
 
   useEffect(() => {
@@ -42,13 +44,23 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
     }
   }, [])
 
-  const navItems: NavItem[] = [
-    { label: 'Мои генерации', path: '/generations', disabled: !isAuthenticated },
-    { label: 'Аккаунт', path: '/account', disabled: !isAuthenticated },
-    { label: 'Оплата', path: '/billing', disabled: !isAuthenticated },
-    { label: 'Профиль', path: '/profile', disabled: !isAuthenticated },
-    { label: '⚙️ Админка', path: '/admin', disabled: !isAuthenticated },
+  const isAdminRoute = location.pathname.startsWith('/admin')
+
+  const mainNavItems: NavItem[] = [
+    { label: 'Мои генерации', path: '/generations', disabled: !isAuthenticated, icon: '📄' },
+    { label: 'Аккаунт', path: '/account', disabled: !isAuthenticated, icon: '👤' },
+    { label: 'Оплата', path: '/billing', disabled: !isAuthenticated, icon: '💳' },
+    { label: 'Профиль', path: '/profile', disabled: !isAuthenticated, icon: '⚙️' },
   ]
+
+  const adminNavItems: NavItem[] = [
+    { label: 'Модели и роутинг', path: '/admin/models', icon: '🤖' },
+    { label: 'Пользователи', path: '/admin/users', icon: '👥' },
+    { label: 'Аналитика P&L', path: '/admin/analytics', icon: '📊' },
+    { label: 'Выйти из админки', path: '/', icon: '🚪' },
+  ]
+
+  const navItems = isAdminRoute ? adminNavItems : mainNavItems
 
   const handleNavClick = (item: NavItem) => {
     if (item.disabled) return
@@ -60,7 +72,6 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
 
   return (
     <>
-      {/* Overlay для мобильных */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -75,7 +86,6 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <AnimatePresence>
         {isOpen && (
           <motion.aside
@@ -123,14 +133,14 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                     color: 'var(--color-neutral-100)'
                   }}
                 >
-                  Зачёт
+                  {isAdminRoute ? 'Админка' : 'Зачёт'}
                 </div>
               </div>
 
               <nav className="app-sidebar__nav" aria-label="Основная навигация">
                 <ul className="app-sidebar__list">
                   {navItems.map((item) => {
-                    const isActive = currentPath === item.path
+                    const isActive = currentPath === item.path || (item.path !== '/' && currentPath.startsWith(item.path))
                     return (
                       <li key={item.path}>
                         <button
@@ -144,7 +154,10 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                           aria-label={item.disabled ? `${item.label} (скоро будет доступно)` : item.label}
                           aria-current={isActive ? 'page' : undefined}
                         >
-                          <span className="app-sidebar__item-label">{item.label}</span>
+                          <span className="app-sidebar__item-label">
+                            {item.icon && <span style={{ marginRight: '12px' }}>{item.icon}</span>}
+                            {item.label}
+                          </span>
                           {item.disabled && (
                             <span className="app-sidebar__item-hint" aria-hidden="true">
                               Скоро
@@ -154,22 +167,37 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                       </li>
                     )
                   })}
+                  {!isAdminRoute && userData?.role === 'admin' && (
+                    <li>
+                      <button
+                        className="app-sidebar__item"
+                        onClick={() => navigate('/admin')}
+                      >
+                        <span className="app-sidebar__item-label">
+                          <span style={{ marginRight: '12px' }}>⚙️</span>
+                          Панель управления
+                        </span>
+                      </button>
+                    </li>
+                  )}
                 </ul>
 
-                <div className="app-sidebar__referral-top">
-                  <button className="referral-block" onClick={() => navigate('/referral')}>
-                    <span className="referral-icon">🎁</span>
-                    <div className="referral-content">
-                      <span className="referral-title">Реферальная ссылка</span>
-                      <span className="referral-subtitle">Пригласи друга и получи бонус</span>
-                    </div>
-                  </button>
-                </div>
+                {!isAdminRoute && (
+                  <div className="app-sidebar__referral-top">
+                    <button className="referral-block" onClick={() => navigate('/referral')}>
+                      <span className="referral-icon">🎁</span>
+                      <div className="referral-content">
+                        <span className="referral-title">Реферальная ссылка</span>
+                        <span className="referral-subtitle">Пригласи друга и получи бонус</span>
+                      </div>
+                    </button>
+                  </div>
+                )}
               </nav>
 
               <div className="app-sidebar__footer">
                 <Stack gap="lg">
-                  {isAuthenticated && userData && (
+                  {isAuthenticated && userData && !isAdminRoute && (
                     <div className="app-sidebar__usage">
                       <div className="usage-info">
                         <span className="usage-label">Осталось генераций:</span>
@@ -232,7 +260,7 @@ const sidebarStyles = `
 
 @media (min-width: 1024px) {
   .app-sidebar {
-    position: absolute; /* Теперь привязан к контейнеру app-shell */
+    position: absolute;
     top: 0;
     left: 0;
     height: 100vh;
@@ -282,7 +310,7 @@ const sidebarStyles = `
 .app-sidebar__item {
   width: 100%;
   padding: var(--spacing-16) var(--spacing-20);
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   color: var(--color-neutral-80);
   background-color: transparent;
@@ -316,6 +344,8 @@ const sidebarStyles = `
 
 .app-sidebar__item-label {
   flex: 1;
+  display: flex;
+  align-items: center;
 }
 
 .app-sidebar__item-hint {
@@ -338,7 +368,7 @@ const sidebarStyles = `
   background-color: white;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border-base);
-  margin-bottom: var(--spacing-32); /* Увеличен еще больше (было 24) */
+  margin-bottom: var(--spacing-32);
 }
 
 .usage-info {
