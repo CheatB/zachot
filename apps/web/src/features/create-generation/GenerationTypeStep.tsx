@@ -125,8 +125,16 @@ const stepStyles = `
 
 .wizard-type-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: var(--spacing-32);
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-24);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1024px) {
+  .wizard-type-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
@@ -139,15 +147,15 @@ const stepStyles = `
 .wizard-type-card {
   position: relative;
   width: 100%;
-  min-height: 380px;
-  padding: var(--spacing-32);
-  background-color: var(--color-surface-base);
+  min-height: 300px;
+  padding: var(--spacing-24);
+  background-color: #ebf0f5; /* Точный цвет фона под иллюстрации */
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
   text-align: center;
   cursor: pointer;
   transition: all var(--motion-duration-base) var(--motion-easing-out);
-  box-shadow: var(--elevation-2);
+  box-shadow: var(--elevation-1);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -156,12 +164,13 @@ const stepStyles = `
 .wizard-type-card:hover {
   box-shadow: var(--elevation-3);
   border-color: var(--color-accent-base);
+  transform: translateY(-4px);
 }
 
 .wizard-type-card--selected {
   border-color: var(--color-accent-base);
-  background-color: var(--color-accent-light);
-  box-shadow: 0 20px 40px rgba(22, 163, 74, 0.1);
+  background-color: #e8f5e9;
+  box-shadow: 0 10px 30px rgba(22, 163, 74, 0.1);
 }
 
 .wizard-type-card__content {
@@ -169,18 +178,18 @@ const stepStyles = `
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-12);
+  gap: var(--spacing-8);
 }
 
 .wizard-type-card__title {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
 }
 
 .wizard-type-card__description {
-  font-size: var(--font-size-xs);
+  font-size: 11px;
   color: var(--color-text-secondary);
   line-height: 1.3;
   max-width: 90%;
@@ -189,39 +198,37 @@ const stepStyles = `
 
 .wizard-type-card__illustration {
   position: absolute;
-  bottom: -10px;
-  right: -10px;
-  width: 70%;
-  height: auto;
-  opacity: 0.9;
-  transition: transform 0.3s var(--motion-easing-out);
+  bottom: 0;
+  right: 0;
+  width: 60%;
+  height: 140px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
   pointer-events: none;
   z-index: 1;
 }
 
-.wizard-type-card:hover .wizard-type-card__illustration {
-  transform: scale(1.05) translate(-5px, -5px);
-}
-
 .wizard-type-card__illustration img {
-  width: 100%;
-  height: auto;
-  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transform: translate(10%, 10%); /* Смещение в угол */
 }
 
 .wizard-type-card__check {
   position: absolute;
-  top: var(--spacing-20);
-  right: var(--spacing-20);
-  width: 28px;
-  height: 28px;
+  top: var(--spacing-16);
+  right: var(--spacing-16);
+  width: 24px;
+  height: 24px;
   background: var(--color-accent-base);
   color: white;
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: bold;
   box-shadow: 0 4px 10px var(--color-accent-shadow);
   z-index: 3;
