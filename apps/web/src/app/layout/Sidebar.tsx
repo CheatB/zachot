@@ -297,20 +297,20 @@ const sidebarStyles = `
 .app-sidebar__list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-16);
+  gap: var(--spacing-24); /* Увеличено расстояние (было 16) */
   list-style: none;
   margin-bottom: var(--spacing-32);
 }
 
 .app-sidebar__referral-top {
   width: 100%;
-  margin-top: var(--spacing-16);
+  margin-top: var(--spacing-24);
 }
 
 .app-sidebar__item {
   width: 100%;
-  padding: var(--spacing-16) var(--spacing-20);
-  font-size: var(--font-size-base);
+  padding: var(--spacing-12) var(--spacing-20);
+  font-size: var(--font-size-xl); /* Увеличено на 4px (было base/16px, стало xl/20px) */
   font-weight: var(--font-weight-medium);
   color: var(--color-neutral-80);
   background-color: transparent;

@@ -382,11 +382,11 @@ function CreateGenerationPage() {
           style={{ width: '100%' }}
         >
           <h1 style={{ 
-            marginBottom: 'var(--spacing-8)', 
+            marginBottom: 'var(--spacing-16)', 
             color: 'var(--color-neutral-100)', 
-            fontSize: 'var(--font-size-2xl)',
+            fontSize: 'var(--font-size-3xl)',
             fontWeight: 'var(--font-weight-bold)',
-            letterSpacing: '-0.02em',
+            letterSpacing: '-0.035em',
             textAlign: 'left'
           }}>
             {title}

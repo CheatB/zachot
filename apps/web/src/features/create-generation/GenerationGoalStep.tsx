@@ -27,7 +27,7 @@ function GenerationGoalStep({ form, onChange, isLoading }: GenerationGoalStepPro
       }}
     >
       <div className="wizard-step">
-        <Stack gap="xl" style={{ position: 'relative' }}>
+        <Stack gap="2xl" style={{ position: 'relative' }}>
           {isLoading && (
             <div style={{
               position: 'absolute',
@@ -46,26 +46,46 @@ function GenerationGoalStep({ form, onChange, isLoading }: GenerationGoalStepPro
             </div>
           )}
 
-          <Stack gap="lg">
-            <Input
-              label="Цель работы — поможет системе лучше структурировать материал"
-              value={form.goal}
-              onChange={(e) => onChange({ goal: e.target.value })}
-              placeholder="Например: Изучить влияние ИИ на современное образование..."
-              style={{ fontSize: 'var(--font-size-base)' }}
-            />
+          <Stack gap="xl">
+            <div className="form-field-group">
+              <label style={{ 
+                display: 'block', 
+                fontSize: 'var(--font-size-base)', 
+                color: 'var(--color-text-secondary)',
+                lineHeight: 'var(--line-height-relaxed)',
+                marginBottom: 'var(--spacing-8)'
+              }}>
+                Цель работы — поможет системе лучше структурировать материал
+              </label>
+              <Input
+                value={form.goal}
+                onChange={(e) => onChange({ goal: e.target.value })}
+                placeholder="Например: Изучить влияние ИИ на современное образование..."
+                style={{ fontSize: 'var(--font-size-base)' }}
+              />
+            </div>
 
-            <Textarea
-              label="Основная идея — это фундамент вашей будущей работы"
-              value={form.idea}
-              onChange={(e) => onChange({ idea: e.target.value })}
-              placeholder="Опишите кратко, о чем будет ваша работа..."
-              rows={4}
-              style={{ fontSize: 'var(--font-size-base)' }}
-            />
+            <div className="form-field-group">
+              <label style={{ 
+                display: 'block', 
+                fontSize: 'var(--font-size-base)', 
+                color: 'var(--color-text-secondary)',
+                lineHeight: 'var(--line-height-relaxed)',
+                marginBottom: 'var(--spacing-8)'
+              }}>
+                Основная идея — это фундамент вашей будущей работы
+              </label>
+              <Textarea
+                value={form.idea}
+                onChange={(e) => onChange({ idea: e.target.value })}
+                placeholder="Опишите кратко, о чем будет ваша работа..."
+                rows={4}
+                style={{ fontSize: 'var(--font-size-base)' }}
+              />
+            </div>
           </Stack>
 
-          <div style={{ marginTop: 'var(--spacing-8)' }}>
+          <div style={{ marginTop: 'var(--spacing-16)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-12)', marginBottom: 'var(--spacing-16)' }}>
               <label
                 style={{
