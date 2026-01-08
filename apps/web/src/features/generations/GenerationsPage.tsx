@@ -19,7 +19,7 @@ function GenerationsPage() {
   const navigate = useNavigate()
   const shouldReduceMotion = false
   
-  // Состояния для управления пустыми экранами
+  // Состояния для управления экранами
   const [hasGenerations, setHasGenerations] = useState<boolean | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -44,82 +44,84 @@ function GenerationsPage() {
     setIsLoading(false)
   }, [])
 
+  if (!isAuthenticated) {
+    return (
+      <div style={{ padding: 'var(--spacing-48)' }}>
+        <EmptyState
+          title="Войдите через лэндинг"
+          description="Для доступа к генерациям необходимо войти"
+        />
+      </div>
+    )
+  }
+
   return (
-    <>
-      {isAuthenticated ? (
-        isLoading ? (
-          <Container size="lg">
-            <Stack gap="xl" style={{ paddingTop: 'var(--spacing-32)' }}>
-              <h1 style={{ color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>Загрузка...</h1>
-            </Stack>
-          </Container>
-        ) : hasGenerations === false ? (
-          <Container size="lg">
-            <Stack gap="xl" style={{ paddingTop: 'var(--spacing-48)', paddingBottom: 'var(--spacing-48)' }}>
-              <FirstTimeEmptyState onCreateFirst={handleNewGeneration} />
-            </Stack>
-          </Container>
-        ) : (
-          <Container size="lg">
-            <Stack gap="xl" style={{ paddingTop: 'var(--spacing-32)' }}>
-              <motion.div
-                initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: motionTokens.duration.slow,
-                  ease: motionTokens.easing.out,
+    <Container size="lg">
+      <Stack gap="xl" style={{ paddingTop: 'var(--spacing-32)' }}>
+        {/* Рендерим заголовок и поиск всегда, если мы не на экране "Первая генерация" */}
+        {(isLoading || hasGenerations !== false) && (
+          <motion.div
+            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: motionTokens.duration.slow,
+              ease: motionTokens.easing.out,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'var(--spacing-24)', gap: 'var(--spacing-24)', flexWrap: 'wrap' }}>
+              <div>
+                <h1 style={{ marginBottom: 'var(--spacing-12)', color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>
+                  Мои генерации
+                </h1>
+                <p style={{ 
+                  fontSize: 'var(--font-size-lg)', 
+                  color: 'var(--color-text-secondary)',
+                  maxWidth: '600px',
+                  margin: 0
+                }}>
+                  История ваших запросов и активные процессы
+                </p>
+              </div>
+              <Button variant="primary" size="lg" onClick={handleNewGeneration}>
+                ✨ Новая генерация
+              </Button>
+            </div>
+
+            <div style={{ marginBottom: 'var(--spacing-32)' }}>
+              <Input 
+                placeholder="Поиск по названию..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ 
+                  maxWidth: '480px',
+                  boxShadow: 'var(--elevation-1)',
+                  borderRadius: 'var(--radius-md)'
                 }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'var(--spacing-24)', gap: 'var(--spacing-24)', flexWrap: 'wrap' }}>
-                  <div>
-                    <h1 style={{ marginBottom: 'var(--spacing-12)', color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>
-                      Мои генерации
-                    </h1>
-                    <p style={{ 
-                      fontSize: 'var(--font-size-lg)', 
-                      color: 'var(--color-text-secondary)',
-                      maxWidth: '600px',
-                      margin: 0
-                    }}>
-                      История ваших запросов и активные процессы
-                    </p>
-                  </div>
-                  <Button variant="primary" size="lg" onClick={handleNewGeneration}>
-                    ✨ Новая генерация
-                  </Button>
-                </div>
-
-                <div style={{ marginBottom: 'var(--spacing-32)' }}>
-                  <Input 
-                    placeholder="Поиск по названию..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ 
-                      maxWidth: '480px',
-                      boxShadow: 'var(--elevation-1)',
-                      borderRadius: 'var(--radius-md)'
-                    }}
-                  />
-                </div>
-              </motion.div>
-
-              <GenerationsList
-                onGenerationClick={handleGenerationClick}
-                onHasGenerations={handleDataLoaded}
-                searchQuery={searchQuery}
               />
-            </Stack>
-          </Container>
-        )
-      ) : (
-        <div style={{ padding: 'var(--spacing-48)' }}>
-          <EmptyState
-            title="Войдите через лэндинг"
-            description="Для доступа к генерациям необходимо войти"
-          />
-        </div>
-      )}
-    </>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Индикатор загрузки поверх списка */}
+        {isLoading && hasGenerations === null && (
+          <h1 style={{ color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>Загрузка...</h1>
+        )}
+
+        {/* Экран для новичков */}
+        {!isLoading && hasGenerations === false && (
+          <div style={{ paddingTop: 'var(--spacing-48)' }}>
+            <FirstTimeEmptyState onCreateFirst={handleNewGeneration} />
+          </div>
+        )}
+
+        {/* Сам список (он сам управляет загрузкой данных) */}
+        <GenerationsList
+          onGenerationClick={handleGenerationClick}
+          onHasGenerations={handleDataLoaded}
+          searchQuery={searchQuery}
+        />
+      </Stack>
+    </Container>
   )
 }
 

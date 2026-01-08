@@ -18,13 +18,19 @@ interface GenerationStructureStepProps {
 function GenerationStructureStep({ structure, onChange }: GenerationStructureStepProps) {
   const [items, setItems] = useState<StructureItem[]>(structure)
 
+  // Синхронизируем внутреннее состояние с пропсами, если они изменились извне (например, после загрузки ИИ)
   useEffect(() => {
-    if (items.length === 0) {
-      const emptyStructure: StructureItem[] = []
-      setItems(emptyStructure)
-      onChange(emptyStructure)
+    if (structure.length > 0) {
+      setItems(structure)
     }
-  }, [items.length, onChange])
+  }, [structure])
+
+  useEffect(() => {
+    if (items.length === 0 && structure.length === 0) {
+      // Только если реально пусто и ничего не пришло
+      // Можно оставить пустым или добавить дефолт
+    }
+  }, [items.length, structure.length])
 
   const handleTitleChange = (id: string, newTitle: string) => {
     const newItems = items.map(item => item.id === id ? { ...item, title: newTitle } : item)
