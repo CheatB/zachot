@@ -10,7 +10,7 @@ import { useLocation, Link, useNavigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import MobileNav from './MobileNav'
 import Stack from '@/ui/layout/Stack'
-import { type User } from '../auth/useAuth'
+import { type User } from '../auth/authTypes'
 import { useAuth } from '../auth/useAuth'
 
 interface AppShellProps {

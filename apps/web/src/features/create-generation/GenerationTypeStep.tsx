@@ -158,18 +158,19 @@ const stepStyles = `
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  isolation: isolate; /* Создает новый контекст наложения для blend-mode */
 }
 
 .wizard-type-card:hover {
   box-shadow: var(--elevation-3);
   border-color: var(--color-accent-base);
   transform: translateY(-4px);
-  background: linear-gradient(135deg, var(--color-surface-base) 0%, var(--color-neutral-10) 100%);
+  background: var(--color-neutral-10);
 }
 
 .wizard-type-card--selected {
   border-color: var(--color-accent-base);
-  background: linear-gradient(135deg, var(--color-accent-light) 0%, var(--color-surface-base) 100%);
+  background: var(--color-accent-light);
   box-shadow: 0 10px 30px rgba(22, 163, 74, 0.1);
 }
 
@@ -197,29 +198,23 @@ const stepStyles = `
 
 .wizard-type-card__illustration {
   position: absolute;
-  bottom: -20px;
-  right: -20px;
-  width: 200px;
-  height: 200px;
+  bottom: -10px;
+  right: -10px;
+  width: 180px;
+  height: 180px;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.9;
-  transition: transform 0.3s ease;
-}
-
-.wizard-type-card:hover .wizard-type-card__illustration {
-  transform: scale(1.05) translate(-5px, -5px);
-  opacity: 1;
 }
 
 .wizard-type-card__illustration img {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  mix-blend-mode: multiply; /* Убирает белый фон, если он чисто белый */
+  mix-blend-mode: multiply; /* Смешивает белый фон картинки с фоном карточки */
+  filter: contrast(1.05) brightness(1.02); /* Немного усиливает белый, чтобы multiply сработал лучше */
 }
 
 .wizard-type-card__check {
