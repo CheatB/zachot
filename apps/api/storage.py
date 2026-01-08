@@ -38,10 +38,11 @@ class SQLGenerationStore:
             )
             session.add(db_gen)
             
-            # Декремент лимита у пользователя
-            user = session.query(UserDB).filter(UserDB.id == generation.user_id).first()
-            if user:
-                user.generations_used += 1
+            # Декремент лимита у пользователя (только если не DRAFT)
+            if db_gen.status != "DRAFT":
+                user = session.query(UserDB).filter(UserDB.id == generation.user_id).first()
+                if user:
+                    user.generations_used += 1
             
             session.commit()
             return generation
@@ -69,10 +70,17 @@ class SQLGenerationStore:
             if not db_gen:
                 raise ValueError(f"Generation with id {generation_id} not found")
             
+            old_status = db_gen.status
             for key, value in updates.items():
                 if hasattr(db_gen, key):
                     setattr(db_gen, key, value)
             
+            # Если статус изменился с DRAFT на что-то другое, уменьшаем лимит
+            if old_status == "DRAFT" and db_gen.status != "DRAFT":
+                user = session.query(UserDB).filter(UserDB.id == db_gen.user_id).first()
+                if user:
+                    user.generations_used += 1
+
             db_gen.updated_at = datetime.utcnow()
             session.commit()
             
