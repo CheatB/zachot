@@ -81,7 +81,7 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
           style={{
             fontSize: 'var(--font-size-sm)',
             color: 'var(--color-text-secondary)',
-            marginBottom: 'var(--spacing-40)',
+            marginBottom: 'var(--spacing-48)',
             lineHeight: 'var(--line-height-relaxed)',
             textAlign: 'center'
           }}
@@ -144,9 +144,9 @@ const stepStyles = `
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-24);
-  max-width: 1320px; /* Увеличено на ~20% (было 1100) */
+  max-width: 1320px; /* Растянуто на 20% от базы 1100px */
   margin: 0 auto;
-  padding: 0 var(--spacing-12);
+  padding: 0 var(--spacing-8); /* Уменьшено расстояние от боковых краев контейнера */
 }
 
 @media (max-width: 1024px) {
@@ -166,7 +166,7 @@ const stepStyles = `
   position: relative;
   width: 100%;
   min-height: 200px;
-  padding: var(--spacing-24) var(--spacing-8); /* Боковые отступы уменьшены вдвое (было 16) */
+  padding: var(--spacing-24) var(--spacing-8); /* Боковые отступы внутри уменьшены вдвое */
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
@@ -176,7 +176,7 @@ const stepStyles = `
   box-shadow: var(--elevation-1);
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* Выравнивание по верху */
+  justify-content: flex-start;
   overflow: hidden;
   isolation: isolate;
 }
@@ -201,7 +201,7 @@ const stepStyles = `
   flex-direction: column;
   gap: var(--spacing-8);
   max-width: 70%;
-  height: 100%; /* Чтобы занять всю высоту для выравнивания */
+  height: 100%;
 }
 
 .wizard-type-card__title {
@@ -210,8 +210,9 @@ const stepStyles = `
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
   margin-top: 0;
-  display: block;
-  min-height: 3em; /* Фиксированная высота для заголовка, чтобы описания начинались на одном уровне */
+  min-height: 3.2em; /* Выравнивание заголовков на одном уровне */
+  display: flex;
+  align-items: flex-start;
 }
 
 .wizard-type-card__description {
@@ -233,9 +234,9 @@ const stepStyles = `
   z-index: 1;
 }
 
-/* Опускаем иллюстрацию во втором блоке на 5 пикселей */
+/* Опускаем иллюстрацию во втором блоке на 5+3 = 8 пикселей суммарно */
 .wizard-type-card--presentation .wizard-type-card__illustration {
-  bottom: -20px;
+  bottom: -23px;
 }
 
 .wizard-type-card__illustration img {
