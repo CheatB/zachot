@@ -48,7 +48,10 @@ function GenerationsPage() {
   }, [isAuthenticated])
 
   const handleGenerationClick = (generation: Generation) => {
-    if (generation.status === 'running') {
+    if (generation.status === 'draft') {
+      // Перенаправляем в визард для продолжения черновика
+      navigate(`/?draftId=${generation.id}`)
+    } else if (generation.status === 'running') {
       navigate(`/generations/${generation.id}`)
     } else {
       navigate(`/generations/${generation.id}/result`)

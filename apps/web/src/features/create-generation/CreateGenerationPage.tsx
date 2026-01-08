@@ -4,8 +4,8 @@
  * Updated for "juicy" landing page aesthetic
  */
 
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Container, Stack, Button } from '@/ui'
 import clsx from 'clsx'
@@ -23,16 +23,18 @@ import StepLoader, { StepLoaderTask } from './components/StepLoader'
 import type { CreateGenerationForm, GenerationType, WorkType, PresentationStyle, TaskMode } from './types'
 import { workTypeConfigs } from './types'
 import { motion as motionTokens } from '@/design-tokens'
-import { createGeneration, executeAction, createJob } from '@/shared/api/generations'
+import { createGeneration, updateGeneration, executeAction, createJob, getGenerationById } from '@/shared/api/generations'
 import { suggestDetails } from '@/shared/api/admin'
 
 type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 3 | 4 | 5 | 6
 
 function CreateGenerationPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [currentStep, setCurrentStep] = useState<WizardStep>(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuggesting, setIsSuggesting] = useState(false)
+  const [activeGenerationId, setActiveGenerationId] = useState<string | null>(null)
   const [transitionState, setTransitionState] = useState<{ title: string; tasks: StepLoaderTask[] } | null>(null)
   const [form, setForm] = useState<CreateGenerationForm>({
     type: null,
@@ -48,8 +50,36 @@ function CreateGenerationPage() {
     volume: 10,
     structure: [],
     sources: [],
-    useSmartProcessing: true // Новый флаг
+    useSmartProcessing: true 
   })
+
+  // Load draft if draftId is in URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const draftId = params.get('draftId')
+    
+    if (draftId && !activeGenerationId) {
+      getGenerationById(draftId).then((gen) => {
+        setActiveGenerationId(gen.id)
+        setForm({
+          type: gen.module.toLowerCase() as GenerationType,
+          workType: (gen.work_type as WorkType) || null,
+          presentationStyle: (gen.input_payload.presentation_style as PresentationStyle) || null,
+          taskMode: (gen.input_payload.task_mode as TaskMode) || null,
+          taskFiles: [], // Files cannot be easily restored from API yet
+          complexityLevel: (gen.complexity_level as any) || 'student',
+          humanityLevel: gen.humanity_level || 50,
+          input: gen.input_payload.topic || gen.input_payload.input || '',
+          goal: gen.input_payload.goal || '',
+          idea: gen.input_payload.idea || '',
+          volume: gen.input_payload.volume || 10,
+          structure: gen.settings_payload.structure || [],
+          sources: gen.settings_payload.sources || [],
+          useSmartProcessing: gen.input_payload.use_smart_processing ?? true
+        })
+      }).catch(console.error)
+    }
+  }, [location.search, activeGenerationId])
 
   const getStepHeader = (): { title: string; subtitle: string } => {
     if (currentStep === 1) {
@@ -108,21 +138,69 @@ function CreateGenerationPage() {
 
   const { title, subtitle } = getStepHeader()
 
+  const saveDraft = useCallback(async (currentForm: CreateGenerationForm) => {
+    if (!currentForm.type) return
+
+    const draftData = {
+      type: currentForm.type.toUpperCase(),
+      work_type: currentForm.workType,
+      complexity_level: currentForm.complexityLevel,
+      humanity_level: currentForm.humanityLevel,
+      input_payload: {
+        topic: currentForm.input,
+        goal: currentForm.goal,
+        idea: currentForm.idea,
+        volume: currentForm.volume,
+        presentation_style: currentForm.presentationStyle,
+        task_mode: currentForm.taskMode,
+        has_files: currentForm.taskFiles.length > 0,
+        use_smart_processing: currentForm.useSmartProcessing
+      },
+      settings_payload: {
+        structure: currentForm.structure,
+        sources: currentForm.sources,
+      }
+    }
+
+    try {
+      if (activeGenerationId) {
+        await updateGeneration(activeGenerationId, draftData)
+      } else {
+        const result = await createGeneration(draftData)
+        setActiveGenerationId(result.id)
+      }
+    } catch (error) {
+      console.error('Failed to save draft:', error)
+    }
+  }, [activeGenerationId])
+
   const handleTypeSelect = (type: GenerationType) => {
-    setForm((prev) => ({ ...prev, type }))
+    setForm((prev) => {
+      const newForm = { ...prev, type }
+      saveDraft(newForm)
+      return newForm
+    })
   }
 
   const handleWorkTypeSelect = (workType: WorkType) => {
     const config = workTypeConfigs[workType]
-    setForm((prev) => ({ 
-      ...prev, 
-      workType,
-      volume: config.defaultVolume
-    }))
+    setForm((prev) => {
+      const newForm = { 
+        ...prev, 
+        workType,
+        volume: config.defaultVolume
+      }
+      saveDraft(newForm)
+      return newForm
+    })
   }
 
   const handlePresentationStyleSelect = (presentationStyle: PresentationStyle) => {
-    setForm((prev) => ({ ...prev, presentationStyle }))
+    setForm((prev) => {
+      const newForm = { ...prev, presentationStyle }
+      saveDraft(newForm)
+      return newForm
+    })
   }
 
   const handleTaskFilesChange = (files: File[]) => {
@@ -153,7 +231,11 @@ function CreateGenerationPage() {
     
     suggestDetails(form.input)
       .then(details => {
-        setForm(prev => ({ ...prev, ...details }))
+        setForm(prev => {
+          const newForm = { ...prev, ...details }
+          saveDraft(newForm)
+          return newForm
+        })
         setTransitionState(null)
         setCurrentStep(3)
       })
@@ -161,6 +243,8 @@ function CreateGenerationPage() {
   }
 
   const handleNext = () => {
+    saveDraft(form)
+
     if (currentStep === 1 && form.type) {
       if (form.type === 'text') setCurrentStep(1.5)
       else if (form.type === 'presentation') setCurrentStep(1.6)
@@ -229,38 +313,14 @@ function CreateGenerationPage() {
   }
 
   const handleConfirm = async () => {
-    if (!form.type) return
+    if (!form.type || !activeGenerationId) return
     
     setIsSubmitting(true)
     try {
-      // 1. Создаем Generation (статус DRAFT)
-      const result = await createGeneration({
-        type: form.type.toUpperCase(),
-        work_type: form.workType,
-        complexity_level: form.complexityLevel,
-        humanity_level: form.humanityLevel,
-        input_payload: {
-          topic: form.input,
-          goal: form.goal,
-          idea: form.idea,
-          volume: form.volume,
-          presentation_style: form.presentationStyle,
-          task_mode: form.taskMode,
-          has_files: form.taskFiles.length > 0
-        },
-        settings_payload: {
-          structure: form.structure,
-          sources: form.sources,
-        }
-      })
-
-      // 2. Переводим в статус RUNNING
-      await executeAction(result.id, 'next')
-
-      // 3. Запускаем фоновую задачу (Worker)
-      await createJob(result.id)
-
-      navigate(`/generations/${result.id}`)
+      await saveDraft(form)
+      await executeAction(activeGenerationId, 'next')
+      await createJob(activeGenerationId)
+      navigate(`/generations/${activeGenerationId}`)
     } catch (error) {
       console.error('Failed to create generation:', error)
       setIsSubmitting(false)
