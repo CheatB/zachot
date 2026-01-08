@@ -8,3 +8,5 @@ fpdf
 python-pptx
 sqlalchemy
 psycopg2-binary
+python-dotenv
+pytest-asyncio
