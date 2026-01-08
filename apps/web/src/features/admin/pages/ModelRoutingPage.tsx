@@ -3,12 +3,15 @@ import { Button, Stack } from '@/ui';
 import { fetchModelRouting, saveModelRouting, type ModelRoutingConfig } from '@/shared/api/admin';
 
 const modelOptions = [
-  { value: 'openai/o3-mini', label: 'o3-mini (Reasoning High)' },
-  { value: 'openai/o1-mini', label: 'o1-mini (Reasoning Mini)' },
+  { value: 'openai/o3', label: 'o3 (Reasoning High)' },
+  { value: 'openai/o1', label: 'o1 (Reasoning Mid)' },
+  { value: 'openai/gpt-5.2', label: 'gpt-5.2 (Ultra High)' },
   { value: 'openai/gpt-4o', label: 'gpt-4o (Standard)' },
   { value: 'openai/gpt-4o-mini', label: 'gpt-4o-mini (Economy)' },
   { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet (Best for Refine)' },
   { value: 'deepseek/deepseek-chat', label: 'DeepSeek V3 (Ultra Economy)' },
+  { value: 'perplexity/sonar-pro', label: 'Perplexity Sonar Pro (Search)' },
+  { value: 'perplexity/sonar-deep-research', label: 'Perplexity Deep Research' },
 ];
 
 const ModelRoutingPage: React.FC = () => {
@@ -19,16 +22,16 @@ const ModelRoutingPage: React.FC = () => {
   useEffect(() => {
     const defaultConfig: ModelRoutingConfig = {
       // Текстовые работы
-      referat: { structure: 'openai/o1-mini', suggest_details: 'openai/gpt-4o-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      kursach: { structure: 'openai/o3-mini', suggest_details: 'openai/gpt-4o-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      essay: { structure: 'openai/o1-mini', suggest_details: 'openai/gpt-4o-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
+      referat: { structure: 'openai/o1', suggest_details: 'openai/gpt-4o-mini', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
+      kursach: { structure: 'openai/o1', suggest_details: 'openai/gpt-4o-mini', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
+      essay: { structure: 'openai/o1', suggest_details: 'openai/gpt-4o-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
       doklad: { structure: 'openai/gpt-4o-mini', suggest_details: 'openai/gpt-4o-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'openai/gpt-4o-mini' },
-      article: { structure: 'openai/o3-mini', suggest_details: 'openai/gpt-4o-mini', sources: 'openai/gpt-4o', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
+      article: { structure: 'openai/o1', suggest_details: 'openai/gpt-4o-mini', sources: 'perplexity/sonar-deep-research', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
       composition: { structure: 'openai/gpt-4o-mini', suggest_details: 'openai/gpt-4o-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
-      other: { structure: 'openai/o1-mini', suggest_details: 'openai/gpt-4o-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
+      other: { structure: 'openai/o1', suggest_details: 'openai/gpt-4o-mini', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
       
       // Презентации
-      presentation: { structure: 'openai/o1-mini', suggest_details: 'openai/gpt-4o-mini', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
+      presentation: { structure: 'openai/o1', suggest_details: 'openai/gpt-4o-mini', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
       
       // Задачи
       task: { task_solve: 'deepseek/deepseek-r1' },
