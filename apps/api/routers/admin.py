@@ -7,7 +7,66 @@ from ..services.model_router import model_router
 from .generations import get_current_user
 import json
 
+from ..services.prompt_service import prompt_service
+from packages.core_domain import Generation
+from packages.core_domain.enums import GenerationStatus, GenerationModule
+from datetime import datetime
+
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+@router.post("/suggest-structure")
+async def suggest_structure(request: dict, user: UserDB = Depends(get_current_user)):
+    """
+    Предлагает структуру работы на основе темы, цели и идеи.
+    """
+    topic = request.get("topic")
+    goal = request.get("goal")
+    idea = request.get("idea")
+    work_type = request.get("workType")
+    volume = request.get("volume", 10)
+    complexity = request.get("complexity", "student")
+
+    if not topic:
+        raise HTTPException(status_code=400, detail="Topic is required")
+
+    # Используем динамический роутинг
+    model_config = model_router.get_model_for_step("structure")
+    model_name = model_config["model"]
+
+    # Создаем фиктивный объект Generation для PromptService
+    dummy_gen = Generation(
+        id=UUID("00000000-0000-0000-0000-000000000000"),
+        user_id=user.id,
+        module=GenerationModule.TEXT,
+        status=GenerationStatus.DRAFT,
+        work_type=work_type,
+        complexity_level=complexity,
+        input_payload={"topic": topic, "goal": goal, "idea": idea, "volume": volume},
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
+
+    prompt = prompt_service.construct_structure_prompt(dummy_gen)
+
+    try:
+        raw_response = await openai_service.chat_completion(
+            model=model_name,
+            messages=[{"role": "user", "content": prompt}],
+            json_mode=True
+        )
+        
+        if not raw_response:
+            raise ValueError("Failed to get response from AI")
+            
+        return json.loads(raw_response)
+    except Exception as e:
+        return {"structure": [
+            {"title": "Введение", "level": 1},
+            {"title": "Глава 1. Обзор предметной области", "level": 1},
+            {"title": "Глава 2. Практическая часть", "level": 1},
+            {"title": "Заключение", "level": 1},
+            {"title": "Список литературы", "level": 1}
+        ]}
 
 def require_admin(user: UserDB = Depends(get_current_user)):
     if user.role != "admin":

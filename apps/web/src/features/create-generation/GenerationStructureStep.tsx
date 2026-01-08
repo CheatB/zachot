@@ -20,17 +20,9 @@ function GenerationStructureStep({ structure, onChange }: GenerationStructureSte
 
   useEffect(() => {
     if (items.length === 0) {
-      const defaultStructure: StructureItem[] = [
-        { id: '1', title: 'Введение', level: 1 },
-        { id: '2', title: 'Глава 1. Теоретические основы исследования', level: 1 },
-        { id: '3', title: '1.1. Основные понятия и определения', level: 2 },
-        { id: '4', title: '1.2. Обзор существующих подходов', level: 2 },
-        { id: '5', title: 'Глава 2. Анализ предметной области', level: 1 },
-        { id: '6', title: 'Заключение', level: 1 },
-        { id: '7', title: 'Список литературы', level: 1 },
-      ]
-      setItems(defaultStructure)
-      onChange(defaultStructure)
+      const emptyStructure: StructureItem[] = []
+      setItems(emptyStructure)
+      onChange(emptyStructure)
     }
   }, [items.length, onChange])
 

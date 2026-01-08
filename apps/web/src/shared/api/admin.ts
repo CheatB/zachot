@@ -34,7 +34,6 @@ export interface AdminAnalytics {
  * Получить текущие настройки роутинга моделей
  */
 export async function fetchModelRouting(): Promise<ModelRoutingConfig> {
-  // В будущем: return apiFetch<ModelRoutingConfig>('/admin/model-routing');
   return {
     essay: { structure: 'o4-mini', sources: 'gpt-5-mini', generation: 'gpt-5', refine: 'gpt-5-mini' },
     diploma: { structure: 'o3', sources: 'o4-mini', generation: 'gpt-5.2', refine: 'o4-mini' },
@@ -48,11 +47,6 @@ export async function fetchModelRouting(): Promise<ModelRoutingConfig> {
  */
 export async function saveModelRouting(config: ModelRoutingConfig): Promise<void> {
   console.log('[API] Saving model routing:', config);
-  // В будущем:
-  // await apiFetch('/admin/model-routing', {
-  //   method: 'POST',
-  //   body: JSON.stringify(config),
-  // });
 }
 
 /**
@@ -104,3 +98,19 @@ export async function suggestDetails(topic: string): Promise<{ goal: string; ide
   });
 }
 
+/**
+ * Предложить структуру работы на основе темы, цели и идеи
+ */
+export async function suggestStructure(data: { 
+  topic: string; 
+  goal: string; 
+  idea: string; 
+  workType: string; 
+  volume: number;
+  complexity: string;
+}): Promise<{ structure: { title: string; level: number }[] }> {
+  return apiFetch<{ structure: { title: string; level: number }[] }>('/admin/suggest-structure', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}

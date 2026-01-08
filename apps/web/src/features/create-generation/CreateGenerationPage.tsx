@@ -24,7 +24,7 @@ import type { CreateGenerationForm, GenerationType, WorkType, PresentationStyle,
 import { workTypeConfigs } from './types'
 import { motion as motionTokens } from '@/design-tokens'
 import { createGeneration, updateGeneration, executeAction, createJob, getGenerationById } from '@/shared/api/generations'
-import { suggestDetails } from '@/shared/api/admin'
+import { suggestDetails, suggestStructure } from '@/shared/api/admin'
 
 type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 3 | 4 | 5 | 6
 
@@ -288,10 +288,33 @@ function CreateGenerationPage() {
           { id: '4', label: 'Проверяю связность введения...' }
         ]
       })
-      setTimeout(() => {
-        setTransitionState(null)
-        setCurrentStep(4)
-      }, 3000)
+      
+      suggestStructure({
+        topic: form.input,
+        goal: form.goal,
+        idea: form.idea,
+        workType: form.workType || 'other',
+        volume: form.volume,
+        complexity: form.complexityLevel
+      })
+        .then(data => {
+          setForm(prev => {
+            const structureWithIds = data.structure.map((item, idx) => ({
+              ...item,
+              id: `${idx}-${Date.now()}`
+            }))
+            const newForm = { ...prev, structure: structureWithIds }
+            saveDraft(newForm)
+            return newForm
+          })
+          setTransitionState(null)
+          setCurrentStep(4)
+        })
+        .catch(err => {
+          console.error('Failed to suggest structure:', err)
+          setTransitionState(null)
+          setCurrentStep(4)
+        })
     } else if (currentStep === 4) {
       setTransitionState({
         title: 'Подбираю литературу',
