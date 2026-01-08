@@ -90,7 +90,6 @@ const appShellStyles = `
 
 .app-shell__main {
   flex: 1;
-  overflow-y: auto;
   padding-bottom: var(--spacing-64);
 }
 

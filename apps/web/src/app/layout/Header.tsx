@@ -151,9 +151,8 @@ const headerStyles = `
   width: 100%;
   background-color: var(--color-surface-base);
   border-bottom: 1px solid var(--color-border-base);
-  position: sticky;
-  top: 0;
-  z-index: var(--z-index-dropdown);
+  position: relative;
+  z-index: var(--z-index-sticky);
   backdrop-filter: blur(8px);
 }
 

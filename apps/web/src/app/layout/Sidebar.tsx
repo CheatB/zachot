@@ -171,7 +171,7 @@ const sidebarStyles = `
 
 .app-sidebar {
   position: fixed;
-  top: 64px; /* Header height offset */
+  top: 0;
   left: 0;
   bottom: 0;
   width: 300px;
@@ -183,8 +183,9 @@ const sidebarStyles = `
 
 @media (min-width: 1024px) {
   .app-sidebar {
-    position: relative;
+    position: sticky;
     top: 0;
+    height: 100vh;
     width: 300px;
     flex-shrink: 0;
     background-color: var(--color-surface-base);
