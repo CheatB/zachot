@@ -15,24 +15,25 @@ interface GenerationTypeStepProps {
   onSelect: (type: GenerationType) => void
 }
 
-const typeOptions: (GenerationTypeOption & { illustration?: string })[] = [
+const typeOptions: (GenerationTypeOption & { illustration?: string; illustrationOffsetLeft?: number })[] = [
   {
     type: 'text',
-    title: 'Создать текстовую работу',
+    title: 'Текстовая работа',
     description: 'Любой вид работы с реальными источниками, оформлением по ГОСТу и защитой от проверки на ИИ',
     icon: '',
-    illustration: '/assets/illustrations/text-work.png'
+    illustration: '/assets/illustrations/text-work.png',
+    illustrationOffsetLeft: 5 // Сдвиг влево на 5 пикселей
   },
   {
     type: 'presentation',
-    title: 'Подготовить презентацию',
+    title: 'Презентация',
     description: 'Презентации по заданной теме в разных стилях оформления',
     icon: '',
     illustration: '/assets/illustrations/presentation.png'
   },
   {
     type: 'task',
-    title: 'Решить задачу',
+    title: 'Решение задач',
     description: 'Разберись, как решать задачки по вышке, химии или экономике. Больше 100+ предметов',
     icon: '',
   },
@@ -99,7 +100,8 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
                 className={clsx(
                   'wizard-type-card', 
                   isSelected && 'wizard-type-card--selected',
-                  option.type === 'presentation' && 'wizard-type-card--presentation'
+                  option.type === 'presentation' && 'wizard-type-card--presentation',
+                  option.type === 'text' && 'wizard-type-card--text'
                 )}
                 onClick={() => onSelect(option.type)}
                 whileHover={{ y: -8, scale: 1.01 }}
@@ -117,7 +119,10 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
                 </div>
 
                 {option.illustration && (
-                  <div className="wizard-type-card__illustration">
+                  <div 
+                    className="wizard-type-card__illustration"
+                    style={option.illustrationOffsetLeft ? { right: `${-15 + option.illustrationOffsetLeft}px` } : undefined}
+                  >
                     <img src={option.illustration} alt="" />
                   </div>
                 )}
@@ -167,7 +172,7 @@ const stepStyles = `
 .wizard-type-card {
   position: relative;
   width: 100%;
-  min-height: 225px; /* Увеличено на 10px (было 215px) */
+  min-height: 245px; /* Увеличено на 20px (было 225px) */
   padding: var(--spacing-24) var(--spacing-16);
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
@@ -207,7 +212,7 @@ const stepStyles = `
 }
 
 .wizard-type-card__title {
-  font-size: var(--font-size-lg);
+  font-size: calc(var(--font-size-lg) + 3px); /* Увеличено на 3 пикселя */
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
