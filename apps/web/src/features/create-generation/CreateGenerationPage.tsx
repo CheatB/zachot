@@ -15,7 +15,6 @@ import TaskInputStep from './TaskInputStep'
 import TaskModeStep from './TaskModeStep'
 import PresentationStyleStep from './PresentationStyleStep'
 import GenerationStyleStep from './GenerationStyleStep'
-import GenerationInputStep from './GenerationInputStep'
 import GenerationGoalStep from './GenerationGoalStep'
 import GenerationStructureStep from './GenerationStructureStep'
 import GenerationSourcesStep from './GenerationSourcesStep'
@@ -27,7 +26,7 @@ import { motion as motionTokens } from '@/design-tokens'
 import { createGeneration, executeAction, createJob } from '@/shared/api/generations'
 import { suggestDetails } from '@/shared/api/admin'
 
-type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 2 | 3 | 4 | 5 | 6
+type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 3 | 4 | 5 | 6
 
 function CreateGenerationPage() {
   const navigate = useNavigate()
@@ -70,22 +69,17 @@ function CreateGenerationPage() {
       case 1.5:
         return {
           title: 'Какую работу создаём?',
-          subtitle: 'От типа работы зависят настройки оформления по ГОСТу и стиль генерации текста.'
+          subtitle: 'Укажите тип работы и тему — это поможет нам подобрать правильный стиль и ГОСТ.'
         }
       case 1.6:
         return {
-          title: 'Выберите стиль презентации',
-          subtitle: 'Стиль влияет на визуальное оформление и структуру слайдов.'
+          title: 'Настройка презентации',
+          subtitle: 'Выберите стиль оформления и укажите тему выступления.'
         }
       case 1.7:
         return {
           title: 'Настройка стиля и качества',
           subtitle: 'Эти параметры влияют на используемый словарь и защиту от обнаружения ИИ.'
-        }
-      case 2:
-        return {
-          title: 'О чем будет работа?',
-          subtitle: 'Чем подробнее описание, тем точнее будет черновик'
         }
       case 3:
         return {
@@ -143,6 +137,29 @@ function CreateGenerationPage() {
     setForm((prev) => ({ ...prev, input: value }))
   }
 
+  const startAiAnalysis = () => {
+    if (!form.input.trim()) return
+    
+    setIsSuggesting(true)
+    setTransitionState({
+      title: 'Анализирую тему',
+      tasks: [
+        { id: '1', label: 'Изучаю контекст темы...' },
+        { id: '2', label: 'Подбираю академический стиль...' },
+        { id: '3', label: 'Формулирую научную цель...' },
+        { id: '4', label: 'Выделяю главный тезис...' }
+      ]
+    })
+    
+    suggestDetails(form.input)
+      .then(details => {
+        setForm(prev => ({ ...prev, ...details }))
+        setTransitionState(null)
+        setCurrentStep(3)
+      })
+      .finally(() => setIsSuggesting(false))
+  }
+
   const handleNext = () => {
     if (currentStep === 1 && form.type) {
       if (form.type === 'text') setCurrentStep(1.5)
@@ -152,32 +169,12 @@ function CreateGenerationPage() {
       setCurrentStep(1.3)
     } else if (currentStep === 1.3 && form.taskMode) {
       setCurrentStep(6)
-    } else if (currentStep === 1.5 && form.workType) {
+    } else if (currentStep === 1.5 && form.workType && form.input.trim()) {
       setCurrentStep(1.7)
-    } else if (currentStep === 1.6 && form.presentationStyle) {
-      setCurrentStep(2)
+    } else if (currentStep === 1.6 && form.presentationStyle && form.input.trim()) {
+      startAiAnalysis()
     } else if (currentStep === 1.7) {
-      setCurrentStep(2)
-    } else if (currentStep === 2 && form.input.trim()) {
-      // Предлагаем детали через AI при переходе с темы на цель/идею
-      setIsSuggesting(true)
-      setTransitionState({
-        title: 'Анализирую тему',
-        tasks: [
-          { id: '1', label: 'Изучаю контекст темы...' },
-          { id: '2', label: 'Подбираю академический стиль...' },
-          { id: '3', label: 'Формулирую научную цель...' },
-          { id: '4', label: 'Выделяю главный тезис...' }
-        ]
-      })
-      
-      suggestDetails(form.input)
-        .then(details => {
-          setForm(prev => ({ ...prev, ...details }))
-          setTransitionState(null)
-          setCurrentStep(3)
-        })
-        .finally(() => setIsSuggesting(false))
+      startAiAnalysis()
     } else if (currentStep === 3) {
       setTransitionState({
         title: 'Проектирую структуру',
@@ -217,13 +214,10 @@ function CreateGenerationPage() {
       setCurrentStep(1.2)
     } else if (currentStep === 1.7) {
       setCurrentStep(1.5)
-    } else if (currentStep === 2) {
-      if (form.type === 'text') setCurrentStep(1.7)
-      else if (form.type === 'presentation') setCurrentStep(1.6)
-      else if (form.type === 'task') setCurrentStep(1.3)
-      else setCurrentStep(1)
     } else if (currentStep === 3) {
-      setCurrentStep(2)
+      if (form.type === 'presentation') setCurrentStep(1.6)
+      else if (form.type === 'text') setCurrentStep(1.7)
+      else setCurrentStep(1)
     } else if (currentStep === 4) {
       setCurrentStep(3)
     } else if (currentStep === 5) {
@@ -277,9 +271,8 @@ function CreateGenerationPage() {
     if (currentStep === 1) return form.type !== null
     if (currentStep === 1.2) return form.taskFiles.length > 0 || form.input.trim().length > 0
     if (currentStep === 1.3) return form.taskMode !== null
-    if (currentStep === 1.5) return form.workType !== null
-    if (currentStep === 1.6) return form.presentationStyle !== null
-    if (currentStep === 2) return form.input.trim().length > 0
+    if (currentStep === 1.5) return form.workType !== null && form.input.trim().length > 0
+    if (currentStep === 1.6) return form.presentationStyle !== null && form.input.trim().length > 0
     if (currentStep === 3) return form.goal.trim().length > 0 && form.idea.trim().length > 0
     if (currentStep === 4) return form.structure.length > 0
     if (currentStep === 5) return form.sources.length > 0
@@ -336,18 +329,18 @@ function CreateGenerationPage() {
         </motion.div>
 
           <div className="wizard-progress" style={{ marginBottom: 'var(--spacing-40)', width: '100%', justifyContent: 'flex-start' }}>
-            {[1, 1.2, 1.3, 1.5, 1.6, 1.7, 2, 3, 4, 5, 6].map((step) => {
+            {[1, 1.2, 1.3, 1.5, 1.6, 1.7, 3, 4, 5, 6].map((step) => {
               const shouldShow = (s: number) => {
                 if (s === 1.5 || s === 1.7) return form.type === 'text'
                 if (s === 1.6) return form.type === 'presentation'
                 if (s === 1.2 || s === 1.3) return form.type === 'task'
-                if (s === 2 || s === 3 || s === 4 || s === 5) return form.type !== 'task'
+                if (s === 3 || s === 4 || s === 5) return form.type !== 'task'
                 return true
               }
               if (!shouldShow(step)) return null
               
               const isActive = step === currentStep
-              const isCompleted = step < currentStep || (step === 1 && currentStep > 1) || (step === 1.2 && currentStep > 1.2) || (step === 1.3 && currentStep > 1.3) || (step === 1.5 && currentStep > 1.5) || (step === 1.6 && currentStep > 1.6) || (step === 1.7 && currentStep > 1.7) || (step === 2 && currentStep > 2) || (step === 3 && currentStep > 3) || (step === 4 && currentStep > 4) || (step === 5 && currentStep > 5)
+              const isCompleted = step < currentStep || (step === 1 && currentStep > 1) || (step === 1.2 && currentStep > 1.2) || (step === 1.3 && currentStep > 1.3) || (step === 1.5 && currentStep > 1.5) || (step === 1.6 && currentStep > 1.6) || (step === 1.7 && currentStep > 1.7) || (step === 3 && currentStep > 3) || (step === 4 && currentStep > 4) || (step === 5 && currentStep > 5)
 
               return (
                 <div key={step} className="wizard-progress__item">
@@ -382,10 +375,9 @@ function CreateGenerationPage() {
                 {currentStep === 1 && <GenerationTypeStep key="step-1" selectedType={form.type} onSelect={handleTypeSelect} />}
                 {currentStep === 1.2 && <TaskInputStep key="step-1-2" input={form.input} files={form.taskFiles} onInputChange={handleInputChange} onFilesChange={handleTaskFilesChange} />}
                 {currentStep === 1.3 && <TaskModeStep key="step-1-3" selectedMode={form.taskMode} onSelect={handleTaskModeSelect} />}
-                {currentStep === 1.5 && <WorkTypeStep key="step-1-5" selectedWorkType={form.workType} onSelect={handleWorkTypeSelect} />}
-                {currentStep === 1.6 && <PresentationStyleStep key="step-1-6" selectedStyle={form.presentationStyle} onSelect={handlePresentationStyleSelect} />}
+                {currentStep === 1.5 && form.type && <WorkTypeStep key="step-1-5" type={form.type} selectedWorkType={form.workType} onSelect={handleWorkTypeSelect} input={form.input} onInputChange={handleInputChange} />}
+                {currentStep === 1.6 && form.type && <PresentationStyleStep key="step-1-6" type={form.type} selectedStyle={form.presentationStyle} onSelect={handlePresentationStyleSelect} input={form.input} onInputChange={handleInputChange} />}
                 {currentStep === 1.7 && <GenerationStyleStep key="step-1-7" complexity={form.complexityLevel} humanity={form.humanityLevel} onChange={(updates) => setForm(prev => ({...prev, ...updates}))} />}
-                {currentStep === 2 && form.type && <GenerationInputStep key="step-2" type={form.type} input={form.input} onInputChange={handleInputChange} />}
                 {currentStep === 3 && <GenerationGoalStep key="step-3" form={form} isLoading={isSuggesting} onChange={(updates) => setForm(prev => ({ ...prev, ...updates }))} />}
                 {currentStep === 4 && <GenerationStructureStep key="step-4" structure={form.structure} onChange={(structure) => setForm(prev => ({ ...prev, structure }))} />}
                 {currentStep === 5 && <GenerationSourcesStep key="step-5" sources={form.sources} onChange={(sources) => setForm(prev => ({ ...prev, sources }))} />}

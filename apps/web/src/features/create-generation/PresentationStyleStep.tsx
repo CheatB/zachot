@@ -1,35 +1,40 @@
 /**
  * PresentationStyleStep
- * Шаг 1.6: Выбор визуального стиля презентации
+ * Шаг 1.2: Выбор визуального стиля + ввод темы
  */
 
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
-import type { PresentationStyle } from './types'
+import { Textarea } from '@/ui'
+import { type PresentationStyle, type GenerationType } from './types'
 import clsx from 'clsx'
+import { useEffect } from 'react'
 
 interface PresentationStyleStepProps {
+  type: GenerationType
   selectedStyle: PresentationStyle | null
   onSelect: (style: PresentationStyle) => void
+  input: string
+  onInputChange: (value: string) => void
 }
 
 const styleOptions: { id: PresentationStyle; label: string; description: string; colors: string[] }[] = [
   { 
     id: 'academic', 
     label: 'Академический', 
-    description: 'Строгий стиль, синие и серые тона, классические шрифты. Идеально для вуза.',
+    description: 'Строгий стиль, синие и серые тона, классические шрифты.',
     colors: ['#1e3a8a', '#f8fafc', '#334155']
   },
   { 
     id: 'business', 
     label: 'Бизнес', 
-    description: 'Профессиональный и чистый. Акцент на графиках и четкой структуре.',
+    description: 'Профессиональный и чистый. Акцент на графиках и структуре.',
     colors: ['#0f172a', '#ffffff', '#2563eb']
   },
   { 
     id: 'modern', 
     label: 'Современный', 
-    description: 'Яркие акценты, динамичная верстка, современные гротески.',
+    description: 'Яркие акценты, динамичная верстка, современные шрифты.',
     colors: ['#7c3aed', '#fdf2f8', '#111827']
   },
   { 
@@ -40,7 +45,20 @@ const styleOptions: { id: PresentationStyle; label: string; description: string;
   },
 ]
 
-function PresentationStyleStep({ selectedStyle, onSelect }: PresentationStyleStepProps) {
+function PresentationStyleStep({ selectedStyle, onSelect, input, onInputChange }: PresentationStyleStepProps) {
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const styleId = 'presentation-style-step-styles'
+      let style = document.getElementById(styleId) as HTMLStyleElement
+      if (!style) {
+        style = document.createElement('style')
+        style.id = styleId
+        document.head.appendChild(style)
+      }
+      style.textContent = presentationStyles
+    }
+  }, [])
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -52,15 +70,15 @@ function PresentationStyleStep({ selectedStyle, onSelect }: PresentationStyleSte
       }}
     >
       <div className="wizard-step">
-        <div className="presentation-style-grid">
-          {styleOptions.map((option) => {
-            const isSelected = selectedStyle === option.id
+        <div className="presentation-style-grid" style={{ marginBottom: 'var(--spacing-48)' }}>
+          {styleOptions.map((style) => {
+            const isSelected = selectedStyle === style.id
             return (
               <motion.button
-                key={option.id}
+                key={style.id}
                 type="button"
                 className={clsx('style-card', isSelected && 'style-card--selected')}
-                onClick={() => onSelect(option.id)}
+                onClick={() => onSelect(style.id)}
                 whileHover={{ y: -4 }}
                 whileTap={{ y: 0 }}
                 transition={{
@@ -69,17 +87,47 @@ function PresentationStyleStep({ selectedStyle, onSelect }: PresentationStyleSte
                 }}
               >
                 <div className="style-card__preview">
-                  {option.colors.map((color, i) => (
-                    <div key={i} style={{ backgroundColor: color, flex: 1 }} />
+                  {style.colors.map((color, idx) => (
+                    <div key={idx} style={{ backgroundColor: color, flex: 1 }} />
                   ))}
                 </div>
                 <div className="style-card__content">
-                  <h3 className="style-card__title">{option.label}</h3>
-                  <p className="style-card__description">{option.description}</p>
+                  <h3 className="style-card__title">{style.label}</h3>
+                  <p className="style-card__description">{style.description}</p>
                 </div>
               </motion.button>
             )
           })}
+        </div>
+
+        <div className="wizard-input-wrapper">
+          <label style={{ 
+            display: 'block', 
+            fontSize: 'var(--font-size-sm)', 
+            fontWeight: 'var(--font-weight-semibold)', 
+            marginBottom: 'var(--spacing-12)',
+            color: 'var(--color-text-secondary)'
+          }}>
+            Тема презентации
+          </label>
+          <Textarea
+            label=""
+            placeholder="Опишите тему выступления и основные тезисы..."
+            hint="Мы подготовим логическую структуру слайдов"
+            value={input}
+            onChange={(e) => onInputChange(e.target.value)}
+            rows={6}
+            style={{
+              minHeight: '160px',
+              fontFamily: 'var(--font-family-sans)',
+              fontSize: 'var(--font-size-base)',
+              padding: 'var(--spacing-24)',
+              borderRadius: 'var(--radius-lg)',
+              backgroundColor: 'var(--color-neutral-10)',
+              border: '1px solid var(--color-border-base)',
+              boxShadow: 'var(--elevation-1)'
+            }}
+          />
         </div>
       </div>
     </motion.div>
@@ -88,74 +136,60 @@ function PresentationStyleStep({ selectedStyle, onSelect }: PresentationStyleSte
 
 export default PresentationStyleStep
 
-const stepStyles = `
+const presentationStyles = `
 .presentation-style-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--spacing-24);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--spacing-16);
 }
 
 .style-card {
-  width: 100%;
-  background-color: var(--color-surface-base);
-  border: 1px solid var(--color-border-base);
-  border-radius: var(--radius-lg);
-  text-align: left;
-  cursor: pointer;
-  overflow: hidden;
-  transition: all var(--motion-duration-base) ease;
-  box-shadow: var(--elevation-1);
   display: flex;
   flex-direction: column;
-  padding: 0;
+  background: white;
+  border: 1px solid var(--color-border-base);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
 }
 
 .style-card:hover {
+  border-color: var(--color-accent-base);
   box-shadow: var(--elevation-2);
-  border-color: var(--color-border-dark);
 }
 
 .style-card--selected {
   border-color: var(--color-accent-base);
-  box-shadow: 0 4px 12px var(--color-accent-shadow);
+  box-shadow: 0 0 0 2px var(--color-accent-base);
 }
 
 .style-card__preview {
-  height: 80px;
+  height: 60px;
   display: flex;
 }
 
 .style-card__content {
-  padding: var(--spacing-32);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-12);
+  padding: var(--spacing-12);
 }
 
 .style-card__title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  text-align: center;
-  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: bold;
+  margin-bottom: 4px;
 }
 
 .style-card__description {
-  font-size: var(--font-size-sm);
+  font-size: 11px;
   color: var(--color-text-secondary);
-  line-height: var(--line-height-relaxed);
-  text-align: left;
-  margin: 0;
+  line-height: 1.3;
+}
+
+.wizard-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 800px;
 }
 `
-
-if (typeof document !== 'undefined') {
-  const styleId = 'presentation-style-step-styles'
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style')
-    style.id = styleId
-    style.textContent = stepStyles
-    document.head.appendChild(style)
-  }
-}
-

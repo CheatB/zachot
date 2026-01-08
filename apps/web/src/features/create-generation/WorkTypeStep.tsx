@@ -1,19 +1,27 @@
 /**
  * WorkTypeStep
- * Шаг 1.1: Выбор типа академической работы
+ * Шаг 1.1: Выбор типа академической работы + ввод темы
  */
 
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
-import { workTypeConfigs, type WorkType } from './types'
+import { workTypeConfigs, type WorkType, type GenerationType } from './types'
+import { Textarea } from '@/ui'
 import clsx from 'clsx'
 
 interface WorkTypeStepProps {
+  type: GenerationType
   selectedWorkType: WorkType | null
   onSelect: (type: WorkType) => void
+  input: string
+  onInputChange: (value: string) => void
 }
 
-function WorkTypeStep({ selectedWorkType, onSelect }: WorkTypeStepProps) {
+function WorkTypeStep({ type, selectedWorkType, onSelect, input, onInputChange }: WorkTypeStepProps) {
+  const placeholder = type === 'presentation' 
+    ? 'Опишите тему выступления и основные тезисы...' 
+    : 'Введите тему или вставьте план/тезисы, если они есть...'
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -25,7 +33,7 @@ function WorkTypeStep({ selectedWorkType, onSelect }: WorkTypeStepProps) {
       }}
     >
       <div className="wizard-step">
-        <div className="work-type-grid">
+        <div className="work-type-grid" style={{ marginBottom: 'var(--spacing-48)' }}>
           {Object.values(workTypeConfigs).map((config) => {
             const isSelected = selectedWorkType === config.id
             return (
@@ -45,6 +53,36 @@ function WorkTypeStep({ selectedWorkType, onSelect }: WorkTypeStepProps) {
             )
           })}
         </div>
+
+        <div className="wizard-input-wrapper">
+          <label style={{ 
+            display: 'block', 
+            fontSize: 'var(--font-size-sm)', 
+            fontWeight: 'var(--font-weight-semibold)', 
+            marginBottom: 'var(--spacing-12)',
+            color: 'var(--color-text-secondary)'
+          }}>
+            О чем будет работа?
+          </label>
+          <Textarea
+            label=""
+            placeholder={placeholder}
+            hint="Чем подробнее описание, тем точнее будет черновик"
+            value={input}
+            onChange={(e) => onInputChange(e.target.value)}
+            rows={6}
+            style={{
+              minHeight: '160px',
+              fontFamily: 'var(--font-family-sans)',
+              fontSize: 'var(--font-size-base)',
+              padding: 'var(--spacing-24)',
+              borderRadius: 'var(--radius-lg)',
+              backgroundColor: 'var(--color-neutral-10)',
+              border: '1px solid var(--color-border-base)',
+              boxShadow: 'var(--elevation-1)'
+            }}
+          />
+        </div>
       </div>
     </motion.div>
   )
@@ -57,7 +95,7 @@ const stepStyles = `
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-12);
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .work-type-card {
@@ -68,7 +106,7 @@ const stepStyles = `
   text-align: center;
   cursor: pointer;
   transition: all var(--motion-duration-base) ease;
-  min-width: 160px;
+  min-width: 140px;
 }
 
 .work-type-card:hover {
@@ -87,16 +125,22 @@ const stepStyles = `
   font-weight: var(--font-weight-medium);
   color: inherit;
 }
+
+.wizard-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 800px;
+}
 `
 
 if (typeof document !== 'undefined') {
   const styleId = 'work-type-step-styles'
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style')
+  let style = document.getElementById(styleId) as HTMLStyleElement
+  if (!style) {
+    style = document.createElement('style')
     style.id = styleId
-    style.textContent = stepStyles
     document.head.appendChild(style)
   }
+  style.textContent = stepStyles
 }
-
-
