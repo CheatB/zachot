@@ -20,7 +20,34 @@ const complexityOptions: { id: ComplexityLevel; label: string; description: stri
   { id: 'research', label: 'Научная публикация', description: 'Высокий уровень абстракции, критический анализ, строгий научный язык.' },
 ]
 
+const humanityOptions = [
+  { 
+    id: 0, 
+    label: 'Очеловечивание отключено', 
+    description: 'На этом уровне система не применяет настройки «очеловечивания» к тексту. Он получается максимально структурированным, но может содержать типичные конструкции ИИ.' 
+  },
+  { 
+    id: 50, 
+    label: 'Базовое очеловечивание', 
+    description: 'Текст становится более естественным и плавным за счет замены монотонных конструкций синонимами и удаления лишней канцелярии. Идеально для большинства учебных работ.' 
+  },
+  { 
+    id: 100, 
+    label: 'Anti-AI режим', 
+    description: 'Максимальная имитация стиля живого автора. Система меняет ритм предложений и использует специфические обороты, чтобы успешно пройти проверку на детекторах ИИ-генерации.' 
+  },
+]
+
 function GenerationStyleStep({ complexity, humanity, onChange }: GenerationStyleStepProps) {
+  // Определяем активную опцию очеловечивания на основе текущего значения
+  const getActiveHumanityId = (value: number) => {
+    if (value < 20) return 0
+    if (value <= 70) return 50
+    return 100
+  }
+
+  const activeHumanityId = getActiveHumanityId(humanity)
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -34,7 +61,7 @@ function GenerationStyleStep({ complexity, humanity, onChange }: GenerationStyle
       <div className="wizard-step">
         <Stack gap="xl">
           <div>
-            <label style={{ display: 'block', fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-medium)', marginBottom: 'var(--spacing-16)', color: 'var(--color-text-secondary)' }}>
+            <label style={{ display: 'block', fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--spacing-16)', color: 'var(--color-text-secondary)' }}>
               Уровень сложности
             </label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-12)' }}>
@@ -58,30 +85,43 @@ function GenerationStyleStep({ complexity, humanity, onChange }: GenerationStyle
                   }}
                 >
                   <div style={{ fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)', textAlign: 'left' }}>{option.label}</div>
-                  <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', textAlign: 'right' }}>{option.description}</div>
+                  <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', textAlign: 'right', maxWidth: '60%' }}>{option.description}</div>
                 </button>
               ))}
             </div>
           </div>
 
           <div style={{ marginTop: 'var(--spacing-32)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-16)' }}>
-              <label style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-secondary)' }}>
-                Очеловечивание (Anti-AI)
-              </label>
-              <span style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-accent-base)', fontWeight: 'bold' }}>{humanity}%</span>
+            <label style={{ display: 'block', fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--spacing-16)', color: 'var(--color-text-secondary)' }}>
+              Очеловечивание (Anti-AI)
+            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-12)' }}>
+              {humanityOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => onChange({ humanityLevel: option.id })}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: 'var(--spacing-4)',
+                    padding: 'var(--spacing-16) var(--spacing-24)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid',
+                    borderColor: activeHumanityId === option.id ? 'var(--color-accent-base)' : 'var(--color-border-base)',
+                    backgroundColor: activeHumanityId === option.id ? 'var(--color-accent-light)' : 'var(--color-surface-base)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    outline: 'none',
+                    textAlign: 'left'
+                  }}
+                >
+                  <div style={{ fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>{option.label}</div>
+                  <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>{option.description}</div>
+                </button>
+              ))}
             </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={humanity}
-              onChange={(e) => onChange({ humanityLevel: parseInt(e.target.value) })}
-              style={{ width: '100%', accentColor: 'var(--color-accent-base)', cursor: 'pointer', height: '6px', borderRadius: 'var(--radius-full)' }}
-            />
-            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-12)' }}>
-              Высокий уровень усложняет синтаксис и убирает характерные алгоритмические шаблоны. Рекомендуется для курсовых.
-            </p>
           </div>
         </Stack>
       </div>
