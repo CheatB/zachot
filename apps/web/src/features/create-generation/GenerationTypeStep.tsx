@@ -14,24 +14,27 @@ interface GenerationTypeStepProps {
   onSelect: (type: GenerationType) => void
 }
 
-const typeOptions: GenerationTypeOption[] = [
+const typeOptions: (GenerationTypeOption & { illustration?: string })[] = [
   {
     type: 'text',
     title: 'Создать текстовую работу',
     description: 'любой вид работы по заданной теме с реальными источниками, оформлением по ГОСТу и защитой от проверки на ИИ-генерацию',
     icon: '',
+    illustration: '/assets/illustrations/text-work.png'
   },
   {
     type: 'presentation',
     title: 'Подготовить презентацию',
     description: 'презентация по заданной теме в разных стилях оформления',
     icon: '',
+    illustration: '/assets/illustrations/presentation.png'
   },
   {
     type: 'task',
     title: 'Решить задачу',
     description: 'Разберись, как решать задачки по вышке, химии или экономике. Больше 100+ предметов',
     icon: '',
+    illustration: '/assets/illustrations/tasks.png'
   },
 ]
 
@@ -54,7 +57,8 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
             fontWeight: 'var(--font-weight-heading)',
             marginBottom: 'var(--spacing-12)',
             color: 'var(--color-text-primary)',
-            letterSpacing: '-0.02em'
+            letterSpacing: '-0.02em',
+            textAlign: 'center'
           }}
         >
           С чего начнём?
@@ -66,6 +70,7 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
             color: 'var(--color-text-secondary)',
             marginBottom: 'var(--spacing-48)',
             lineHeight: 'var(--line-height-relaxed)',
+            textAlign: 'center'
           }}
         >
           Выберите формат работы. На следующем шаге мы уточним тему и детали.
@@ -79,8 +84,8 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
                 key={option.type}
                 className={clsx('wizard-type-card', isSelected && 'wizard-type-card--selected')}
                 onClick={() => onSelect(option.type)}
-                whileHover={{ y: -8, scale: 1.02 }}
-                whileTap={{ y: 0, scale: 0.98 }}
+                whileHover={{ y: -8, scale: 1.01 }}
+                whileTap={{ y: 0, scale: 0.99 }}
                 transition={{
                   duration: motionTokens.duration.base,
                   ease: motionTokens.easing.out,
@@ -88,9 +93,17 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
                 aria-pressed={isSelected}
                 aria-label={`${option.title}: ${option.description}`}
               >
-                <div className="wizard-type-card__icon">{option.icon}</div>
-                <h3 className="wizard-type-card__title">{option.title}</h3>
-                <p className="wizard-type-card__description">{option.description}</p>
+                <div className="wizard-type-card__content">
+                  <h3 className="wizard-type-card__title">{option.title}</h3>
+                  <p className="wizard-type-card__description">{option.description}</p>
+                </div>
+                
+                {option.illustration && (
+                  <div className="wizard-type-card__illustration">
+                    <img src={option.illustration} alt="" />
+                  </div>
+                )}
+
                 {isSelected && (
                   <div className="wizard-type-card__check">✓</div>
                 )}
@@ -112,7 +125,7 @@ const stepStyles = `
 
 .wizard-type-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: var(--spacing-32);
 }
 
@@ -126,17 +139,18 @@ const stepStyles = `
 .wizard-type-card {
   position: relative;
   width: 100%;
+  min-height: 380px;
   padding: var(--spacing-32);
   background-color: var(--color-surface-base);
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
-  text-align: left;
+  text-align: center;
   cursor: pointer;
   transition: all var(--motion-duration-base) var(--motion-easing-out);
   box-shadow: var(--elevation-2);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-16);
+  overflow: hidden;
 }
 
 .wizard-type-card:hover {
@@ -150,10 +164,12 @@ const stepStyles = `
   box-shadow: 0 20px 40px rgba(22, 163, 74, 0.1);
 }
 
-.wizard-type-card__icon {
-  font-size: var(--font-size-4xl);
-  line-height: 1;
-  margin-bottom: var(--spacing-8);
+.wizard-type-card__content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
 }
 
 .wizard-type-card__title {
@@ -164,15 +180,39 @@ const stepStyles = `
 }
 
 .wizard-type-card__description {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
-  line-height: var(--line-height-relaxed);
+  line-height: 1.3;
+  max-width: 90%;
+  margin: 0 auto;
+}
+
+.wizard-type-card__illustration {
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  width: 70%;
+  height: auto;
+  opacity: 0.9;
+  transition: transform 0.3s var(--motion-easing-out);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.wizard-type-card:hover .wizard-type-card__illustration {
+  transform: scale(1.05) translate(-5px, -5px);
+}
+
+.wizard-type-card__illustration img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .wizard-type-card__check {
   position: absolute;
-  top: var(--spacing-24);
-  right: var(--spacing-24);
+  top: var(--spacing-20);
+  right: var(--spacing-20);
   width: 28px;
   height: 28px;
   background: var(--color-accent-base);
@@ -184,6 +224,7 @@ const stepStyles = `
   font-size: 14px;
   font-weight: bold;
   box-shadow: 0 4px 10px var(--color-accent-shadow);
+  z-index: 3;
 }
 `
 
