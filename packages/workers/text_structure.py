@@ -120,7 +120,17 @@ class TextStructureWorker(BaseWorker):
                 openai_service.chat_completion(model=refine_model, messages=[{"role": "user", "content": humanize_prompt}])
             )
             
-            final_content = refined_text or full_text
+            # 5. Контроль качества (Layer 5: Quality Control)
+            logger.info("Step 5: Quality Control check...")
+            qc_text = refined_text or full_text
+            qc_prompt = prompt_service.construct_qc_prompt(qc_text)
+            
+            final_content = loop.run_until_complete(
+                openai_service.chat_completion(
+                    model="openai/gpt-4o-mini",
+                    messages=[{"role": "user", "content": qc_prompt}]
+                )
+            ) or qc_text
             
             # Финальное сохранение
             generation_store.update(job.generation_id, result_content=final_content, status="completed")

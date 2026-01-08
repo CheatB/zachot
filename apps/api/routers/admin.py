@@ -76,3 +76,30 @@ async def suggest_details(request: dict, user: UserDB = Depends(get_current_user
         return json.loads(raw_response)
     except Exception as e:
         return {"goal": "Исследовать основные аспекты темы", "idea": "Работа направлена на глубокий анализ выбранного направления."}
+
+@router.post("/suggest-title-info")
+async def suggest_title_info(request: dict, user: UserDB = Depends(get_current_user)):
+    """
+    Дополняет информацию для титульного листа (полное название ВУЗа, город).
+    """
+    university_short = request.get("university")
+    if not university_short:
+        raise HTTPException(status_code=400, detail="University name is required")
+
+    prompt = f"""
+    Ты — сотрудник отдела кадров университета. По краткому названию вуза "{university_short}" найди:
+    1. Полное официальное название (например, для МГУ это "Московский государственный университет имени М.В. Ломоносова").
+    2. Город, в котором находится главный корпус.
+    
+    Верни результат в формате JSON: {{"university_full": "...", "city": "..."}}
+    """
+
+    try:
+        raw_response = await openai_service.chat_completion(
+            model="openai/gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            json_mode=True
+        )
+        return json.loads(raw_response or '{"university_full": "' + university_short + '", "city": "Москва"}')
+    except Exception:
+        return {"university_full": university_short, "city": "Москва"}
