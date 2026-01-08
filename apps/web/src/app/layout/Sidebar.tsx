@@ -144,6 +144,8 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
           </motion.aside>
         )}
       </AnimatePresence>
+
+      <style>{sidebarStyles}</style>
     </>
   )
 }
