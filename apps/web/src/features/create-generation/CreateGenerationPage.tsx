@@ -4,7 +4,7 @@
  * Updated for "juicy" landing page aesthetic
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Container, Stack, Button } from '@/ui'
@@ -56,7 +56,7 @@ function CreateGenerationPage() {
     if (currentStep === 1) {
       return {
         title: 'Создать новую работу',
-        subtitle: 'AI-ассистент поможет подготовить качественный черновик по ГОСТу, соответствующий всем академическим нормам.'
+        subtitle: 'Мы поможем подготовить качественную работу по всем академическим нормам'
       }
     }
 
@@ -286,9 +286,22 @@ function CreateGenerationPage() {
     return true
   }
 
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const styleId = 'create-generation-page-styles'
+      let style = document.getElementById(styleId) as HTMLStyleElement
+      if (!style) {
+        style = document.createElement('style')
+        style.id = styleId
+        document.head.appendChild(style)
+      }
+      style.textContent = pageStyles
+    }
+  }, [])
+
   return (
     <Container size="lg">
-      <Stack gap="xl" style={{ paddingTop: 'var(--spacing-48)', paddingBottom: 'var(--spacing-48)' }}>
+      <Stack gap="lg" style={{ paddingTop: 'var(--spacing-32)', paddingBottom: 'var(--spacing-32)' }}>
         
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -299,21 +312,21 @@ function CreateGenerationPage() {
             ease: motionTokens.easing.out,
           }}
         >
-          <h1 style={{ marginBottom: 'var(--spacing-12)', color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>
+          <h1 style={{ marginBottom: 'var(--spacing-8)', color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>
             {title}
           </h1>
           <p style={{ 
-            fontSize: 'var(--font-size-base)', 
+            fontSize: 'var(--font-size-sm)', 
             color: 'var(--color-text-secondary)', 
-            lineHeight: 'var(--line-height-relaxed)', 
-            marginBottom: 'var(--spacing-48)',
+            lineHeight: 'var(--line-height-tight)', 
+            marginBottom: 'var(--spacing-32)',
             maxWidth: '800px'
           }}>
             {subtitle}
           </p>
         </motion.div>
 
-          <div className="wizard-progress">
+          <div className="wizard-progress" style={{ marginBottom: 'var(--spacing-32)' }}>
             {[1, 1.2, 1.3, 1.5, 1.6, 1.7, 2, 3, 4, 5, 6].map((step) => {
               const shouldShow = (s: number) => {
                 if (s === 1.5 || s === 1.7) return form.type === 'text'
@@ -468,13 +481,3 @@ const pageStyles = `
   }
 }
 `
-
-if (typeof document !== 'undefined') {
-  const styleId = 'create-generation-page-styles'
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style')
-    style.id = styleId
-    style.textContent = pageStyles
-    document.head.appendChild(style)
-  }
-}

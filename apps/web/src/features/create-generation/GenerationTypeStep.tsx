@@ -5,6 +5,7 @@
  */
 
 import { motion } from 'framer-motion'
+import { useEffect } from 'react'
 import { motion as motionTokens } from '@/design-tokens'
 import type { GenerationType, GenerationTypeOption } from './types'
 import clsx from 'clsx'
@@ -14,20 +15,18 @@ interface GenerationTypeStepProps {
   onSelect: (type: GenerationType) => void
 }
 
-const typeOptions: (GenerationTypeOption & { illustration?: string })[] = [
+const typeOptions: GenerationTypeOption[] = [
   {
     type: 'text',
     title: 'Создать текстовую работу',
-    description: 'любой вид работы по заданной теме с реальными источниками, оформлением по ГОСТу и защитой от проверки на ИИ-генерацию',
+    description: 'Любой вид работы с реальными источниками, оформлением по ГОСТу и защитой от проверки на ИИ',
     icon: '',
-    illustration: '/assets/illustrations/text-work.png'
   },
   {
     type: 'presentation',
     title: 'Подготовить презентацию',
     description: 'презентация по заданной теме в разных стилях оформления',
     icon: '',
-    illustration: '/assets/illustrations/presentation.png'
   },
   {
     type: 'task',
@@ -38,6 +37,19 @@ const typeOptions: (GenerationTypeOption & { illustration?: string })[] = [
 ]
 
 function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps) {
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const styleId = 'wizard-type-step-styles'
+      let style = document.getElementById(styleId) as HTMLStyleElement
+      if (!style) {
+        style = document.createElement('style')
+        style.id = styleId
+        document.head.appendChild(style)
+      }
+      style.textContent = stepStyles
+    }
+  }, [])
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -96,12 +108,6 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
                   <h3 className="wizard-type-card__title">{option.title}</h3>
                   <p className="wizard-type-card__description">{option.description}</p>
                 </div>
-                
-                {option.illustration && (
-                  <div className="wizard-type-card__illustration">
-                    <img src={option.illustration} alt="" />
-                  </div>
-                )}
 
                 {isSelected && (
                   <div className="wizard-type-card__check">✓</div>
@@ -146,19 +152,19 @@ const stepStyles = `
 .wizard-type-card {
   position: relative;
   width: 100%;
-  min-height: 320px;
-  padding: var(--spacing-24);
+  min-height: 180px;
+  padding: var(--spacing-20) var(--spacing-16);
   background: var(--color-surface-base);
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
-  text-align: left;
+  text-align: center;
   cursor: pointer;
   transition: all var(--motion-duration-base) var(--motion-easing-out);
   box-shadow: var(--elevation-1);
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
   overflow: hidden;
-  isolation: isolate; /* Создает новый контекст наложения для blend-mode */
 }
 
 .wizard-type-card:hover {
@@ -170,7 +176,7 @@ const stepStyles = `
 
 .wizard-type-card--selected {
   border-color: var(--color-accent-base);
-  background: var(--color-accent-light);
+  background: var(--color-accent-light) !important;
   box-shadow: 0 10px 30px rgba(22, 163, 74, 0.1);
 }
 
@@ -179,42 +185,22 @@ const stepStyles = `
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-12);
-  max-width: 80%;
+  gap: var(--spacing-8);
+  width: 100%;
 }
 
 .wizard-type-card__title {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
 }
 
 .wizard-type-card__description {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
-  line-height: 1.4;
-}
-
-.wizard-type-card__illustration {
-  position: absolute;
-  bottom: -10px;
-  right: -10px;
-  width: 180px;
-  height: 180px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.wizard-type-card__illustration img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  mix-blend-mode: multiply; /* Смешивает белый фон картинки с фоном карточки */
-  filter: contrast(1.05) brightness(1.02); /* Немного усиливает белый, чтобы multiply сработал лучше */
+  line-height: 1.3;
+  padding: 0 var(--spacing-4);
 }
 
 .wizard-type-card__check {
@@ -235,13 +221,3 @@ const stepStyles = `
   z-index: 3;
 }
 `
-
-if (typeof document !== 'undefined') {
-  const styleId = 'wizard-type-step-styles'
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style')
-    style.id = styleId
-    style.textContent = stepStyles
-    document.head.appendChild(style)
-  }
-}

@@ -29,6 +29,19 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
     }
   }, [isAuthenticated])
 
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const styleId = 'app-sidebar-styles'
+      let style = document.getElementById(styleId) as HTMLStyleElement
+      if (!style) {
+        style = document.createElement('style')
+        style.id = styleId
+        document.head.appendChild(style)
+      }
+      style.textContent = sidebarStyles
+    }
+  }, [])
+
   const navItems: NavItem[] = [
     { label: 'Мои генерации', path: '/generations', disabled: !isAuthenticated },
     { label: 'Аккаунт', path: '/account', disabled: !isAuthenticated },
@@ -182,8 +195,6 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
           </motion.aside>
         )}
       </AnimatePresence>
-
-      <style>{sidebarStyles}</style>
     </>
   )
 }
@@ -212,7 +223,7 @@ const sidebarStyles = `
   top: 0;
   left: 0;
   bottom: 0;
-  width: 300px;
+  width: 280px;
   background-color: var(--color-neutral-10);
   border-right: 1px solid var(--color-border-base);
   z-index: var(--z-index-modal);
@@ -221,13 +232,15 @@ const sidebarStyles = `
 
 @media (min-width: 1024px) {
   .app-sidebar {
-    position: relative;
+    position: fixed;
     top: 0;
+    left: 0;
     height: 100vh;
-    width: 300px;
+    width: 280px;
     flex-shrink: 0;
     background-color: var(--color-surface-base);
     border-right: 1px solid var(--color-border-base);
+    z-index: var(--z-index-sticky);
   }
 }
 

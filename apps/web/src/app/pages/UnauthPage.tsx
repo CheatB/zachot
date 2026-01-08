@@ -3,6 +3,7 @@
  * Страница для неавторизованных пользователей
  */
 
+import { useEffect } from 'react'
 import { Button, EmptyState } from '@/ui'
 
 function UnauthPage() {
@@ -10,6 +11,19 @@ function UnauthPage() {
     console.log('Login button clicked')
     // TODO: Реализовать логику входа
   }
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const styleId = 'unauth-page-styles'
+      let style = document.getElementById(styleId) as HTMLStyleElement
+      if (!style) {
+        style = document.createElement('style')
+        style.id = styleId
+        document.head.appendChild(style)
+      }
+      style.textContent = pageStyles
+    }
+  }, [])
 
   return (
     <div className="unauth-page">
@@ -43,13 +57,3 @@ const pageStyles = `
   justify-content: center;
 }
 `
-
-if (typeof document !== 'undefined') {
-  const styleId = 'unauth-page-styles'
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style')
-    style.id = styleId
-    style.textContent = pageStyles
-    document.head.appendChild(style)
-  }
-}

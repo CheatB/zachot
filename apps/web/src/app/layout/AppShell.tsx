@@ -65,6 +65,19 @@ function AppShell({ isAuthenticated, user, children }: AppShellProps) {
     return cleanId.substring(0, 2).toUpperCase()
   }
 
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const styleId = 'app-shell-styles'
+      let style = document.getElementById(styleId) as HTMLStyleElement
+      if (!style) {
+        style = document.createElement('style')
+        style.id = styleId
+        document.head.appendChild(style)
+      }
+      style.textContent = appShellStyles
+    }
+  }, [])
+
   // ❗️Если не авторизован — просто рендерим контент без shell
   if (!isAuthenticated) {
     return <>{children}</>
@@ -279,36 +292,34 @@ const appShellStyles = `
 
 .app-shell__container {
   display: flex;
-  flex: 1;
   width: 100%;
+  min-height: 100vh;
 }
 
 .app-shell__main {
   flex: 1;
   background-color: var(--color-surface-base);
-  height: 100vh;
-  overflow-y: auto;
+  min-height: 100vh;
+}
+
+@media (min-width: 1024px) {
+  .app-shell__main {
+    margin-left: 280px;
+  }
 }
 
 .app-shell__content-limit {
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
   width: 100%;
 }
 
 @media (max-width: 1024px) {
-  .app-shell {
+  .app-shell__container {
     flex-direction: column;
+  }
+  .app-shell__main {
+    padding-bottom: var(--spacing-80);
   }
 }
 `
-
-if (typeof document !== 'undefined') {
-  const styleId = 'app-shell-styles'
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style')
-    style.id = styleId
-    style.textContent = appShellStyles
-    document.head.appendChild(style)
-  }
-}
