@@ -46,8 +46,8 @@ function GenerationGoalStep({ form, onChange, isLoading }: GenerationGoalStepPro
             </div>
           )}
 
-          {/* Увеличен отступ между блоками на 5 пикселей через custom gap */}
-          <Stack gap="xl" style={{ gap: '37px' }}> 
+          {/* Увеличен отступ между блоками еще на 5 пикселей (итого 42px) */}
+          <Stack gap="xl" style={{ gap: '42px' }}> 
             <div className="form-field-group">
               <label style={{ 
                 display: 'block', 
@@ -91,17 +91,17 @@ function GenerationGoalStep({ form, onChange, isLoading }: GenerationGoalStepPro
               <label
                 style={{
                   display: 'block',
-                  fontSize: 'var(--font-size-base)', /* Унифицирован шрифт (было sm) */
-                  fontWeight: 'var(--font-weight-semibold)',
+                  fontSize: 'var(--font-size-base)',
+                  fontWeight: 'var(--font-weight-normal)', /* Унифицирован с другими метками (был semibold) */
                   color: 'var(--color-text-secondary)',
                 }}
               >
                 📊 Примерный объём работы
               </label>
               <Tooltip content={
-                <div style={{ padding: '8px', width: '240px' }}>
+                <div style={{ padding: '4px', width: '260px', maxWidth: 'none' }}>
                   <div style={{ fontWeight: 'bold', marginBottom: '8px', color: 'white' }}>Распределение страниц:</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', gap: '16px', color: 'rgba(255,255,255,0.9)' }}>
                       <span>Титульный лист и Содержание:</span>
                       <span style={{ fontWeight: 'bold' }}>2 стр.</span>
