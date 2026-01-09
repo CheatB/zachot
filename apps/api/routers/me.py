@@ -54,5 +54,12 @@ async def get_me(authorization: str = Header(None)):
                 "generationsLimit": user.generations_limit,
                 "tokensUsed": user.tokens_used,
                 "tokensLimit": user.tokens_limit
+            },
+            fairUseMode=user.fair_use_mode,
+            capabilities={
+                "streamingAvailable": True,
+                "maxTokensPerRequest": 8000 if user.plan_name.startswith("BASE") else 16000,
+                "priority": "normal" if user.plan_name.startswith("BASE") else "high",
+                "resultPersistence": True
             }
         )

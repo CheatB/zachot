@@ -90,11 +90,20 @@ class UserUsageInfo(BaseModel):
     tokensLimit: int
 
 
+class UserCapabilities(BaseModel):
+    streamingAvailable: bool
+    maxTokensPerRequest: int
+    priority: Literal['low', 'normal', 'high']
+    resultPersistence: bool
+
+
 class MeResponse(BaseModel):
     id: UUID
     role: str
     subscription: UserSubscriptionInfo
     usage: UserUsageInfo
+    fairUseMode: Literal['normal', 'degraded', 'strict']
+    capabilities: UserCapabilities
 
 
 class UserAdminResponse(BaseModel):

@@ -48,7 +48,6 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
 
   const mainNavItems: NavItem[] = [
     { label: 'Мои генерации', path: '/generations', disabled: !isAuthenticated, icon: '📄' },
-    { label: 'Аккаунт', path: '/account', disabled: !isAuthenticated, icon: '👤' },
     { label: 'Оплата', path: '/billing', disabled: !isAuthenticated, icon: '💳' },
     { label: 'Профиль', path: '/profile', disabled: !isAuthenticated, icon: '⚙️' },
   ]

@@ -56,6 +56,7 @@ class User(Base):
     generations_limit = Column(Integer, default=5)
     tokens_used = Column(Integer, default=0)
     tokens_limit = Column(Integer, default=100000)
+    fair_use_mode = Column(String, default="normal") # 'normal', 'degraded', 'strict'
     
     generations = relationship("GenerationDB", back_populates="user")
 

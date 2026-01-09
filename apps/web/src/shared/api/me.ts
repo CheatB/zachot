@@ -20,6 +20,13 @@ export interface MeResponse {
     tokensUsed: number;
     tokensLimit: number;
   };
+  fairUseMode: 'normal' | 'degraded' | 'strict';
+  capabilities: {
+    streamingAvailable: boolean;
+    maxTokensPerRequest: number;
+    priority: 'low' | 'normal' | 'high';
+    resultPersistence: boolean;
+  };
 }
 
 /**
