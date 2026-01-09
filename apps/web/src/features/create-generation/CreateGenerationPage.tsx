@@ -31,7 +31,14 @@ type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 3 | 4 | 5 | 6
 function CreateGenerationPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [currentStep, setCurrentStep] = useState<WizardStep>(1)
+  const [currentStep, setCurrentStepState] = useState<WizardStep>(1)
+  const currentStepRef = useRef<number>(1)
+  
+  const setCurrentStep = (step: WizardStep) => {
+    currentStepRef.current = step
+    setCurrentStepState(step)
+  }
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuggesting, setIsSuggesting] = useState(false)
   
@@ -163,7 +170,7 @@ function CreateGenerationPage() {
         task_mode: currentForm.taskMode,
         has_files: currentForm.taskFiles.length > 0,
         use_smart_processing: currentForm.useSmartProcessing,
-        current_step: stepOverride ?? currentStep
+        current_step: stepOverride ?? currentStepRef.current
       },
       settings_payload: {
         structure: currentForm.structure,

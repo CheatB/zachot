@@ -8,6 +8,7 @@ import { motion as motionTokens } from '@/design-tokens'
 import { Badge } from '@/ui'
 import type { Generation } from '@/shared/api/generations'
 import { formatRelativeTime } from '@/utils/format'
+import { useEffect } from 'react'
 import clsx from 'clsx'
 
 interface GenerationCardProps {
@@ -88,6 +89,19 @@ function GenerationCard({ generation, onClick }: GenerationCardProps) {
   }
 
   const shouldReduceMotion = false
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const styleId = 'generation-card-styles'
+      let style = document.getElementById(styleId) as HTMLStyleElement
+      if (!style) {
+        style = document.createElement('style')
+        style.id = styleId
+        document.head.appendChild(style)
+      }
+      style.textContent = cardStyles
+    }
+  }, [])
 
   return (
     <motion.button
@@ -224,14 +238,3 @@ const cardStyles = `
   }
 }
 `
-
-if (typeof document !== 'undefined') {
-  const styleId = 'generation-card-styles'
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style')
-    style.id = styleId
-    style.textContent = cardStyles
-    document.head.appendChild(style)
-  }
-}
-
