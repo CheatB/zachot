@@ -172,7 +172,7 @@ const stepStyles = `
 .wizard-type-card {
   position: relative;
   width: 100%;
-  min-height: 265px; /* Увеличено еще на 20px (было 245px) */
+  min-height: 275px; /* Увеличено на 10px (было 265px) */
   padding: var(--spacing-24) var(--spacing-16);
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
