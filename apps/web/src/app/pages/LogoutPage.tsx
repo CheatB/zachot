@@ -4,12 +4,10 @@
  */
 
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 
 function LogoutPage() {
   const { logout } = useAuth()
-  const navigate = useNavigate()
 
   useEffect(() => {
     // Очищаем first-time флаги при logout
@@ -17,8 +15,9 @@ function LogoutPage() {
     sessionStorage.removeItem('zachot_has_generations')
     
     logout()
-    navigate('/')
-  }, [logout, navigate])
+    // Редирект на внешний лендинг после выхода
+    window.location.href = 'https://zachet.tech'
+  }, [logout])
 
   return null
 }

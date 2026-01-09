@@ -21,7 +21,12 @@ function AppBoundary({ children }: AppBoundaryProps) {
     return <GlobalLoader />
   }
 
-  // 2. Auth resolved, но пользователь не authenticated — показываем UnauthPage
+  // 2. Разрешаем доступ к странице логина и выхода без проверки авторизации
+  if (location.pathname === '/login' || location.pathname === '/logout') {
+    return <>{children}</>
+  }
+
+  // 3. Auth resolved, но пользователь не authenticated — показываем UnauthPage
   if (!isAuthenticated) {
     return <UnauthPage />
   }
