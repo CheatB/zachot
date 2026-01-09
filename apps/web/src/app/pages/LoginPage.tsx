@@ -17,7 +17,7 @@ function LoginPage() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [authLink, setAuthLink] = useState<string | null>(null)
-  const pollingInterval = useRef<any>(null)
+  const pollingInterval = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     if (isAuthenticated) {

@@ -45,7 +45,9 @@ async function performFetch<T>(
     try {
       const data = await res.json()
       message = data?.detail || data?.message || message
-    } catch {}
+    } catch {
+      // Ignore JSON parse errors
+    }
 
     if (res.status === 401 && !isRetry) {
       if (!refreshPromise) {

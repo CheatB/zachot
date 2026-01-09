@@ -3,6 +3,7 @@
  * Simple notification system
  */
 
+/* eslint-disable react-refresh/only-export-components */
 import { useState, createContext, useContext, useCallback, ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 

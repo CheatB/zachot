@@ -3,16 +3,15 @@
  * Status indicators: neutral/success/warn/danger
  */
 
-import { motion } from 'framer-motion'
+import { motion, HTMLMotionProps } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { forwardRef } from 'react'
 import clsx from 'clsx'
 
 type BadgeStatus = 'neutral' | 'success' | 'warn' | 'danger'
 
-interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+interface BadgeProps extends HTMLMotionProps<'span'> {
   status?: BadgeStatus
-  children: React.ReactNode
 }
 
 const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
@@ -27,7 +26,7 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
           duration: motionTokens.duration.fast,
           ease: motionTokens.easing.out,
         }}
-        {...(props as any)}
+        {...props}
       >
         {children}
       </motion.span>

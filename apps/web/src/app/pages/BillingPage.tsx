@@ -36,7 +36,7 @@ function BillingPage() {
 
   const pricingData = useMemo(() => {
     switch (period) {
-      case 'quarter':
+      case 'quarter': {
         const quarterMonthly = Math.round(basePrice * 0.9)
         return {
           monthly: quarterMonthly,
@@ -45,7 +45,8 @@ function BillingPage() {
           showBadge: true,
           description: 'Подписка "Зачёт" — 3 месяца',
         }
-      case 'year':
+      }
+      case 'year': {
         const yearMonthly = Math.round(basePrice * 0.85)
         return {
           monthly: yearMonthly,
@@ -54,6 +55,7 @@ function BillingPage() {
           showBadge: false,
           description: 'Подписка "Зачёт" — 12 месяцев',
         }
+      }
       default:
         return {
           monthly: basePrice,
@@ -63,7 +65,7 @@ function BillingPage() {
           description: 'Подписка "Зачёт" — 1 месяц',
         }
     }
-  }, [period])
+  }, [period, basePrice])
 
   const handleCheckout = async () => {
     if (!isAuthenticated) return

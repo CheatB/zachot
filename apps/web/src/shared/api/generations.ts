@@ -10,8 +10,10 @@ export interface Generation {
   humanity_level?: number;
   created_at: string;
   updated_at: string;
-  input_payload: Record<string, any> & { current_step?: number };
-  settings_payload: Record<string, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  input_payload: any & { current_step?: number };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  settings_payload: any;
   result_content?: string;
 }
 
@@ -24,8 +26,10 @@ export interface CreateGenerationData {
   work_type?: string | null;
   complexity_level?: string;
   humanity_level?: number;
-  input_payload: Record<string, any>;
-  settings_payload?: Record<string, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  input_payload: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  settings_payload?: any;
 }
 
 export async function fetchGenerations(): Promise<GenerationsResponse> {

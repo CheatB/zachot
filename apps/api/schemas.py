@@ -101,7 +101,8 @@ class MeResponse(BaseModel):
     id: UUID
     role: str
     telegram_username: Optional[str] = None
-    subscription: UserSubscriptionInfo    usage: UserUsageInfo
+    subscription: UserSubscriptionInfo
+    usage: UserUsageInfo
     fairUseMode: Literal['normal', 'degraded', 'strict']
     capabilities: UserCapabilities
 

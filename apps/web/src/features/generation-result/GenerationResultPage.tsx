@@ -176,7 +176,7 @@ function GenerationResultPage() {
               {generation.result_content && (
                 <ResultContent 
                   content={generation.result_content} 
-                  type={generation.module as any} 
+                  type={generation.module} 
                   onUpdate={(updated) => setGeneration(updated)}
                 />
               )}
@@ -188,7 +188,7 @@ function GenerationResultPage() {
                 onExport={handleExport}
               />
 
-              <ResultMeta type={generation.module as any} durationSeconds={120} />
+              <ResultMeta type={generation.module} durationSeconds={120} />
             </Stack>
           </Container>
         )
