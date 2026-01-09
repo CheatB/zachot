@@ -77,7 +77,7 @@ function CreateGenerationPage() {
           presentationStyle: (gen.input_payload.presentation_style as PresentationStyle) || null,
           taskMode: (gen.input_payload.task_mode as TaskMode) || null,
           taskFiles: [], 
-          complexityLevel: (gen.complexity_level as any) || 'student',
+          complexityLevel: (gen.complexity_level as ComplexityLevel) || 'student',
           humanityLevel: gen.humanity_level || 50,
           input: gen.input_payload.topic || gen.input_payload.input || '',
           goal: gen.input_payload.goal || '',
@@ -156,7 +156,7 @@ function CreateGenerationPage() {
   const saveDraft = useCallback(async (currentForm: CreateGenerationForm, stepOverride?: number) => {
     if (!currentForm.type) return
 
-    const draftData: any = {
+    const draftData = {
       module: currentForm.type.toUpperCase(),
       work_type: currentForm.workType,
       complexity_level: currentForm.complexityLevel,
