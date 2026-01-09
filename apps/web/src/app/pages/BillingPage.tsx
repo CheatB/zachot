@@ -1,145 +1,399 @@
 /**
  * BillingPage
  * Страница оплаты и управления подпиской
+ * Реализована в стиле лендинга согласно предоставленному макету
  */
 
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { useAuth } from '@/app/auth/useAuth'
-import { Container, Stack, Card, Button, Badge, EmptyState, Progress, Tooltip } from '@/ui'
-import { fetchMe, type MeResponse } from '@/shared/api/me'
+import { Container, Stack, Button, EmptyState } from '@/ui'
 import { useState, useEffect } from 'react'
+import clsx from 'clsx'
+
+type BillingPeriod = 'month' | 'quarter' | 'year'
 
 function BillingPage() {
   const { isAuthenticated } = useAuth()
-  const [meData, setMeResponse] = useState<MeResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const shouldReduceMotion = false
+  const [period, setPeriod] = useState<BillingPeriod>('month')
 
   useEffect(() => {
-    if (!isAuthenticated) return
-
-    fetchMe()
-      .then(setMeResponse)
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }, [isAuthenticated])
+    if (typeof document !== 'undefined') {
+      const styleId = 'billing-page-styles'
+      let style = document.getElementById(styleId) as HTMLStyleElement
+      if (!style) {
+        style = document.createElement('style')
+        style.id = styleId
+        document.head.appendChild(style)
+      }
+      style.textContent = billingStyles
+    }
+  }, [])
 
   if (!isAuthenticated) {
     return (
-      <EmptyState
-        title="Войдите через лэндинг"
-        description="Для управления оплатой необходимо войти"
-      />
+      <div style={{ padding: 'var(--spacing-48)' }}>
+        <EmptyState
+          title="Войдите через лэндинг"
+          description="Для управления оплатой необходимо войти"
+        />
+      </div>
     )
   }
 
-  if (loading) {
-    return (
-      <Container size="lg">
-        <p style={{ textAlign: 'center', paddingTop: 100 }}>Загрузка данных оплаты...</p>
-      </Container>
-    )
-  }
-
-  const generationsUsed = meData?.usage.generationsUsed || 0
-  const generationsLimit = meData?.usage.generationsLimit || 5
-  const percentage = (generationsUsed / generationsLimit) * 100
-  const monthlyPrice = meData?.subscription.monthlyPriceRub || 499
-  const planName = meData?.subscription.planName || 'Студент Плюс'
+  const periods = [
+    { id: 'month', label: 'На месяц' },
+    { id: 'quarter', label: 'На 3 месяца', discount: '-10%' },
+    { id: 'year', label: 'На целый год', discount: '-15%' },
+  ]
 
   return (
-    <Container size="lg">
-      <Stack gap="xl" style={{ paddingTop: 'var(--spacing-32)', paddingBottom: 'var(--spacing-32)' }}>
+    <Container size="full">
+      <Stack align="center" gap="3xl" style={{ paddingTop: 'var(--spacing-80)', paddingBottom: 'var(--spacing-120)' }}>
+        
+        {/* Header Section */}
         <motion.div
-          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: motionTokens.duration.base,
-            ease: motionTokens.easing.out,
-          }}
+          transition={{ duration: 0.6, ease: motionTokens.easing.out }}
+          style={{ textAlign: 'center', maxWidth: '800px' }}
         >
-          <h1 style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-12)' }}>
-            Оплата и тариф
+          <h1 className="billing-title">
+            Начни экономить время уже с первой работы
           </h1>
-          <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
-            Управляйте своей подпиской и отслеживайте лимиты генераций
+          <p className="billing-subtitle">
+            Подписка открывает доступ ко всем основным возможностям сервиса.
           </p>
         </motion.div>
 
-        <Card>
-          <div style={{ padding: 'var(--spacing-24)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--spacing-20)' }}>
-              <div>
-                <Badge status="success" style={{ marginBottom: 'var(--spacing-8)' }}>Подписка активна</Badge>
-                <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-text-primary)' }}>
-                  {planName}
-                </h2>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-text-primary)' }}>
-                  {monthlyPrice} ₽
-                </div>
-                <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                  в месяц
-                </div>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 'var(--spacing-24)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-8)' }}>
-                <span style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)' }}>
-                  Использовано генераций
-                </span>
-                <span style={{ fontWeight: 'var(--font-weight-bold)' }}>
-                  {generationsUsed} / {generationsLimit}
-                </span>
-              </div>
-              <Progress value={percentage} />
-              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-12)' }}>
-                Лимит обновляется 1-го числа каждого месяца. Одна генерация включает полный цикл от темы до экспорта файла.
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', gap: 'var(--spacing-12)', flexWrap: 'wrap' }}>
-              <Tooltip content="Функция будет доступна позже">
-                <Button variant="primary" disabled>Продлить подписку</Button>
-              </Tooltip>
-              <Tooltip content="Функция будет доступна позже">
-                <Button variant="secondary" disabled>История платежей</Button>
-              </Tooltip>
-            </div>
+        {/* Period Selector (Tabs) */}
+        <div className="billing-tabs-wrapper">
+          <div className="billing-tabs-container">
+            {periods.map((p) => (
+              <button
+                key={p.id}
+                className={clsx('billing-tab', period === p.id && 'billing-tab--active')}
+                onClick={() => setPeriod(p.id as BillingPeriod)}
+              >
+                {p.label}
+                {p.discount && <span className="billing-tab__discount">{p.discount}</span>}
+              </button>
+            ))}
           </div>
-        </Card>
+        </div>
 
-        <Card>
-          <div style={{ padding: 'var(--spacing-24)' }}>
-            <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-16)' }}>
-              Что входит в подписку?
-            </h3>
-            <Stack gap="sm">
-              <div style={{ display: 'flex', gap: 'var(--spacing-12)' }}>
-                <span style={{ color: 'var(--color-success-base)' }}>✓</span>
-                <span>5 полных генераций работ в месяц</span>
+        {/* Pricing Cards Grid */}
+        <div className="pricing-grid">
+          {/* Free Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <div className="pricing-card">
+              <div className="pricing-card__badge-wrapper">
+                <span className="pricing-badge">Попробовать</span>
               </div>
-              <div style={{ display: 'flex', gap: 'var(--spacing-12)' }}>
-                <span style={{ color: 'var(--color-success-base)' }}>✓</span>
-                <span>Экспорт в .docx, .pdf и .pptx</span>
+              
+              <div className="pricing-card__header">
+                <div className="pricing-card__plan-name">Бесплатно</div>
+                <div className="pricing-card__price">0 ₽</div>
+                <p className="pricing-card__subtext">
+                  Попробуй возможности сервиса без оплаты.
+                </p>
               </div>
-              <div style={{ display: 'flex', gap: 'var(--spacing-12)' }}>
-                <span style={{ color: 'var(--color-success-base)' }}>✓</span>
-                <span>Поиск реальных источников в интернете</span>
+
+              <div className="pricing-card__features">
+                <div className="feature-item">
+                  <span className="feature-item__icon">✓</span>
+                  <span className="feature-item__text">Решить 3 задачи</span>
+                </div>
+                <div className="feature-item">
+                  <span className="feature-item__icon">✓</span>
+                  <span className="feature-item__text">Создать содержание одной работы</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: 'var(--spacing-12)' }}>
-                <span style={{ color: 'var(--color-success-base)' }}>✓</span>
-                <span>Умный редактор стиля текста</span>
+
+              <div className="pricing-card__footer">
+                <Button variant="secondary" className="pricing-button">
+                  Начать бесплатно
+                </Button>
               </div>
-            </Stack>
-          </div>
-        </Card>
+            </div>
+          </motion.div>
+
+          {/* Paid Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <div className="pricing-card pricing-card--featured">
+              <div className="pricing-card__badge-wrapper">
+                <span className="pricing-badge pricing-badge--featured">Популярный выбор</span>
+              </div>
+              
+              <div className="pricing-card__header">
+                <div className="pricing-card__price-small">499 ₽ / в месяц</div>
+                <div className="pricing-card__price">499 ₽</div>
+                <p className="pricing-card__subtext">
+                  Полный доступ к инструментам «Зачёта».
+                </p>
+              </div>
+
+              <div className="pricing-card__features">
+                <div className="feature-item">
+                  <span className="feature-item__icon">✓</span>
+                  <span className="feature-item__text">5 текстовых работ и презентаций</span>
+                </div>
+                <div className="feature-item">
+                  <span className="feature-item__icon">✓</span>
+                  <span className="feature-item__text">Пошаговое построение структуры и текста</span>
+                </div>
+                <div className="feature-item">
+                  <span className="feature-item__icon">✓</span>
+                  <span className="feature-item__text">Онлайн-редактор и выгрузка в файл</span>
+                </div>
+              </div>
+
+              <div className="pricing-card__footer">
+                <Button variant="primary" className="pricing-button pricing-button--featured">
+                  Улучшить подписку
+                </Button>
+                <div className="pricing-card__note">Можно отменить подписку в любой момент</div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
       </Stack>
     </Container>
   )
 }
+
+const billingStyles = `
+.billing-title {
+  font-size: 42px;
+  font-weight: 800;
+  color: #020617;
+  margin-bottom: 24px;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.billing-subtitle {
+  font-size: 18px;
+  color: #64748b;
+  line-height: 1.6;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.billing-tabs-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.billing-tabs-container {
+  display: flex;
+  background-color: #f1f5f9;
+  padding: 6px;
+  border-radius: 12px;
+  gap: 4px;
+}
+
+.billing-tab {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.billing-tab--active {
+  background-color: #334155;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.billing-tab__discount {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: normal;
+}
+
+.billing-tab--active .billing-tab__discount {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 420px));
+  gap: 32px;
+  justify-content: center;
+  width: 100%;
+  padding: 0 24px;
+  margin-top: 32px;
+}
+
+.pricing-card {
+  height: 100%;
+  padding: 64px 40px 48px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border: 1px solid #e2e8f0;
+  background: white;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.pricing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
+}
+
+.pricing-card--featured {
+  border: 2px solid #16a34a;
+  box-shadow: 0 20px 40px rgba(22, 163, 74, 0.08);
+}
+
+.pricing-card__badge-wrapper {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+}
+
+.pricing-badge {
+  background-color: #f1f5f9;
+  color: #64748b;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pricing-badge--featured {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}
+
+.pricing-card__header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.pricing-card__plan-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 12px;
+}
+
+.pricing-card__price-small {
+  font-size: 14px;
+  color: #94a3b8;
+  margin-bottom: 12px;
+}
+
+.pricing-card__price {
+  font-size: 72px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+  margin-bottom: 24px;
+  letter-spacing: -0.04em;
+}
+
+.pricing-card__subtext {
+  font-size: 16px;
+  color: #64748b;
+  line-height: 1.5;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.pricing-card__features {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 48px;
+}
+
+.feature-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.feature-item__icon {
+  color: #16a34a;
+  font-weight: bold;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+
+.feature-item__text {
+  font-size: 16px;
+  color: #1e293b;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.pricing-card__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+
+.pricing-button {
+  width: 100%;
+  height: 56px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+
+.pricing-button--featured {
+  background-color: #16a34a;
+  border: none;
+  color: white;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+}
+
+.pricing-button--featured:hover {
+  background-color: #15803d;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.3);
+}
+
+.pricing-card__note {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+  .billing-title {
+    font-size: 32px;
+  }
+}
+`
 
 export default BillingPage
