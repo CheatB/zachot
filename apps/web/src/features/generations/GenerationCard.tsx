@@ -16,8 +16,10 @@ interface GenerationCardProps {
 }
 
 function GenerationCard({ generation, onClick }: GenerationCardProps) {
-  const getStatusLabel = (status: Generation['status']): string => {
-    switch (status) {
+  const status = (generation.status || '').toUpperCase()
+
+  const getStatusLabel = (s: string): string => {
+    switch (s) {
       case 'COMPLETED':
       case 'GENERATED':
       case 'EXPORTED':
@@ -31,12 +33,12 @@ function GenerationCard({ generation, onClick }: GenerationCardProps) {
       case 'WAITING_USER':
         return 'Ожидает вас'
       default:
-        return status
+        return s
     }
   }
 
-  const getStatusBadgeStatus = (status: Generation['status']): 'neutral' | 'success' | 'warn' | 'danger' => {
-    switch (status) {
+  const getStatusBadgeStatus = (s: string): 'neutral' | 'success' | 'warn' | 'danger' => {
+    switch (s) {
       case 'COMPLETED':
       case 'GENERATED':
       case 'EXPORTED':
@@ -54,7 +56,8 @@ function GenerationCard({ generation, onClick }: GenerationCardProps) {
   }
 
   const getModuleLabel = (module: Generation['module']): string => {
-    switch (module) {
+    const m = (module || '').toUpperCase()
+    switch (m) {
       case 'TEXT':
         return 'Текст'
       case 'PRESENTATION':
@@ -66,8 +69,8 @@ function GenerationCard({ generation, onClick }: GenerationCardProps) {
     }
   }
 
-  const getActionHint = (status: Generation['status']): string => {
-    switch (status) {
+  const getActionHint = (s: string): string => {
+    switch (s) {
       case 'COMPLETED':
       case 'GENERATED':
       case 'EXPORTED':
@@ -88,7 +91,7 @@ function GenerationCard({ generation, onClick }: GenerationCardProps) {
 
   return (
     <motion.button
-      className={clsx('generation-card', `generation-card--${generation.status.toLowerCase()}`)}
+      className={clsx('generation-card', `generation-card--${status.toLowerCase()}`)}
       onClick={onClick}
       whileHover={
         !shouldReduceMotion
@@ -108,18 +111,18 @@ function GenerationCard({ generation, onClick }: GenerationCardProps) {
           ease: motionTokens.easing.out,
         },
       }}
-      aria-label={`${generation.title}, ${getStatusLabel(generation.status)}`}
+      aria-label={`${generation.title}, ${getStatusLabel(status)}`}
     >
       <div className="generation-card__header">
         <h3 className="generation-card__title">{generation.title}</h3>
         <div className="generation-card__badges">
           <Badge status="neutral">{getModuleLabel(generation.module)}</Badge>
-          <Badge status={getStatusBadgeStatus(generation.status)}>{getStatusLabel(generation.status)}</Badge>
+          <Badge status={getStatusBadgeStatus(status)}>{getStatusLabel(status)}</Badge>
         </div>
       </div>
       <div className="generation-card__footer">
         <span className="generation-card__time">{formatRelativeTime(generation.updated_at)}</span>
-        <span className="generation-card__action">{getActionHint(generation.status)}</span>
+        <span className="generation-card__action">{getActionHint(status)}</span>
       </div>
     </motion.button>
   )

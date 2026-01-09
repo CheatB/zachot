@@ -65,7 +65,11 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
   const handleNavClick = (item: NavItem) => {
     if (item.disabled) return
     navigate(item.path)
-    onClose()
+    
+    // Закрываем сайдбар только на мобильных устройствах
+    if (window.innerWidth < 1024) {
+      onClose()
+    }
   }
 
   const remainingGens = userData ? userData.usage.generationsLimit - userData.usage.generationsUsed : 0
