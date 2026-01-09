@@ -10,7 +10,7 @@ export interface Generation {
   humanity_level?: number;
   created_at: string;
   updated_at: string;
-  input_payload: Record<string, any>;
+  input_payload: Record<string, any> & { current_step?: number };
   settings_payload: Record<string, any>;
   result_content?: string;
 }

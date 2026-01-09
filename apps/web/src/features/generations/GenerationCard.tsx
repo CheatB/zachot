@@ -191,6 +191,21 @@ const cardStyles = `
   color: var(--color-accent-base);
 }
 
+.generation-card--draft {
+  border-style: dashed;
+  background-color: var(--color-neutral-10);
+  border-color: var(--color-accent-base);
+}
+
+.generation-card--draft:hover {
+  background-color: var(--color-accent-light);
+}
+
+.generation-card--draft .generation-card__action {
+  color: var(--color-accent-base);
+  font-weight: bold;
+}
+
 .generation-card--running .generation-card__action {
   color: var(--color-warn-base);
 }

@@ -80,6 +80,9 @@ function CreateGenerationPage() {
           sources: gen.settings_payload.sources || [],
           useSmartProcessing: gen.input_payload.use_smart_processing ?? true
         })
+        if (gen.input_payload.current_step) {
+          setCurrentStep(gen.input_payload.current_step as WizardStep)
+        }
       }).catch(console.error)
     }
   }, [location.search])
@@ -143,7 +146,7 @@ function CreateGenerationPage() {
 
   const isCreatingRef = useRef(false)
 
-  const saveDraft = useCallback(async (currentForm: CreateGenerationForm) => {
+  const saveDraft = useCallback(async (currentForm: CreateGenerationForm, stepOverride?: number) => {
     if (!currentForm.type) return
 
     const draftData: any = {
@@ -159,7 +162,8 @@ function CreateGenerationPage() {
         presentation_style: currentForm.presentationStyle,
         task_mode: currentForm.taskMode,
         has_files: currentForm.taskFiles.length > 0,
-        use_smart_processing: currentForm.useSmartProcessing
+        use_smart_processing: currentForm.useSmartProcessing,
+        current_step: stepOverride ?? currentStep
       },
       settings_payload: {
         structure: currentForm.structure,
@@ -198,7 +202,7 @@ function CreateGenerationPage() {
     }, 2000)
 
     return () => clearTimeout(timer)
-  }, [form, saveDraft])
+  }, [form, currentStep, saveDraft])
 
   const handleTypeSelect = (type: GenerationType) => {
     setForm((prev) => {
@@ -259,7 +263,7 @@ function CreateGenerationPage() {
       .then(details => {
         setForm(prev => {
           const newForm = { ...prev, ...details }
-          saveDraft(newForm)
+          saveDraft(newForm, 3) // Save step index 3
           return newForm
         })
         setTransitionState(null)
@@ -269,22 +273,24 @@ function CreateGenerationPage() {
   }
 
   const handleNext = () => {
-    saveDraft(form)
+    let nextStep: WizardStep | null = null
 
     if (currentStep === 1 && form.type) {
-      if (form.type === 'text') setCurrentStep(1.5)
-      else if (form.type === 'presentation') setCurrentStep(1.6)
-      else if (form.type === 'task') setCurrentStep(1.2)
+      if (form.type === 'text') nextStep = 1.5
+      else if (form.type === 'presentation') nextStep = 1.6
+      else if (form.type === 'task') nextStep = 1.2
     } else if (currentStep === 1.2 && (form.taskFiles.length > 0 || form.input.trim())) {
-      setCurrentStep(1.3)
+      nextStep = 1.3
     } else if (currentStep === 1.3 && form.taskMode) {
-      setCurrentStep(6)
+      nextStep = 6
     } else if (currentStep === 1.5 && form.workType && form.input.trim()) {
-      setCurrentStep(1.7)
+      nextStep = 1.7
     } else if (currentStep === 1.6 && form.presentationStyle && form.input.trim()) {
       startAiAnalysis()
+      return
     } else if (currentStep === 1.7) {
       startAiAnalysis()
+      return
     } else if (currentStep === 3) {
       setTransitionState({
         title: 'Проектирую структуру',
@@ -311,7 +317,7 @@ function CreateGenerationPage() {
               id: `${idx}-${Date.now()}`
             }))
             const newForm = { ...prev, structure: structureWithIds }
-            saveDraft(newForm)
+            saveDraft(newForm, 4) // Save next step index
             return newForm
           })
           setTransitionState(null)
@@ -322,6 +328,7 @@ function CreateGenerationPage() {
           setTransitionState(null)
           setCurrentStep(4)
         })
+      return
     } else if (currentStep === 4) {
       setTransitionState({
         title: 'Подбираю литературу',
@@ -345,7 +352,7 @@ function CreateGenerationPage() {
               id: `${idx}-${Date.now()}`
             }))
             const newForm = { ...prev, sources: sourcesWithIds }
-            saveDraft(newForm)
+            saveDraft(newForm, 5) // Save next step index
             return newForm
           })
           setTransitionState(null)
@@ -356,29 +363,42 @@ function CreateGenerationPage() {
           setTransitionState(null)
           setCurrentStep(5)
         })
+      return
     } else if (currentStep === 5) {
-      setCurrentStep(6)
+      nextStep = 6
+    }
+
+    if (nextStep) {
+      setCurrentStep(nextStep)
+      saveDraft(form, nextStep)
     }
   }
 
   const handleBack = () => {
+    let prevStep: WizardStep | null = null
+
     if (currentStep === 1.2 || currentStep === 1.5 || currentStep === 1.6) {
-      setCurrentStep(1)
+      prevStep = 1
     } else if (currentStep === 1.3) {
-      setCurrentStep(1.2)
+      prevStep = 1.2
     } else if (currentStep === 1.7) {
-      setCurrentStep(1.5)
+      prevStep = 1.5
     } else if (currentStep === 3) {
-      if (form.type === 'presentation') setCurrentStep(1.6)
-      else if (form.type === 'text') setCurrentStep(1.7)
-      else setCurrentStep(1)
+      if (form.type === 'presentation') prevStep = 1.6
+      else if (form.type === 'text') prevStep = 1.7
+      else prevStep = 1
     } else if (currentStep === 4) {
-      setCurrentStep(3)
+      prevStep = 3
     } else if (currentStep === 5) {
-      setCurrentStep(4)
+      prevStep = 4
     } else if (currentStep === 6) {
-      if (form.type === 'task') setCurrentStep(1.3)
-      else setCurrentStep(5)
+      if (form.type === 'task') prevStep = 1.3
+      else prevStep = 5
+    }
+
+    if (prevStep) {
+      setCurrentStep(prevStep)
+      saveDraft(form, prevStep)
     }
   }
 
