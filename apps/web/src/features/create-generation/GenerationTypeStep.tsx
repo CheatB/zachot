@@ -36,6 +36,7 @@ const typeOptions: (GenerationTypeOption & { illustration?: string; illustration
     title: 'Решение задач',
     description: 'Разберись, как решать задачки по вышке, химии или экономике. Больше 100+ предметов',
     icon: '',
+    illustration: '/assets/illustrations/tasks.png'
   },
 ]
 
@@ -101,7 +102,8 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
                   'wizard-type-card', 
                   isSelected && 'wizard-type-card--selected',
                   option.type === 'presentation' && 'wizard-type-card--presentation',
-                  option.type === 'text' && 'wizard-type-card--text'
+                  option.type === 'text' && 'wizard-type-card--text',
+                  option.type === 'task' && 'wizard-type-card--task'
                 )}
                 onClick={() => onSelect(option.type)}
                 whileHover={{ y: -8, scale: 1.01 }}
@@ -241,7 +243,8 @@ const stepStyles = `
   z-index: 1;
 }
 
-.wizard-type-card--presentation .wizard-type-card__illustration {
+.wizard-type-card--presentation .wizard-type-card__illustration,
+.wizard-type-card--task .wizard-type-card__illustration {
   bottom: -29px;
 }
 
