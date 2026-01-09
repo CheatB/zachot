@@ -8,6 +8,7 @@ import { apiFetch } from './http'
 export interface MeResponse {
   id: string;
   role: 'admin' | 'user';
+  telegram_username?: string;
   subscription: {
     planName: string;
     status: 'active' | 'expiring' | 'paused';

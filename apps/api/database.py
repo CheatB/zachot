@@ -58,6 +58,9 @@ class User(Base):
     tokens_limit = Column(Integer, default=100000)
     fair_use_mode = Column(String, default="normal") # 'normal', 'degraded', 'strict'
     
+    telegram_id = Column(String, unique=True, index=True, nullable=True)
+    telegram_username = Column(String, nullable=True)
+    
     generations = relationship("GenerationDB", back_populates="user")
 
 class GenerationDB(Base):
@@ -93,6 +96,16 @@ class PaymentDB(Base):
     description = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User")
+
+class AuthTokenDB(Base):
+    __tablename__ = "auth_tokens"
+    
+    token = Column(String, primary_key=True)
+    user_id = Column(GUID(), ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    is_used = Column(Integer, default=0) # 0 - no, 1 - yes
     
     user = relationship("User")
 

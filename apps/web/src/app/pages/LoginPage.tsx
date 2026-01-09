@@ -7,24 +7,56 @@
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { Container, Stack, Button, Card } from '@/ui'
-import { useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../auth/authContext'
+import { getTelegramLink, checkTelegramAuth } from '@/shared/api/auth'
 
 function LoginPage() {
-  const { isAuthenticated } = useAuthContext()
+  const { isAuthenticated, loginFromLanding } = useAuthContext()
   const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
+  const [authLink, setAuthLink] = useState<string | null>(null)
+  const pollingInterval = useRef<any>(null)
 
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/')
     }
+    return () => {
+      if (pollingInterval.current) clearInterval(pollingInterval.current)
+    }
   }, [isAuthenticated, navigate])
 
-  const handleTelegramLogin = () => {
-    // В будущем здесь будет инициализация виджета Telegram или редирект на бота
-    console.log('Telegram login clicked')
-    alert('Авторизация через Telegram бота будет доступна в ближайшем обновлении.')
+  const startPolling = (token: string) => {
+    pollingInterval.current = setInterval(async () => {
+      try {
+        const result = await checkTelegramAuth(token)
+        if (result.status === 'success' && result.user_id) {
+          if (pollingInterval.current) clearInterval(pollingInterval.current)
+          // В MVP токен — это ID пользователя
+          loginFromLanding(result.user_id, result.user_id)
+          navigate('/')
+        }
+      } catch (error) {
+        console.error('Polling error:', error)
+      }
+    }, 2000)
+  }
+
+  const handleTelegramLogin = async () => {
+    setLoading(true)
+    try {
+      const { link, token } = await getTelegramLink()
+      setAuthLink(link)
+      window.open(link, '_blank')
+      startPolling(token)
+    } catch (error) {
+      console.error('Failed to get Telegram link:', error)
+      alert('Не удалось связаться с Telegram. Попробуйте позже.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -73,14 +105,21 @@ function LoginPage() {
                   size="lg" 
                   className="telegram-btn"
                   onClick={handleTelegramLogin}
+                  loading={loading || !!authLink}
                 >
                   <span className="telegram-btn__icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M21.43 3.14L2.5 10.43C1.21 10.95 1.22 11.67 2.27 11.99L7.13 13.51L18.38 6.42C18.91 5.77 19.4 5.92 19 6.36L9.89 16.4L9.5 21.8C10.03 21.8 10.26 21.56 10.56 21.27L13.11 18.79L18.41 22.71C19.39 23.43 20.09 23.06 20.33 21.89L23.8 3.82C24.16 2.42 23.03 1.6 21.43 3.14Z" fill="currentColor"/>
                     </svg>
                   </span>
-                  Войти через Telegram
+                  {authLink ? 'Ожидаю подтверждения...' : 'Войти через Telegram'}
                 </Button>
+                
+                {authLink && (
+                  <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '12px', textAlign: 'center' }}>
+                    Бот открылся в новой вкладке. Нажмите «Запустить» в Telegram.
+                  </p>
+                )}
               </div>
 
               <div className="login-divider">

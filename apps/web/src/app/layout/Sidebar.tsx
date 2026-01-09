@@ -140,6 +140,12 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                 </div>
               </div>
 
+              {userData?.telegram_username && (
+                <div style={{ padding: '0 var(--spacing-24) var(--spacing-16)', fontSize: 'var(--font-size-sm)', color: 'var(--color-accent-base)', fontWeight: 600 }}>
+                  @{userData.telegram_username}
+                </div>
+              )}
+
               <nav className="app-sidebar__nav" aria-label="Основная навигация">
                 <ul className="app-sidebar__list">
                   {navItems.map((item) => {

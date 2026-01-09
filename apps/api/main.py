@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from packages.core_domain import GenerationUpdated, StepUpdated, event_dispatcher
 from packages.core_domain.state_machine import GenerationStateMachine
 
-from .routers import generations, health, jobs, me, admin, payments
+from .routers import generations, health, jobs, me, admin, payments, auth
 from .settings import settings
 from .storage import generation_store
 from .database import init_db
@@ -143,6 +143,7 @@ app.include_router(jobs.router)
 app.include_router(me.router)
 app.include_router(admin.router)
 app.include_router(payments.router)
+app.include_router(auth.router)
 
 
 @app.get("/")

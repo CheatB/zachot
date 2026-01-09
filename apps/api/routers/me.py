@@ -43,6 +43,7 @@ async def get_me(authorization: str = Header(None)):
         return MeResponse(
             id=user.id,
             role=user.role,
+            telegram_username=user.telegram_username,
             subscription={
                 "planName": user.plan_name,
                 "status": user.subscription_status,
