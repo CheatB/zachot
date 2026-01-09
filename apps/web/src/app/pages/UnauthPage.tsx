@@ -4,13 +4,11 @@
  */
 
 import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button, EmptyState } from '@/ui'
 
 function UnauthPage() {
-  const handleLogin = () => {
-    console.log('Login button clicked')
-    // TODO: Реализовать логику входа
-  }
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -25,15 +23,19 @@ function UnauthPage() {
     }
   }, [])
 
+  const handleLogin = () => {
+    navigate('/login')
+  }
+
   return (
     <div className="unauth-page">
       <EmptyState
         title="Требуется вход"
-        description="Для доступа к приложению необходимо войти через лэндинг"
+        description="Для доступа к приложению необходимо авторизоваться"
       >
         <div className="unauth-page__action">
           <Button variant="primary" onClick={handleLogin}>
-            Войти
+            Войти в аккаунт
           </Button>
         </div>
       </EmptyState>
@@ -48,7 +50,7 @@ const pageStyles = `
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 60vh;
+  min-height: 100vh;
 }
 
 .unauth-page__action {
