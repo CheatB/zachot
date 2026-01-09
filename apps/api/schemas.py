@@ -115,3 +115,27 @@ class UsersAdminResponse(BaseModel):
 
 class UserRoleUpdateRequest(BaseModel):
     role: Literal["admin", "user"]
+
+
+class PaymentInitRequest(BaseModel):
+    period: Literal['month', 'quarter', 'year']
+
+
+class PaymentInitResponse(BaseModel):
+    payment_url: str
+    order_id: str
+
+
+class TBankWebhook(BaseModel):
+    TerminalKey: str
+    OrderId: str
+    Success: bool
+    Status: str
+    PaymentId: int
+    ErrorCode: str
+    Amount: int
+    RebillId: Optional[int] = None
+    CardId: Optional[int] = None
+    Pan: Optional[str] = None
+    ExpDate: Optional[str] = None
+    Token: str

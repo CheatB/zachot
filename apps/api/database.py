@@ -80,6 +80,21 @@ class GenerationDB(Base):
     
     user = relationship("User", back_populates="generations")
 
+class PaymentDB(Base):
+    __tablename__ = "payments"
+    
+    id = Column(GUID(), primary_key=True, default=uuid4)
+    user_id = Column(GUID(), ForeignKey("users.id"))
+    amount = Column(Integer) # в копейках
+    status = Column(String, default="NEW") # NEW, AUTHORIZED, CONFIRMED, REJECTED
+    payment_id = Column(String, nullable=True) # ID из Т-Банка
+    order_id = Column(String, unique=True)
+    description = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User")
+
 # Database initialization
 db_url = settings.database_url
 if settings.env == "test":

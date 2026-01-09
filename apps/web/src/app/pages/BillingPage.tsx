@@ -1,14 +1,15 @@
 /**
  * BillingPage
  * Страница оплаты и управления подпиской
- * Реализована в стиле лендинга согласно предоставленному макету
+ * Реализована в стиле лендинга с интеграцией эквайринга Т-Банка
  */
 
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { useAuth } from '@/app/auth/useAuth'
 import { Container, Stack, Button, EmptyState } from '@/ui'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { initiatePayment } from '@/shared/api/payments'
 import clsx from 'clsx'
 
 type BillingPeriod = 'month' | 'quarter' | 'year'
@@ -16,6 +17,7 @@ type BillingPeriod = 'month' | 'quarter' | 'year'
 function BillingPage() {
   const { isAuthenticated } = useAuth()
   const [period, setPeriod] = useState<BillingPeriod>('month')
+  const [isProcessing, setIsProcessing] = useState(false)
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -29,6 +31,54 @@ function BillingPage() {
       style.textContent = billingStyles
     }
   }, [])
+
+  const basePrice = 499
+
+  const pricingData = useMemo(() => {
+    switch (period) {
+      case 'quarter':
+        const quarterMonthly = Math.round(basePrice * 0.9)
+        return {
+          monthly: quarterMonthly,
+          total: quarterMonthly * 3,
+          showTotal: true,
+          showBadge: true,
+          description: 'Подписка "Зачёт" — 3 месяца',
+        }
+      case 'year':
+        const yearMonthly = Math.round(basePrice * 0.85)
+        return {
+          monthly: yearMonthly,
+          total: yearMonthly * 12,
+          showTotal: true,
+          showBadge: false,
+          description: 'Подписка "Зачёт" — 12 месяцев',
+        }
+      default:
+        return {
+          monthly: basePrice,
+          total: basePrice,
+          showTotal: false,
+          showBadge: false,
+          description: 'Подписка "Зачёт" — 1 месяц',
+        }
+    }
+  }, [period])
+
+  const handleCheckout = async () => {
+    if (!isAuthenticated) return
+    
+    setIsProcessing(true)
+    try {
+      const { payment_url } = await initiatePayment(period)
+      window.location.href = payment_url
+    } catch (error) {
+      console.error('Payment initiation failed:', error)
+      alert('Не удалось инициализировать платеж. Попробуйте позже.')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
 
   if (!isAuthenticated) {
     return (
@@ -115,8 +165,8 @@ function BillingPage() {
               </div>
 
               <div className="pricing-card__footer">
-                <Button variant="secondary" className="pricing-button">
-                  Начать бесплатно
+                <Button variant="secondary" className="pricing-button" disabled>
+                  Текущий тариф
                 </Button>
               </div>
             </div>
@@ -128,14 +178,28 @@ function BillingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <div className="pricing-card pricing-card--featured">
-              <div className="pricing-card__badge-wrapper">
-                <span className="pricing-badge pricing-badge--featured">Популярный выбор</span>
-              </div>
+            <div className={clsx('pricing-card pricing-card--featured', pricingData.showBadge && 'pricing-card--has-badge')}>
+              {pricingData.showBadge && (
+                <div className="pricing-card__badge-wrapper">
+                  <span className="pricing-badge pricing-badge--featured">Популярный выбор</span>
+                </div>
+              )}
               
               <div className="pricing-card__header">
-                <div className="pricing-card__price-small">499 ₽ / в месяц</div>
-                <div className="pricing-card__price">499 ₽</div>
+                <div className="pricing-card__total-hint">
+                  {pricingData.showTotal ? `${pricingData.total} ₽ за весь период` : <>&nbsp;</>}
+                </div>
+                <div className="pricing-card__price">
+                  <motion.span
+                    key={pricingData.monthly}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    {pricingData.monthly}
+                  </motion.span>
+                  <span className="pricing-card__currency"> ₽</span>
+                  <span className="pricing-card__period"> / месяц</span>
+                </div>
                 <p className="pricing-card__subtext">
                   Полный доступ к инструментам «Зачёта».
                 </p>
@@ -157,7 +221,12 @@ function BillingPage() {
               </div>
 
               <div className="pricing-card__footer">
-                <Button variant="primary" className="pricing-button pricing-button--featured">
+                <Button 
+                  variant="primary" 
+                  className="pricing-button pricing-button--featured"
+                  onClick={handleCheckout}
+                  loading={isProcessing}
+                >
                   Улучшить подписку
                 </Button>
                 <div className="pricing-card__note">Можно отменить подписку в любой момент</div>
@@ -263,6 +332,10 @@ const billingStyles = `
 }
 
 .pricing-card--featured {
+  border: 2px solid #e2e8f0;
+}
+
+.pricing-card--has-badge {
   border: 2px solid #16a34a;
   box-shadow: 0 20px 40px rgba(22, 163, 74, 0.08);
 }
@@ -292,16 +365,18 @@ const billingStyles = `
   margin-bottom: 40px;
 }
 
+.pricing-card__total-hint {
+  font-size: 16px;
+  color: #94a3b8;
+  height: 24px;
+  margin-bottom: 4px;
+  transition: opacity 0.2s ease;
+}
+
 .pricing-card__plan-name {
   font-size: 18px;
   font-weight: 600;
   color: #64748b;
-  margin-bottom: 12px;
-}
-
-.pricing-card__price-small {
-  font-size: 14px;
-  color: #94a3b8;
   margin-bottom: 12px;
 }
 
@@ -312,6 +387,17 @@ const billingStyles = `
   line-height: 1;
   margin-bottom: 24px;
   letter-spacing: -0.04em;
+}
+
+.pricing-card__currency {
+  font-size: 32px;
+  vertical-align: super;
+}
+
+.pricing-card__period {
+  font-size: 18px;
+  color: #94a3b8;
+  font-weight: 500;
 }
 
 .pricing-card__subtext {
@@ -366,6 +452,8 @@ const billingStyles = `
   background-color: white;
   border: 1px solid #e2e8f0;
   color: #0f172a;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .pricing-button--featured {
