@@ -1,46 +1,63 @@
 /**
  * ProfilePage
  * Страница профиля пользователя
- * Объединена с данными аккаунта
+ * Простой вид с разделами без карточек
  */
 
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { useAuth } from '@/app/auth/useAuth'
-import { Container, Stack, Card, Button, EmptyState, Tooltip } from '@/ui'
-import SubscriptionCard from '@/features/account/SubscriptionCard'
-import UsageOverviewCard from '@/features/account/UsageOverviewCard'
-import FairUseModeCard from '@/features/account/FairUseModeCard'
-import CapabilitiesCard from '@/features/account/CapabilitiesCard'
-import type { SubscriptionInfo, UsageInfo } from '@/features/account/types'
+import { Container, Stack, Button, EmptyState, Badge, Progress } from '@/ui'
 import { fetchMe, type MeResponse } from '@/shared/api/me'
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 function ProfilePage() {
   const { isAuthenticated, logout, user } = useAuth()
-  const [meData, setMeResponse] = useState<MeResponse | null>(null)
+  const navigate = useNavigate()
+  const [meData, setMeData] = useState<MeResponse | null>(null)
   const [loading, setLoading] = useState(true)
-  const shouldReduceMotion = false
 
   useEffect(() => {
     if (!isAuthenticated) return
 
     fetchMe()
-      .then(setMeResponse)
+      .then(setMeData)
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [isAuthenticated])
 
-  const getInitials = (userId: string): string => {
-    if (!userId) return '??'
-    const cleanId = userId.replace(/-/g, '')
-    return cleanId.substring(0, 2).toUpperCase()
+  // Инжектим стили
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const styleId = 'profile-page-styles'
+      let style = document.getElementById(styleId) as HTMLStyleElement
+      if (!style) {
+        style = document.createElement('style')
+        style.id = styleId
+        document.head.appendChild(style)
+      }
+      style.textContent = pageStyles
+    }
+  }, [])
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '—'
+    return new Date(dateStr).toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    })
+  }
+
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('ru-RU').format(num)
   }
 
   if (!isAuthenticated) {
     return (
       <EmptyState
-        title="Войдите через лэндинг"
+        title="Войдите в аккаунт"
         description="Для просмотра профиля необходимо войти"
       />
     )
@@ -48,147 +65,318 @@ function ProfilePage() {
 
   if (loading) {
     return (
-      <Container size="lg">
-        <p style={{ textAlign: 'center', paddingTop: 100 }}>Загрузка данных профиля...</p>
+      <Container size="md">
+        <p style={{ textAlign: 'center', paddingTop: 100, color: 'var(--color-text-muted)' }}>
+          Загрузка...
+        </p>
       </Container>
     )
   }
 
-  const subscription: SubscriptionInfo = meData?.subscription || {
-    planName: 'BASE 499',
-    status: 'active',
-    monthlyPriceRub: 499,
-    nextBillingDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+  const subscription = meData?.subscription
+  const usage = meData?.usage
+  const capabilities = meData?.capabilities
+
+  const getStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'active': return <Badge status="success">Активна</Badge>
+      case 'expiring': return <Badge status="warn">Истекает</Badge>
+      case 'paused': return <Badge status="neutral">Приостановлена</Badge>
+      default: return <Badge status="neutral">Нет подписки</Badge>
+    }
   }
 
-  const usage: UsageInfo = {
-    tokensUsed: meData?.usage.tokensUsed || 0,
-    tokensLimit: meData?.usage.tokensLimit || 100000,
-    costRub: 0,
-    costLimitRub: subscription.monthlyPriceRub,
+  const getModeLabel = (mode?: string) => {
+    switch (mode) {
+      case 'normal': return 'Обычный'
+      case 'degraded': return 'Щадящий'
+      case 'strict': return 'Ограниченный'
+      default: return 'Обычный'
+    }
   }
+
+  const getPriorityLabel = (priority?: string) => {
+    switch (priority) {
+      case 'high': return 'Высокий'
+      case 'normal': return 'Обычный'
+      case 'low': return 'Низкий'
+      default: return 'Обычный'
+    }
+  }
+
+  const generationsUsed = usage?.generationsUsed ?? 0
+  const generationsLimit = usage?.generationsLimit ?? 5
+  const generationsPercent = Math.min((generationsUsed / generationsLimit) * 100, 100)
 
   return (
-    <Container size="lg">
-      <Stack gap="xl" style={{ paddingTop: 'var(--spacing-32)', paddingBottom: 'var(--spacing-64)' }}>
+    <Container size="md">
+      <Stack gap="xl" className="profile-page">
+        
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: motionTokens.duration.base,
-            ease: motionTokens.easing.out,
-          }}
+          transition={{ duration: 0.4, ease: motionTokens.easing.out }}
         >
-          <div className="profile-header">
-            <h1 style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-12)' }}>
-              Профиль
-            </h1>
-            <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
-              Личные данные, информация о подписке и лимитах
-            </p>
-          </div>
+          <h1 className="profile-title">Профиль</h1>
         </motion.div>
 
-        <Card>
-          <div style={{ padding: 'var(--spacing-24)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-24)' }}>
-            <div style={{
-              width: 80,
-              height: 80,
-              borderRadius: 'var(--radius-full)',
-              backgroundColor: 'var(--color-accent-base)',
-              color: 'var(--color-text-inverse)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 'var(--font-size-3xl)',
-              fontWeight: 'var(--font-weight-bold)'
-            }}>
-              {user ? getInitials(user.id) : '??'}
+        {/* Личные данные */}
+        <motion.section 
+          className="profile-section"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+        >
+          <h2 className="profile-section__title">Личные данные</h2>
+          <div className="profile-fields">
+            <div className="profile-field">
+              <span className="profile-field__label">ID пользователя</span>
+              <span className="profile-field__value profile-field__value--mono">{user?.id}</span>
             </div>
-            <div>
-              <h2 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)', marginBottom: 'var(--spacing-4)' }}>
-                Пользователь
-              </h2>
-              <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-muted)', wordBreak: 'break-all' }}>
-                ID: {user?.id}
-              </p>
+            {user?.email && (
+              <div className="profile-field">
+                <span className="profile-field__label">Email</span>
+                <span className="profile-field__value">{user.email}</span>
+              </div>
+            )}
+            {user?.telegram_username && (
+              <div className="profile-field">
+                <span className="profile-field__label">Telegram</span>
+                <span className="profile-field__value">@{user.telegram_username}</span>
+              </div>
+            )}
+            <div className="profile-field">
+              <span className="profile-field__label">Роль</span>
+              <span className="profile-field__value">{user?.role === 'admin' ? 'Администратор' : 'Пользователь'}</span>
             </div>
           </div>
-        </Card>
+        </motion.section>
 
-        <SubscriptionCard subscription={subscription} />
-        <UsageOverviewCard usage={usage} />
-        <FairUseModeCard mode={meData?.fairUseMode || 'normal'} />
-        <CapabilitiesCard capabilities={meData?.capabilities || {
-          streamingAvailable: true,
-          maxTokensPerRequest: 8000,
-          priority: 'normal',
-          resultPersistence: true,
-        }} />
+        {/* Подписка */}
+        <motion.section 
+          className="profile-section"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
+          <h2 className="profile-section__title">Подписка</h2>
+          <div className="profile-fields">
+            <div className="profile-field">
+              <span className="profile-field__label">Тариф</span>
+              <span className="profile-field__value">{subscription?.planName || 'Бесплатный'}</span>
+            </div>
+            <div className="profile-field">
+              <span className="profile-field__label">Статус</span>
+              <span className="profile-field__value">{getStatusBadge(subscription?.status)}</span>
+            </div>
+            {subscription?.monthlyPriceRub && subscription.monthlyPriceRub > 0 && (
+              <div className="profile-field">
+                <span className="profile-field__label">Стоимость</span>
+                <span className="profile-field__value">{subscription.monthlyPriceRub} ₽/мес</span>
+              </div>
+            )}
+            {subscription?.nextBillingDate && (
+              <div className="profile-field">
+                <span className="profile-field__label">Следующее списание</span>
+                <span className="profile-field__value">{formatDate(subscription.nextBillingDate)}</span>
+              </div>
+            )}
+          </div>
+          <div className="profile-section__actions">
+            <Button variant="primary" size="sm" onClick={() => navigate('/billing')}>
+              Управление подпиской
+            </Button>
+          </div>
+        </motion.section>
 
-        <motion.div
+        {/* Использование */}
+        <motion.section 
+          className="profile-section"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+        >
+          <h2 className="profile-section__title">Использование</h2>
+          <div className="profile-fields">
+            <div className="profile-field profile-field--column">
+              <div className="profile-field__row">
+                <span className="profile-field__label">Генерации</span>
+                <span className="profile-field__value">{generationsUsed} / {generationsLimit}</span>
+              </div>
+              <Progress value={generationsPercent} />
+            </div>
+            {usage && (
+              <div className="profile-field">
+                <span className="profile-field__label">Токены использовано</span>
+                <span className="profile-field__value">{formatNumber(usage.tokensUsed)} / {formatNumber(usage.tokensLimit)}</span>
+              </div>
+            )}
+          </div>
+        </motion.section>
+
+        {/* Системные параметры */}
+        <motion.section 
+          className="profile-section"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
+          <h2 className="profile-section__title">Системные параметры</h2>
+          <div className="profile-fields">
+            <div className="profile-field">
+              <span className="profile-field__label">Режим работы</span>
+              <span className="profile-field__value">{getModeLabel(meData?.fairUseMode)}</span>
+            </div>
+            <div className="profile-field">
+              <span className="profile-field__label">Приоритет обработки</span>
+              <span className="profile-field__value">{getPriorityLabel(capabilities?.priority)}</span>
+            </div>
+            <div className="profile-field">
+              <span className="profile-field__label">Макс. токенов на запрос</span>
+              <span className="profile-field__value">{formatNumber(capabilities?.maxTokensPerRequest ?? 8000)}</span>
+            </div>
+            <div className="profile-field">
+              <span className="profile-field__label">Потоковая генерация</span>
+              <span className="profile-field__value">{capabilities?.streamingAvailable ? 'Доступна' : 'Недоступна'}</span>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* Действия */}
+        <motion.div 
           className="profile-actions"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{
-            duration: motionTokens.duration.base,
-            ease: motionTokens.easing.out,
-            delay: 0.4,
-          }}
+          transition={{ duration: 0.4, delay: 0.25 }}
         >
-          <div className="profile-actions__group">
-            <Button variant="ghost" onClick={logout}>
-              Выйти из аккаунта
-            </Button>
-            <Tooltip content="Функция будет доступна позже">
-              <Button variant="ghost" disabled>
-                Связаться с поддержкой
-              </Button>
-            </Tooltip>
-          </div>
+          <Button variant="ghost" onClick={logout}>
+            Выйти из аккаунта
+          </Button>
         </motion.div>
+
       </Stack>
     </Container>
   )
 }
 
-export default ProfilePage
-
 const pageStyles = `
-.profile-header {
-  width: 100%;
+.profile-page {
+  padding-top: var(--spacing-32);
+  padding-bottom: var(--spacing-64);
+}
+
+.profile-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.profile-section {
+  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: var(--spacing-24);
+}
+
+.profile-section:last-of-type {
+  border-bottom: none;
+}
+
+.profile-section__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--spacing-16) 0;
+}
+
+.profile-section__actions {
+  margin-top: var(--spacing-16);
+}
+
+.profile-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.profile-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-8) 0;
+}
+
+.profile-field--column {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-8);
+}
+
+.profile-field__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-field__label {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+}
+
+.profile-field__value {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-align: right;
+}
+
+.profile-field__value--mono {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  word-break: break-all;
+  max-width: 60%;
 }
 
 .profile-actions {
-  width: 100%;
-  padding-top: var(--spacing-24);
-  border-top: 1px solid var(--color-border-light);
-}
-
-.profile-actions__group {
+  padding-top: var(--spacing-16);
   display: flex;
-  gap: var(--spacing-16);
-  flex-wrap: wrap;
+  gap: var(--spacing-12);
 }
 
-@media (max-width: 768px) {
-  .profile-actions__group {
+@media (max-width: 640px) {
+  .profile-page {
+    padding-top: var(--spacing-24);
+  }
+  
+  .profile-title {
+    font-size: 24px;
+  }
+  
+  .profile-field {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-4);
+  }
+  
+  .profile-field__value {
+    text-align: left;
+  }
+  
+  .profile-field__value--mono {
+    max-width: 100%;
+  }
+  
+  .profile-actions {
     flex-direction: column;
   }
   
-  .profile-actions__group button {
+  .profile-actions button {
     width: 100%;
   }
 }
 `
 
-if (typeof document !== 'undefined') {
-  const styleId = 'profile-page-styles'
-  let style = document.getElementById(styleId) as HTMLStyleElement
-  if (!style) {
-    style = document.createElement('style')
-    style.id = styleId
-    document.head.appendChild(style)
-  }
-  style.textContent = pageStyles
-}
+export default ProfilePage
