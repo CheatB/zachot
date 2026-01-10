@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
-import { useNavigate, Link, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { fetchMe, type MeResponse } from '@/shared/api/me'
 import { Stack, Button } from '@/ui'
