@@ -18,6 +18,12 @@ from .confirmation import (
 )
 from .entitlements import EntitlementResolver, EntitlementSet
 from .fake_provider import FakePaymentProvider
+from .tbank_provider import (
+    TBankConfig,
+    TBankPaymentProvider,
+    get_tbank_config,
+    get_tbank_provider,
+)
 from .lifecycle import (
     SubscriptionEvent,
     SubscriptionLifecycleService,
@@ -38,6 +44,10 @@ __all__ = [
     "PaymentResult",
     "PaymentProvider",
     "FakePaymentProvider",
+    "TBankConfig",
+    "TBankPaymentProvider",
+    "get_tbank_config",
+    "get_tbank_provider",
     # F3: Payment Confirmation & Webhook
     "PaymentEvent",
     "PaymentConfirmationResult",

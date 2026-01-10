@@ -95,6 +95,15 @@ function UnauthPage() {
           </div>
         )}
 
+        {/* Footer */}
+        <div className="unauth-footer">
+          <p>© 2026 Зачёт. Все права защищены.</p>
+          <div className="unauth-footer__links">
+            <a href="/privacy.pdf" target="_blank" rel="noopener noreferrer">Политика обработки персональных данных</a>
+            <a href="/oferta.pdf" target="_blank" rel="noopener noreferrer">Публичная оферта</a>
+          </div>
+        </div>
+
       </Stack>
 
       <style>{pageStyles}</style>
@@ -103,6 +112,30 @@ function UnauthPage() {
 }
 
 const pageStyles = `
+.unauth-footer {
+  margin-top: 40px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.unauth-footer__links {
+  margin-top: 8px;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.unauth-footer__links a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.unauth-footer__links a:hover {
+  color: var(--color-accent-base);
+  text-decoration: underline;
+}
 .unauth-title {
   font-size: 48px;
   font-weight: 800;
