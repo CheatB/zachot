@@ -58,7 +58,8 @@ function LoginPage() {
     try {
       const { link, token } = await getTelegramLink()
       setAuthLink(link)
-      window.location.href = link
+      // Открываем в новой вкладке, чтобы пользователь не потерял текущую страницу
+      window.open(link, '_blank')
       startPolling(token)
     } catch (error) {
       console.error('Failed to get Telegram link:', error)
