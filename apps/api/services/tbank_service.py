@@ -51,7 +51,7 @@ class TBankService:
         amount_rub: int, 
         description: str,
         customer_email: str,
-        success_url: str = "https://app.zachet.tech/",
+        success_url: str = "https://app.zachet.tech/generations?status=success",
         fail_url: str = "https://app.zachet.tech/billing?status=fail"
     ) -> Optional[Dict[str, Any]]:
         """
@@ -89,6 +89,21 @@ class TBankService:
             "FailURL": fail_url,
             "DATA": {
                 "Email": customer_email
+            },
+            "Receipt": {
+                "Email": customer_email,
+                "Taxation": "patent",
+                "Items": [
+                    {
+                        "Name": description,
+                        "Price": amount_rub * 100,
+                        "Quantity": 1.00,
+                        "Amount": amount_rub * 100,
+                        "PaymentMethod": "full_prepayment",
+                        "PaymentObject": "service",
+                        "Tax": "none"
+                    }
+                ]
             }
         }
 

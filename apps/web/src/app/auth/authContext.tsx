@@ -66,9 +66,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const storedToken = localStorage.getItem(TOKEN_KEY)
 
     if (storedToken) {
+      console.log('[Auth] Found stored token, fetching user...')
       // Проверяем валидность токена через /me
       fetchMe()
         .then((response) => {
+          console.log('[Auth] User fetched successfully:', response.email || response.telegram_username)
           setAuthState({
             isAuthenticated: true,
             isAuthResolved: true,
@@ -81,11 +83,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
             token: storedToken,
           })
         })
-        .catch(() => {
-          // Ошибка /me — auth не прошла
+        .catch((error) => {
+          console.error('[Auth] Failed to fetch user:', error)
+          // Если это 401, значит токен протух
+          if (error.status === 401) {
+            console.log('[Auth] Token expired (401), clearing session')
+            localStorage.removeItem(TOKEN_KEY)
+            localStorage.removeItem(USER_ID_KEY)
+          }
+          
           setAuthState((prev) => ({
             ...prev,
             isAuthResolved: true,
+            isAuthenticated: false, // Явно сбрасываем, если ошибка
           }))
         })
       return

@@ -17,11 +17,16 @@ function getAuthToken(): string | null {
 let refreshPromise: Promise<void> | null = null
 
 function performLogout() {
+  console.log('[HTTP] Unauthorized access, performing logout redirect')
   localStorage.removeItem('zachot_auth_token')
   localStorage.removeItem('zachot_auth_user_id')
   localStorage.removeItem('zachot_refresh_token')
   window.dispatchEvent(new CustomEvent('auth:logout'))
-  window.location.href = '/login'
+  
+  // Делаем редирект только если мы не на странице логина
+  if (!window.location.pathname.includes('/login')) {
+    window.location.href = '/login'
+  }
 }
 
 async function performFetch<T>(
