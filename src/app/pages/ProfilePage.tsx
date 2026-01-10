@@ -75,7 +75,6 @@ function ProfilePage() {
 
   const subscription = meData?.subscription
   const usage = meData?.usage
-  const capabilities = meData?.capabilities
 
   const getStatusBadge = (status?: string) => {
     switch (status) {
@@ -83,24 +82,6 @@ function ProfilePage() {
       case 'expiring': return <Badge status="warn">Истекает</Badge>
       case 'paused': return <Badge status="neutral">Приостановлена</Badge>
       default: return <Badge status="neutral">Нет подписки</Badge>
-    }
-  }
-
-  const getModeLabel = (mode?: string) => {
-    switch (mode) {
-      case 'normal': return 'Обычный'
-      case 'degraded': return 'Щадящий'
-      case 'strict': return 'Ограниченный'
-      default: return 'Обычный'
-    }
-  }
-
-  const getPriorityLabel = (priority?: string) => {
-    switch (priority) {
-      case 'high': return 'Высокий'
-      case 'normal': return 'Обычный'
-      case 'low': return 'Низкий'
-      default: return 'Обычный'
     }
   }
 
@@ -212,34 +193,6 @@ function ProfilePage() {
                 <span className="profile-field__value">{formatNumber(usage.tokensUsed)} / {formatNumber(usage.tokensLimit)}</span>
               </div>
             )}
-          </div>
-        </motion.section>
-
-        {/* Системные параметры */}
-        <motion.section 
-          className="profile-section"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-        >
-          <h2 className="profile-section__title">Системные параметры</h2>
-          <div className="profile-fields">
-            <div className="profile-field">
-              <span className="profile-field__label">Режим работы</span>
-              <span className="profile-field__value">{getModeLabel(meData?.fairUseMode)}</span>
-            </div>
-            <div className="profile-field">
-              <span className="profile-field__label">Приоритет обработки</span>
-              <span className="profile-field__value">{getPriorityLabel(capabilities?.priority)}</span>
-            </div>
-            <div className="profile-field">
-              <span className="profile-field__label">Макс. токенов на запрос</span>
-              <span className="profile-field__value">{formatNumber(capabilities?.maxTokensPerRequest ?? 8000)}</span>
-            </div>
-            <div className="profile-field">
-              <span className="profile-field__label">Потоковая генерация</span>
-              <span className="profile-field__value">{capabilities?.streamingAvailable ? 'Доступна' : 'Недоступна'}</span>
-            </div>
           </div>
         </motion.section>
 
