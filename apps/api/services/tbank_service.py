@@ -125,6 +125,30 @@ class TBankService:
             logger.error(f"Error calling T-Bank Init: {str(e)}")
             return None
 
+    async def cancel_payment(self, payment_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Отменяет (возвращает) платеж в Т-Банке.
+        """
+        logger.info(f"[TBankService] cancel_payment: payment_id={payment_id}")
+        
+        if PAYMENT_MODE == "fake":
+            return {"Success": True, "Status": "REFUNDED"}
+
+        payload = {
+            "TerminalKey": self.terminal_key,
+            "PaymentId": payment_id
+        }
+        payload["Token"] = self._generate_token(payload)
+
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(f"{self.api_url}/Cancel", json=payload)
+                response.raise_for_status()
+                return response.json()
+        except Exception as e:
+            logger.error(f"Error calling T-Bank Cancel: {str(e)}")
+            return None
+
     def check_token(self, data: Dict[str, Any]) -> bool:
         """
         Проверяет токен в уведомлении от Т-Банка.

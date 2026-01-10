@@ -109,4 +109,14 @@ async def payment_webhook(request: Request):
 
     return Response(content="OK", status_code=200)
 
+@router.get("/debug/cancel")
+async def debug_cancel_payment(payment_id: str):
+    """
+    Отладочный эндпоинт для отмены платежа (Тест №8).
+    """
+    res = await tbank_service.cancel_payment(payment_id)
+    if not res:
+        return {"status": "error", "message": "Failed to call T-Bank API"}
+    return {"status": "success", "data": res}
+
 
