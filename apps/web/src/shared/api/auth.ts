@@ -8,6 +8,7 @@ export interface TelegramAuthLink {
 export interface TelegramAuthStatus {
   status: 'success' | 'pending';
   user_id?: string;
+  telegram_username?: string;
 }
 
 /**

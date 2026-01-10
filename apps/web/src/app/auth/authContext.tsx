@@ -12,7 +12,7 @@ import {
   ReactNode,
 } from 'react'
 
-import type { AuthContextValue, AuthState } from './authTypes'
+import type { AuthContextValue, AuthState, User } from './authTypes'
 import { fetchMe } from '@/shared/api/me'
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -98,14 +98,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }))
   }, [])
 
-  const loginFromLanding = (token: string, userId: string) => {
+  const loginFromLanding = (token: string, userId: string, details?: Partial<User>) => {
     sessionStorage.setItem(TOKEN_KEY, token)
     sessionStorage.setItem(USER_ID_KEY, userId)
 
     setAuthState({
       isAuthenticated: true,
       isAuthResolved: true,
-      user: { id: userId, role: 'user' },
+      user: { id: userId, role: 'user', ...details },
       token,
     })
   }
