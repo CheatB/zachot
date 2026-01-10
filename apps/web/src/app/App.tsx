@@ -10,6 +10,7 @@ import LoginPage from './pages/LoginPage'
 import LogoutPage from './pages/LogoutPage'
 import ProfilePage from './pages/ProfilePage'
 import BillingPage from './pages/BillingPage'
+import NotFoundPage from './pages/NotFoundPage'
 import GenerationsPage from '@/features/generations/GenerationsPage'
 import CreateGenerationPage from '@/features/create-generation/CreateGenerationPage'
 import GenerationProgressPage from '@/features/generation-progress/GenerationProgressPage'
@@ -78,7 +79,7 @@ function AppRoutes() {
           <Route path="analytics" element={<AdminAnalyticsPage />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>
   )

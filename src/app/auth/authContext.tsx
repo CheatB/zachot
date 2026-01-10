@@ -87,18 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return
     }
 
-    // 3️⃣ Integration mode — пускаем внутрь (без backend auth)
-    if (IS_INTEGRATION) {
-      setAuthState({
-        isAuthenticated: true,
-        isAuthResolved: true,
-        user: { id: 'integration-user', role: 'admin' },
-        token: 'integration-token',
-      })
-      return
-    }
-
-    // 4️⃣ Нет токена и не integration mode — оставляем как есть (unauthenticated)
+    // 3️⃣ Нет токена — оставляем как есть (unauthenticated)
     setAuthState((prev) => ({
       ...prev,
       isAuthResolved: true,

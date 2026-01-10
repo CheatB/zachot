@@ -6,11 +6,10 @@
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { Container, Stack, Button, Card } from '@/ui'
-import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 
 function UnauthPage() {
-  const navigate = useNavigate()
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -25,14 +24,18 @@ function UnauthPage() {
     }
   }, [])
 
-  const handleLogin = () => {
-    navigate('/login')
+  const handleLoginClick = () => {
+    // Теперь кнопка открывает модальное окно (реализация окна будет следующим шагом)
+    setIsAuthModalOpen(true)
+    // Временно для теста можно оставить переход, если нужно, 
+    // но по ТЗ кнопка должна вызывать окошко.
+    console.log('Open Auth Modal')
   }
 
   const features = [
-    { icon: '📝', text: 'Генерация текстов по ГОСТу' },
-    { icon: '📊', text: 'Создание презентаций за 1 минуту' },
-    { icon: '🧠', text: 'Решение задач любого уровня' },
+    { text: 'Мы напишем твою работу по ГОСТу' },
+    { text: 'Поможем собрать классную презентацию' },
+    { text: 'Научим решать задачи любой сложности' },
   ]
 
   return (
@@ -44,12 +47,11 @@ function UnauthPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: motionTokens.easing.out }}
-          style={{ textAlign: 'center', maxWidth: '600px' }}
+          style={{ textAlign: 'center', maxWidth: '800px' }}
         >
-          <div className="unauth-badge">Доступ ограничен</div>
-          <h1 className="unauth-title">Вернитесь к учёбе без рутины</h1>
+          <h1 className="unauth-title">Передай нам свою рутину</h1>
           <p className="unauth-subtitle">
-            Для доступа к вашим работам и инструментам генерации необходимо войти в личный кабинет.
+            Для доступа к вашим работам и инструментам пожалуйста войдите в личный кабинет.
           </p>
         </motion.div>
 
@@ -58,21 +60,20 @@ function UnauthPage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          style={{ width: '100%', maxWidth: '500px' }}
+          style={{ width: '100%', maxWidth: '600px' }}
         >
           <Card className="unauth-card">
             <Stack gap="xl">
               <div className="unauth-features">
                 {features.map((f, i) => (
                   <div key={i} className="unauth-feature">
-                    <span className="unauth-feature__icon">{f.icon}</span>
                     <span className="unauth-feature__text">{f.text}</span>
                   </div>
                 ))}
               </div>
 
               <div className="unauth-actions">
-                <Button variant="primary" size="lg" className="login-trigger" onClick={handleLogin}>
+                <Button variant="primary" size="lg" className="login-trigger" onClick={handleLoginClick}>
                   Войти в аккаунт
                 </Button>
                 <Button variant="ghost" size="lg" onClick={() => window.location.href = 'https://zachet.tech'}>
@@ -83,6 +84,17 @@ function UnauthPage() {
           </Card>
         </motion.div>
 
+        {/* Placeholder for Auth Modal */}
+        {isAuthModalOpen && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <Card style={{ padding: '40px', maxWidth: '400px', textAlign: 'center' }}>
+              <h3>Авторизация</h3>
+              <p>Окно выбора способа входа будет реализовано следующим шагом.</p>
+              <Button onClick={() => setIsAuthModalOpen(false)} style={{ marginTop: '20px' }}>Закрыть</Button>
+            </Card>
+          </div>
+        )}
+
       </Stack>
 
       <style>{pageStyles}</style>
@@ -91,19 +103,6 @@ function UnauthPage() {
 }
 
 const pageStyles = `
-.unauth-badge {
-  display: inline-block;
-  padding: 6px 16px;
-  background-color: var(--color-neutral-10);
-  color: var(--color-text-muted);
-  border-radius: 99px;
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 24px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 .unauth-title {
   font-size: 48px;
   font-weight: 800;
@@ -117,6 +116,8 @@ const pageStyles = `
   font-size: 18px;
   color: var(--color-text-secondary);
   line-height: 1.6;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 .unauth-card {
@@ -130,27 +131,25 @@ const pageStyles = `
 .unauth-features {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   margin-bottom: 8px;
 }
 
 .unauth-feature {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px;
+  justify-content: center;
+  padding: 14px;
   background-color: var(--color-neutral-10);
   border-radius: 12px;
-}
-
-.unauth-feature__icon {
-  font-size: 20px;
+  text-align: center;
 }
 
 .unauth-feature__text {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-neutral-90);
+  white-space: nowrap;
 }
 
 .unauth-actions {
@@ -168,6 +167,9 @@ const pageStyles = `
 @media (max-width: 640px) {
   .unauth-title {
     font-size: 32px;
+  }
+  .unauth-feature__text {
+    white-space: normal;
   }
 }
 `

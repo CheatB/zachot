@@ -6,6 +6,8 @@
 export interface User {
   id: string // UUID
   role: 'admin' | 'user'
+  email?: string
+  telegram_username?: string
 }
 
 export interface AuthState {
@@ -19,5 +21,3 @@ export interface AuthContextValue extends AuthState {
   loginFromLanding: (token: string, userId: string) => void
   logout: () => void
 }
-
-

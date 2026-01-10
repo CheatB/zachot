@@ -18,29 +18,25 @@ async def get_me(authorization: str = Header(None)):
     """
     Возвращает информацию о текущем пользователе, его подписке и лимитах.
     """
-    # 1. Пытаемся получить user_id из токена (имитация JWT для MVP)
-    user_id = DEFAULT_USER_ID
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ")[1]
-        try:
-            user_id = UUID(token) # В MVP токен — это просто UUID пользователя
-        except ValueError:
-            pass
+    # 1. Проверяем наличие токена
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+        
+    token = authorization.split(" ")[1]
+    try:
+        user_id = UUID(token) # В MVP токен — это просто UUID пользователя
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid token format")
 
     with SessionLocal() as session:
         user = session.query(UserDB).filter(UserDB.id == user_id).first()
         
-        # 2. Если пользователя нет — создаем его (авто-регистрация для MVP)
+        # 2. Если пользователя нет — возвращаем 401
         if not user:
-            user = UserDB(
-                id=user_id,
-                email=f"user_{user_id.hex[:8]}@zachet.tech"
-            )
-            session.add(user)
-            session.commit()
-            session.refresh(user)
+            raise HTTPException(status_code=401, detail="User not found")
 
         return MeResponse(
+            email=user.email,
             id=user.id,
             role=user.role,
             telegram_username=user.telegram_username,

@@ -175,17 +175,18 @@ const stepStyles = `
   position: relative;
   width: 100%;
   min-height: 275px; /* Увеличено на 10px (было 265px) */
-  padding: var(--spacing-24) var(--spacing-16);
+  padding: var(--spacing-24) var(--spacing-8);
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
-  text-align: left;
+  text-align: center;
   cursor: pointer;
   transition: all var(--motion-duration-base) var(--motion-easing-out);
   box-shadow: var(--elevation-1);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  align-items: center;
   overflow: hidden;
   isolation: isolate;
 }
@@ -209,7 +210,7 @@ const stepStyles = `
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
-  max-width: 70%;
+  max-width: 85%;
   height: 100%;
 }
 
@@ -221,11 +222,13 @@ const stepStyles = `
   margin-top: 0;
   min-height: 2.4em;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .wizard-type-card__description {
-  font-size: var(--font-size-xs);
+  font-size: calc(var(--font-size-xs) + 4px);
   color: var(--color-text-secondary);
   line-height: 1.3;
 }

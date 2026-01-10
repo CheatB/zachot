@@ -1,10 +1,10 @@
 /**
  * CreateGenerationPage
  * Wizard создания генерации
- * Updated for "juicy" landing page aesthetic
+ * Refactored to use Zustand for state management
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Container, Stack, Button } from '@/ui'
@@ -20,57 +20,43 @@ import GenerationStructureStep from './GenerationStructureStep'
 import GenerationSourcesStep from './GenerationSourcesStep'
 import GenerationConfirmStep from './GenerationConfirmStep'
 import StepLoader, { StepLoaderTask } from './components/StepLoader'
-import type { CreateGenerationForm, GenerationType, WorkType, PresentationStyle, TaskMode, ComplexityLevel } from './types'
+import type { GenerationType, WorkType, PresentationStyle, TaskMode, ComplexityLevel } from './types'
 import { workTypeConfigs } from './types'
 import { motion as motionTokens } from '@/design-tokens'
 import { createGeneration, updateGeneration, executeAction, createJob, getGenerationById } from '@/shared/api/generations'
 import { suggestDetails, suggestStructure, suggestSources } from '@/shared/api/admin'
-
-type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 3 | 4 | 5 | 6
+import { useCreateStore } from './store/useCreateStore'
+import { useState } from 'react'
 
 function CreateGenerationPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [currentStep, setCurrentStepState] = useState<WizardStep>(1)
-  const currentStepRef = useRef<number>(1)
   
-  const setCurrentStep = (step: WizardStep) => {
-    currentStepRef.current = step
-    setCurrentStepState(step)
-  }
+  // Use Zustand store
+  const { 
+    currentStep, 
+    form, 
+    activeGenerationId, 
+    setStep, 
+    setForm, 
+    setActiveGenerationId,
+    resetForm 
+  } = useCreateStore()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuggesting, setIsSuggesting] = useState(false)
-  
-  // Use ref for activeGenerationId to avoid stale closures in debounced effects
-  const activeGenerationRef = useRef<string | null>(null)
-  
   const [transitionState, setTransitionState] = useState<{ title: string; tasks: StepLoaderTask[] } | null>(null)
-  const [form, setForm] = useState<CreateGenerationForm>({
-    type: null,
-    workType: null,
-    presentationStyle: null,
-    taskMode: null,
-    taskFiles: [],
-    complexityLevel: 'student',
-    humanityLevel: 50,
-    input: '',
-    goal: 'Провести комплексное исследование по заданной теме',
-    idea: 'Основная идея работы заключается в глубоком анализе существующих материалов и формулировании авторских выводов.',
-    volume: 10,
-    structure: [],
-    sources: [],
-    useSmartProcessing: true 
-  })
+  
+  const isCreatingRef = useRef(false)
 
   // Load draft if draftId is in URL
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const draftId = params.get('draftId')
     
-    if (draftId && !activeGenerationRef.current) {
+    if (draftId && draftId !== activeGenerationId) {
       getGenerationById(draftId).then((gen) => {
-        activeGenerationRef.current = gen.id
+        setActiveGenerationId(gen.id)
         setForm({
           type: gen.module.toLowerCase() as GenerationType,
           workType: (gen.work_type as WorkType) || null,
@@ -88,11 +74,58 @@ function CreateGenerationPage() {
           useSmartProcessing: gen.input_payload.use_smart_processing ?? true
         })
         if (gen.input_payload.current_step) {
-          setCurrentStep(gen.input_payload.current_step as WizardStep)
+          setStep(gen.input_payload.current_step as number)
         }
       }).catch(console.error)
     }
-  }, [location.search])
+  }, [location.search, activeGenerationId, setActiveGenerationId, setForm, setStep])
+
+  const saveDraft = useCallback(async (stepOverride?: number) => {
+    if (!form.type) return
+
+    const draftData = {
+      module: form.type.toUpperCase(),
+      work_type: form.workType,
+      complexity_level: form.complexityLevel,
+      humanity_level: form.humanityLevel,
+      input_payload: {
+        topic: form.input,
+        goal: form.goal,
+        idea: form.idea,
+        volume: form.volume,
+        presentation_style: form.presentationStyle,
+        task_mode: form.taskMode,
+        has_files: form.taskFiles.length > 0,
+        use_smart_processing: form.useSmartProcessing,
+        current_step: stepOverride ?? currentStep
+      },
+      settings_payload: {
+        structure: form.structure,
+        sources: form.sources,
+      }
+    }
+
+    try {
+      if (activeGenerationId) {
+        await updateGeneration(activeGenerationId, draftData)
+      } else if (!isCreatingRef.current) {
+        isCreatingRef.current = true
+        try {
+          const result = await createGeneration(draftData)
+          setActiveGenerationId(result.id)
+          // Update URL so refresh loads this draft
+          const newParams = new URLSearchParams(window.location.search)
+          newParams.set('draftId', result.id)
+          const newUrl = `${window.location.pathname}?${newParams.toString()}`
+          window.history.replaceState(null, '', newUrl)
+        } finally {
+          isCreatingRef.current = false
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save draft:', error)
+    }
+  }, [form, currentStep, activeGenerationId, setActiveGenerationId])
 
   const getStepHeader = (): { title: string; subtitle: string } => {
     if (currentStep === 1) {
@@ -126,17 +159,17 @@ function CreateGenerationPage() {
         }
       case 3:
         return {
-          title: 'Уточним детали работы',
+          title: 'Формулируем цель и идею работы',
           subtitle: 'Мы предложили цель и основную идею. Вы можете отредактировать их под свои требования.'
         }
       case 4:
         return {
           title: 'План работы',
-          subtitle: 'AI предложил оптимальную структуру. Вы можете добавить, удалить или переименовать разделы.'
+          subtitle: 'Система предложила оптимальную структуру. Вы можете добавить, удалить или переименовать разделы.'
         }
       case 5:
         return {
-          title: 'Источники литературы',
+          title: 'Источники информации',
           subtitle: 'Мы подобрали актуальные источники. Вы можете добавить свои или отредактировать предложенные.'
         }
       case 6:
@@ -151,109 +184,13 @@ function CreateGenerationPage() {
 
   const { title, subtitle } = getStepHeader()
 
-  const isCreatingRef = useRef(false)
-
-  const saveDraft = useCallback(async (currentForm: CreateGenerationForm, stepOverride?: number) => {
-    if (!currentForm.type) return
-
-    const draftData = {
-      module: currentForm.type.toUpperCase(),
-      work_type: currentForm.workType,
-      complexity_level: currentForm.complexityLevel,
-      humanity_level: currentForm.humanityLevel,
-      input_payload: {
-        topic: currentForm.input,
-        goal: currentForm.goal,
-        idea: currentForm.idea,
-        volume: currentForm.volume,
-        presentation_style: currentForm.presentationStyle,
-        task_mode: currentForm.taskMode,
-        has_files: currentForm.taskFiles.length > 0,
-        use_smart_processing: currentForm.useSmartProcessing,
-        current_step: stepOverride ?? currentStepRef.current
-      },
-      settings_payload: {
-        structure: currentForm.structure,
-        sources: currentForm.sources,
-      }
-    }
-
-    try {
-      if (activeGenerationRef.current) {
-        await updateGeneration(activeGenerationRef.current, draftData)
-      } else if (!isCreatingRef.current) {
-        isCreatingRef.current = true
-        try {
-          const result = await createGeneration(draftData)
-          activeGenerationRef.current = result.id
-          // Update URL so refresh loads this draft
-          const newParams = new URLSearchParams(window.location.search)
-          newParams.set('draftId', result.id)
-          const newUrl = `${window.location.pathname}?${newParams.toString()}`
-          window.history.replaceState(null, '', newUrl)
-        } finally {
-          isCreatingRef.current = false
-        }
-      }
-    } catch (error) {
-      console.error('Failed to save draft:', error)
-    }
-  }, [])
-
-  // Debounced save for any form changes
-  useEffect(() => {
-    if (!form.type) return
-
-    const timer = setTimeout(() => {
-      saveDraft(form)
-    }, 2000)
-
-    return () => clearTimeout(timer)
-  }, [form, currentStep, saveDraft])
-
-  const handleTypeSelect = (type: GenerationType) => {
-    setForm((prev) => {
-      const newForm = { ...prev, type }
-      saveDraft(newForm)
-      return newForm
-    })
-  }
-
-  const handleWorkTypeSelect = (workType: WorkType) => {
-    const config = workTypeConfigs[workType]
-    setForm((prev) => {
-      const newForm = { 
-        ...prev, 
-        workType,
-        volume: config.defaultVolume
-      }
-      saveDraft(newForm)
-      return newForm
-    })
-  }
-
-  const handlePresentationStyleSelect = (presentationStyle: PresentationStyle) => {
-    setForm((prev) => {
-      const newForm = { ...prev, presentationStyle }
-      saveDraft(newForm)
-      return newForm
-    })
-  }
-
-  const handleTaskFilesChange = (files: File[]) => {
-    setForm((prev) => ({ ...prev, taskFiles: files }))
-  }
-
-  const handleTaskModeSelect = (taskMode: TaskMode) => {
-    setForm((prev) => ({ ...prev, taskMode }))
-  }
-
-  const handleInputChange = (value: string) => {
-    setForm((prev) => ({ ...prev, input: value }))
-  }
-
-  const startAiAnalysis = () => {
+  const startAiAnalysis = (force = false) => {
     if (!form.input.trim()) return
+    // Only suggest if not already present OR if forced
+    if (!force && form.goal && form.idea && form.goal !== 'Провести комплексное исследование по заданной теме') {
+      setStep(3)
+      return
+    }
     
     setIsSuggesting(true)
     setTransitionState({
@@ -268,19 +205,95 @@ function CreateGenerationPage() {
     
     suggestDetails(form.input)
       .then(details => {
-        setForm(prev => {
-          const newForm = { ...prev, ...details }
-          saveDraft(newForm, 3) // Save step index 3
-          return newForm
-        })
+        setForm(details)
+        saveDraft(3)
         setTransitionState(null)
-        setCurrentStep(3)
+        setStep(3)
       })
       .finally(() => setIsSuggesting(false))
   }
 
+  const suggestStructureData = (force = false) => {
+    if (!force && form.structure.length > 0) {
+      setStep(4)
+      return
+    }
+
+    setTransitionState({
+      title: 'Проектирую структуру',
+      tasks: [
+        { id: '1', label: 'Сверяюсь с требованиями ГОСТ...' },
+        { id: '2', label: 'Выстраиваю логику глав...' },
+        { id: '3', label: 'Распределяю объем разделов...' },
+        { id: '4', label: 'Проверяю связность введения...' }
+      ]
+    })
+    
+    suggestStructure({
+      topic: form.input,
+      goal: form.goal,
+      idea: form.idea,
+      workType: form.workType || 'other',
+      volume: form.volume,
+      complexity: form.complexityLevel
+    })
+      .then(data => {
+        const structureWithIds = data.structure.map((item, idx) => ({
+          ...item,
+          id: `${idx}-${Date.now()}`
+        }))
+        setForm({ structure: structureWithIds })
+        saveDraft(4)
+        setTransitionState(null)
+        setStep(4)
+      })
+      .catch(err => {
+        console.error('Failed to suggest structure:', err)
+        setTransitionState(null)
+        setStep(4)
+      })
+  }
+
+  const suggestSourcesData = (force = false) => {
+    if (!force && form.sources.length > 0) {
+      setStep(5)
+      return
+    }
+
+    setTransitionState({
+      title: 'Подбираю информацию',
+      tasks: [
+        { id: '1', label: 'Сканирую научные базы данных...' },
+        { id: '2', label: 'Проверяю актуальность публикаций...' },
+        { id: '3', label: 'Оформляю список по стандарту...' }
+      ]
+    })
+    
+    suggestSources({
+      topic: form.input,
+      workType: form.workType || 'other',
+      volume: form.volume,
+      complexity: form.complexityLevel
+    })
+      .then(data => {
+        const sourcesWithIds = data.sources.map((item, idx) => ({
+          ...item,
+          id: `${idx}-${Date.now()}`
+        }))
+        setForm({ sources: sourcesWithIds })
+        saveDraft(5)
+        setTransitionState(null)
+        setStep(5)
+      })
+      .catch(err => {
+        console.error('Failed to suggest sources:', err)
+        setTransitionState(null)
+        setStep(5)
+      })
+  }
+
   const handleNext = () => {
-    let nextStep: WizardStep | null = null
+    let nextStep: number | null = null
 
     if (currentStep === 1 && form.type) {
       if (form.type === 'text') nextStep = 1.5
@@ -299,90 +312,23 @@ function CreateGenerationPage() {
       startAiAnalysis()
       return
     } else if (currentStep === 3) {
-      setTransitionState({
-        title: 'Проектирую структуру',
-        tasks: [
-          { id: '1', label: 'Сверяюсь с требованиями ГОСТ...' },
-          { id: '2', label: 'Выстраиваю логику глав...' },
-          { id: '3', label: 'Распределяю объем разделов...' },
-          { id: '4', label: 'Проверяю связность введения...' }
-        ]
-      })
-      
-      suggestStructure({
-        topic: form.input,
-        goal: form.goal,
-        idea: form.idea,
-        workType: form.workType || 'other',
-        volume: form.volume,
-        complexity: form.complexityLevel
-      })
-        .then(data => {
-          setForm(prev => {
-            const structureWithIds = data.structure.map((item, idx) => ({
-              ...item,
-              id: `${idx}-${Date.now()}`
-            }))
-            const newForm = { ...prev, structure: structureWithIds }
-            saveDraft(newForm, 4) // Save next step index
-            return newForm
-          })
-          setTransitionState(null)
-          setCurrentStep(4)
-        })
-        .catch(err => {
-          console.error('Failed to suggest structure:', err)
-          setTransitionState(null)
-          setCurrentStep(4)
-        })
+      suggestStructureData()
       return
     } else if (currentStep === 4) {
-      setTransitionState({
-        title: 'Подбираю литературу',
-        tasks: [
-          { id: '1', label: 'Сканирую научные базы данных...' },
-          { id: '2', label: 'Проверяю актуальность публикаций...' },
-          { id: '3', label: 'Оформляю список по стандарту...' }
-        ]
-      })
-      
-      suggestSources({
-        topic: form.input,
-        workType: form.workType || 'other',
-        volume: form.volume,
-        complexity: form.complexityLevel
-      })
-        .then(data => {
-          setForm(prev => {
-            const sourcesWithIds = data.sources.map((item, idx) => ({
-              ...item,
-              id: `${idx}-${Date.now()}`
-            }))
-            const newForm = { ...prev, sources: sourcesWithIds }
-            saveDraft(newForm, 5) // Save next step index
-            return newForm
-          })
-          setTransitionState(null)
-          setCurrentStep(5)
-        })
-        .catch(err => {
-          console.error('Failed to suggest sources:', err)
-          setTransitionState(null)
-          setCurrentStep(5)
-        })
+      suggestSourcesData()
       return
     } else if (currentStep === 5) {
       nextStep = 6
     }
 
     if (nextStep) {
-      setCurrentStep(nextStep)
-      saveDraft(form, nextStep)
+      setStep(nextStep)
+      saveDraft(nextStep)
     }
   }
 
   const handleBack = () => {
-    let prevStep: WizardStep | null = null
+    let prevStep: number | null = null
 
     if (currentStep === 1.2 || currentStep === 1.5 || currentStep === 1.6) {
       prevStep = 1
@@ -404,20 +350,22 @@ function CreateGenerationPage() {
     }
 
     if (prevStep) {
-      setCurrentStep(prevStep)
-      saveDraft(form, prevStep)
+      setStep(prevStep)
+      saveDraft(prevStep)
     }
   }
 
   const handleConfirm = async () => {
-    if (!form.type || !activeGenerationRef.current) return
+    if (!form.type || !activeGenerationId) return
     
     setIsSubmitting(true)
     try {
-      await saveDraft(form)
-      await executeAction(activeGenerationRef.current, 'next')
-      await createJob(activeGenerationRef.current)
-      navigate(`/generations/${activeGenerationRef.current}`)
+      await saveDraft()
+      await executeAction(activeGenerationId, 'next')
+      await createJob(activeGenerationId)
+      const finalId = activeGenerationId
+      resetForm() // Clear state after success
+      navigate(`/generations/${finalId}`)
     } catch (error) {
       console.error('Failed to create generation:', error)
       setIsSubmitting(false)
@@ -463,26 +411,47 @@ function CreateGenerationPage() {
           }}
           style={{ width: '100%' }}
         >
-          <h1 style={{ 
-            marginBottom: 'var(--spacing-8)', 
-            color: 'var(--color-neutral-100)', 
-            fontSize: 'var(--font-size-2xl)',
-            fontWeight: 'var(--font-weight-bold)',
-            letterSpacing: '-0.02em',
-            textAlign: 'left'
-          }}>
-            {title}
-          </h1>
-          <p style={{ 
-            fontSize: 'var(--font-size-base)', 
-            color: 'var(--color-text-secondary)', 
-            lineHeight: 'var(--line-height-relaxed)', 
-            marginBottom: 'var(--spacing-40)',
-            maxWidth: '100%',
-            textAlign: 'left'
-          }}>
-            {subtitle}
-          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ flex: 1 }}>
+              <h1 style={{ 
+                marginBottom: 'var(--spacing-8)', 
+                color: 'var(--color-neutral-100)', 
+                fontSize: 'var(--font-size-2xl)',
+                fontWeight: 'var(--font-weight-bold)',
+                letterSpacing: '-0.02em',
+                textAlign: 'left'
+              }}>
+                {title}
+              </h1>
+              <p style={{ 
+                fontSize: 'var(--font-size-base)', 
+                color: 'var(--color-text-secondary)', 
+                lineHeight: 'var(--line-height-relaxed)', 
+                marginBottom: 'var(--spacing-40)',
+                maxWidth: '100%',
+                textAlign: 'left'
+              }}>
+                {subtitle}
+              </p>
+            </div>
+            
+            {/* Кнопка "Перегенерировать" для соответствующих шагов */}
+            {[3, 4, 5].includes(currentStep) && (
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={() => {
+                  if (currentStep === 3) startAiAnalysis(true)
+                  else if (currentStep === 4) suggestStructureData(true)
+                  else if (currentStep === 5) suggestSourcesData(true)
+                }}
+                disabled={isSuggesting}
+                style={{ borderRadius: '12px', padding: '0 20px' }}
+              >
+                🪄 Перегенерировать
+              </Button>
+            )}
+          </div>
         </motion.div>
 
           <div className="wizard-progress" style={{ marginBottom: 'var(--spacing-40)', width: '100%', justifyContent: 'flex-start' }}>
@@ -529,15 +498,36 @@ function CreateGenerationPage() {
               </motion.div>
             ) : (
               <div style={{ width: '100%' }}>
-                {currentStep === 1 && <GenerationTypeStep key="step-1" selectedType={form.type} onSelect={handleTypeSelect} />}
-                {currentStep === 1.2 && <TaskInputStep key="step-1-2" input={form.input} files={form.taskFiles} onInputChange={handleInputChange} onFilesChange={handleTaskFilesChange} />}
-                {currentStep === 1.3 && <TaskModeStep key="step-1-3" selectedMode={form.taskMode} onSelect={handleTaskModeSelect} />}
-                {currentStep === 1.5 && form.type && <WorkTypeStep key="step-1-5" type={form.type} selectedWorkType={form.workType} onSelect={handleWorkTypeSelect} input={form.input} onInputChange={handleInputChange} />}
-                {currentStep === 1.6 && form.type && <PresentationStyleStep key="step-1-6" type={form.type} selectedStyle={form.presentationStyle} onSelect={handlePresentationStyleSelect} input={form.input} onInputChange={handleInputChange} />}
-                {currentStep === 1.7 && <GenerationStyleStep key="step-1-7" complexity={form.complexityLevel} humanity={form.humanityLevel} onChange={(updates) => setForm(prev => ({...prev, ...updates}))} />}
-                {currentStep === 3 && <GenerationGoalStep key="step-3" form={form} isLoading={isSuggesting} onChange={(updates) => setForm(prev => ({ ...prev, ...updates }))} />}
-                {currentStep === 4 && <GenerationStructureStep key="step-4" structure={form.structure} onChange={(structure) => setForm(prev => ({ ...prev, structure }))} />}
-                {currentStep === 5 && <GenerationSourcesStep key="step-5" sources={form.sources} onChange={(sources) => setForm(prev => ({ ...prev, sources }))} />}
+                {currentStep === 1 && <GenerationTypeStep key="step-1" selectedType={form.type} onSelect={(type) => setForm({ type })} />}
+                {currentStep === 1.2 && <TaskInputStep key="step-1-2" input={form.input} files={form.taskFiles} onInputChange={(v) => setForm({ input: v })} onFilesChange={(f) => setForm({ taskFiles: f })} />}
+                {currentStep === 1.3 && <TaskModeStep key="step-1-3" selectedMode={form.taskMode} onSelect={(m) => setForm({ taskMode: m })} />}
+                {currentStep === 1.5 && form.type && (
+                  <WorkTypeStep 
+                    key="step-1-5" 
+                    type={form.type} 
+                    selectedWorkType={form.workType} 
+                    onSelect={(wt) => {
+                      const config = workTypeConfigs[wt]
+                      setForm({ workType: wt, volume: config.defaultVolume })
+                    }} 
+                    input={form.input} 
+                    onInputChange={(v) => setForm({ input: v })} 
+                  />
+                )}
+                {currentStep === 1.6 && form.type && (
+                  <PresentationStyleStep 
+                    key="step-1-6" 
+                    type={form.type} 
+                    selectedStyle={form.presentationStyle} 
+                    onSelect={(s) => setForm({ presentationStyle: s })} 
+                    input={form.input} 
+                    onInputChange={(v) => setForm({ input: v })} 
+                  />
+                )}
+                {currentStep === 1.7 && <GenerationStyleStep key="step-1-7" complexity={form.complexityLevel} humanity={form.humanityLevel} onChange={(updates) => setForm(updates)} />}
+                {currentStep === 3 && <GenerationGoalStep key="step-3" form={form} isLoading={isSuggesting} onChange={(updates) => setForm(updates)} />}
+                {currentStep === 4 && <GenerationStructureStep key="step-4" structure={form.structure} onChange={(structure) => setForm({ structure })} />}
+                {currentStep === 5 && <GenerationSourcesStep key="step-5" sources={form.sources} onChange={(sources) => setForm({ sources })} />}
                 {currentStep === 6 && form.type && (
                   <GenerationConfirmStep 
                     key="step-6" 
@@ -547,9 +537,13 @@ function CreateGenerationPage() {
                     input={form.input} 
                     hasFiles={form.taskFiles.length > 0}
                     useSmartProcessing={form.useSmartProcessing}
-                    onToggleSmartProcessing={(val) => setForm(prev => ({ ...prev, useSmartProcessing: val }))}
+                    complexityLevel={form.complexityLevel}
+                    humanityLevel={form.humanityLevel}
+                    volume={form.volume}
+                    onToggleSmartProcessing={(val) => setForm({ useSmartProcessing: val })}
                     onConfirm={handleConfirm} 
                     onBack={handleBack} 
+                    onJumpToStep={(s) => setStep(s)}
                     isSubmitting={isSubmitting} 
                   />
                 )}

@@ -33,20 +33,18 @@ export interface AdminAnalytics {
 /**
  * Получить текущие настройки роутинга моделей
  */
-export async function fetchModelRouting(): Promise<ModelRoutingConfig> {
-  return {
-    essay: { structure: 'o4-mini', sources: 'gpt-5-mini', generation: 'gpt-5', refine: 'gpt-5-mini' },
-    diploma: { structure: 'o3', sources: 'o4-mini', generation: 'gpt-5.2', refine: 'o4-mini' },
-    presentation: { structure: 'o4-mini', sources: 'gpt-5-mini', generation: 'gpt-5-mini', refine: 'gpt-5-mini' },
-    task: { structure: 'o3', sources: 'o4-mini', generation: 'o3', refine: 'o4-mini' },
-  };
+export async function fetchModelRouting(): Promise<any> {
+  return apiFetch('/admin/model-routing');
 }
 
 /**
  * Сохранить настройки роутинга моделей
  */
-export async function saveModelRouting(config: ModelRoutingConfig): Promise<void> {
-  console.log('[API] Saving model routing:', config);
+export async function saveModelRouting(config: any): Promise<void> {
+  await apiFetch('/admin/model-routing', {
+    method: 'POST',
+    body: JSON.stringify(config),
+  });
 }
 
 /**

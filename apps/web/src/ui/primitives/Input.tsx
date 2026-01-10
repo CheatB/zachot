@@ -122,7 +122,6 @@ const inputStyles = `
   display: flex;
   align-items: center;
   color: var(--color-text-muted);
-  pointer-events: none;
 }
 
 .ui-input__prefix {

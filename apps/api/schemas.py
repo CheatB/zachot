@@ -100,6 +100,7 @@ class UserCapabilities(BaseModel):
 class MeResponse(BaseModel):
     id: UUID
     role: str
+    email: Optional[str] = None
     telegram_username: Optional[str] = None
     subscription: UserSubscriptionInfo
     usage: UserUsageInfo

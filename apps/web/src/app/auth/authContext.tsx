@@ -13,7 +13,6 @@ import {
 } from 'react'
 
 import type { AuthContextValue, AuthState } from './authTypes'
-import { IS_INTEGRATION } from '@/shared/config'
 import { fetchMe } from '@/shared/api/me'
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -73,7 +72,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setAuthState({
             isAuthenticated: true,
             isAuthResolved: true,
-            user: { id: response.id, role: response.role },
+            user: { 
+              id: response.id, 
+              role: response.role,
+              email: response.email,
+              telegram_username: response.telegram_username
+            },
             token: storedToken,
           })
         })
@@ -87,28 +91,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return
     }
 
-    // 3️⃣ Integration mode — пускаем внутрь (без backend auth)
-    if (IS_INTEGRATION) {
-      setAuthState({
-        isAuthenticated: true,
-        isAuthResolved: true,
-        user: { id: 'integration-user', role: 'admin' },
-        token: 'integration-token',
-      })
-      return
-    }
-
-    // 4️⃣ Нет токена и не integration mode — создаем анонимную сессию для MVP
-    const anonymousId = crypto.randomUUID()
-    sessionStorage.setItem(TOKEN_KEY, anonymousId)
-    sessionStorage.setItem(USER_ID_KEY, anonymousId)
-    
-    setAuthState({
-      isAuthenticated: true,
+    // 3️⃣ Нет токена — оставляем как есть (unauthenticated)
+    setAuthState((prev) => ({
+      ...prev,
       isAuthResolved: true,
-      user: { id: anonymousId, role: 'user' },
-      token: anonymousId,
-    })
+    }))
   }, [])
 
   const loginFromLanding = (token: string, userId: string) => {

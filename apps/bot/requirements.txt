@@ -1,0 +1,6 @@
+aiogram>=3.0.0
+pydantic-settings
+python-dotenv
+httpx
+sqlalchemy
+psycopg2-binary

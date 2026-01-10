@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { useLocation, Link, useNavigate } from 'react-router-dom'
+import clsx from 'clsx'
 import Sidebar from './Sidebar'
 import MobileNav from './MobileNav'
 import Stack from '@/ui/layout/Stack'
@@ -56,13 +57,18 @@ function AppShell({ isAuthenticated, user, children }: AppShellProps) {
   const handleLogout = () => {
     logout()
     setIsMenuOpen(false)
-    navigate('/')
+    navigate('/login')
   }
 
-  const getInitials = (userId: string): string => {
-    if (!userId) return '??'
-    const cleanId = userId.replace(/-/g, '')
-    return cleanId.substring(0, 2).toUpperCase()
+  const getRandomEmoji = (userId: string): string => {
+    const emojis = ['🎓', '🚀', '🧠', '📚', '💡', '✍️', '🧪', '🔭', '🎨', '💻', '🌍', '⚡️']
+    // Используем ID пользователя как сид для выбора одного и того же эмодзи для одного юзера
+    let hash = 0
+    for (let i = 0; i < userId.length; i++) {
+      hash = userId.charCodeAt(i) + ((hash << 5) - hash)
+    }
+    const index = Math.abs(hash) % emojis.length
+    return emojis[index]
   }
 
   useEffect(() => {
@@ -77,11 +83,6 @@ function AppShell({ isAuthenticated, user, children }: AppShellProps) {
       style.textContent = appShellStyles
     }
   }, [])
-
-  // ❗️Если не авторизован — просто рендерим контент без shell
-  if (!isAuthenticated) {
-    return <>{children}</>
-  }
 
   return (
     <div className="app-shell-wrapper">
@@ -106,18 +107,17 @@ function AppShell({ isAuthenticated, user, children }: AppShellProps) {
                 aria-label="Открыть меню пользователя"
                 aria-expanded={isMenuOpen}
               >
-                {getInitials(user.id)}
+                <span className="user-avatar-emoji">{getRandomEmoji(user.id)}</span>
               </button>
 
               {isMenuOpen && (
                 <div className="user-dropdown-menu">
                   <div className="user-dropdown-header">
-                    <span className="user-dropdown-id">ID: {user.id.substring(0, 8)}...</span>
+                    <span className="user-dropdown-id">
+                      {user.telegram_username ? `@${user.telegram_username}` : (user.email || `ID: ${user.id.substring(0, 8)}...`)}
+                    </span>
                   </div>
                   <nav className="user-dropdown-nav">
-                    <Link to="/account" className="user-dropdown-item" onClick={() => setIsMenuOpen(false)}>
-                      👤 Аккаунт
-                    </Link>
                     <Link to="/profile" className="user-dropdown-item" onClick={() => setIsMenuOpen(false)}>
                       ⚙️ Профиль
                     </Link>
@@ -145,7 +145,7 @@ function AppShell({ isAuthenticated, user, children }: AppShellProps) {
             currentPath={currentPath}
           />
 
-          <main className="app-shell__main">
+          <main className={clsx('app-shell__main', sidebarOpen && isDesktop && 'app-shell__main--with-sidebar')}>
             <div className="app-shell__content-limit">
               <Stack gap="lg" style={{ padding: 'var(--spacing-32)' }}>
                 {children}
@@ -215,23 +215,29 @@ const appShellStyles = `
   width: 44px;
   height: 44px;
   border-radius: var(--radius-full);
-  background: var(--color-accent-base);
+  background: white;
   color: var(--color-text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
   cursor: pointer;
   transition: all var(--motion-duration-base) var(--motion-easing-out);
-  box-shadow: 0 4px 12px var(--color-accent-shadow);
-  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 2px solid var(--color-accent-base);
   padding: 0;
+}
+
+.user-avatar-emoji {
+  font-size: 24px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .user-avatar-btn:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.3);
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.15);
 }
 
 .user-dropdown-menu {
@@ -313,10 +319,11 @@ const appShellStyles = `
   flex: 1;
   background-color: var(--color-surface-base);
   min-height: 100vh;
+  transition: margin-left var(--motion-duration-base) var(--motion-easing-out);
 }
 
 @media (min-width: 1024px) {
-  .app-shell__main {
+  .app-shell__main--with-sidebar {
     margin-left: 280px;
   }
 }

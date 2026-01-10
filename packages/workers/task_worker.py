@@ -2,12 +2,14 @@ import asyncio
 import logging
 import json
 from datetime import datetime
+from uuid import uuid4
 from packages.jobs import Job, JobResult
 from packages.jobs.enums import JobType
 from .base import BaseWorker
 from apps.api.storage import generation_store
 from apps.api.services.openai_service import openai_service
 from apps.api.services.model_router import model_router
+from apps.api.services.prompt_service import prompt_service
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +34,7 @@ class TaskWorker(BaseWorker):
             # 1. Быстрая проверка на пустой или слишком короткий ввод
             if len(topic.strip()) < 10:
                 error_msg = "Слишком короткое условие. Пожалуйста, пришлите текст задачи или фото."
-                generation_store.update(job.generation_id, result_content=error_msg, status="failed")
+                generation_store.update(job.generation_id, result_content=error_msg, status="FAILED")
                 return JobResult(job_id=job.id, success=False, output_payload={"reason": "too_short"}, finished_at=datetime.now())
 
             # 2. Семантическая классификация через дешевую модель
@@ -48,13 +50,12 @@ class TaskWorker(BaseWorker):
             classification = json.loads(raw_class or '{"type": "task"}')
             if classification.get("type") == "chat":
                 error_msg = "Я решаю конкретные учебные задачи. Для общих вопросов или написания текстов используйте соответствующие разделы."
-                generation_store.update(job.generation_id, result_content=error_msg, status="failed")
+                generation_store.update(job.generation_id, result_content=error_msg, status="FAILED")
                 return JobResult(job_id=job.id, success=False, output_payload={"reason": "not_a_task"}, finished_at=datetime.now())
 
             # --- ОСНОВНАЯ ЛОГИКА РЕШЕНИЯ ---
-            # Выбор модели (Умный каскад)
-            model_config = model_router.get_model_for_step("task_solve", generation.complexity_level)
-            model_name = model_config["model"]
+            # Выбор модели
+            model_name = model_router.get_model_for_step("task_solve", "task")
             
             task_mode = job.input_payload.get("task_mode", "quick")
             
@@ -80,7 +81,9 @@ class TaskWorker(BaseWorker):
             result_text = loop.run_until_complete(
                 openai_service.chat_completion(
                     model=model_name,
-                    messages=[{"role": "user", "content": prompt}]
+                    messages=[{"role": "user", "content": prompt}],
+                    step_type="task_solve",
+                    work_type="task"
                 )
             )
             
@@ -88,7 +91,7 @@ class TaskWorker(BaseWorker):
                 raise ValueError("Failed to get solution from AI")
                 
             # Обновляем контент в базе
-            generation_store.update(job.generation_id, result_content=result_text, status="completed")
+            generation_store.update(job.generation_id, result_content=result_text, status="COMPLETED")
             logger.info("Task solved successfully")
             
             return JobResult(
@@ -99,4 +102,3 @@ class TaskWorker(BaseWorker):
             )
         finally:
             loop.close()
-

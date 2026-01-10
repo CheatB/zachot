@@ -57,7 +57,7 @@ function AppShell({ isAuthenticated, user, children }: AppShellProps) {
   const handleLogout = () => {
     logout()
     setIsMenuOpen(false)
-    navigate('/')
+    navigate('/login')
   }
 
   const getInitials = (userId: string): string => {
@@ -78,11 +78,6 @@ function AppShell({ isAuthenticated, user, children }: AppShellProps) {
       style.textContent = appShellStyles
     }
   }, [])
-
-  // ❗️Если не авторизован — просто рендерим контент без shell
-  if (!isAuthenticated) {
-    return <>{children}</>
-  }
 
   return (
     <div className="app-shell-wrapper">

@@ -11,6 +11,16 @@ export interface TelegramAuthStatus {
 }
 
 /**
+ * Авторизация через email
+ */
+export async function emailLogin(email: string, password: string): Promise<{ user_id: string; token: string }> {
+  return apiFetch<{ user_id: string; token: string }>('/auth/email/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+/**
  * Получить ссылку для привязки Telegram
  */
 export async function getTelegramLink(): Promise<TelegramAuthLink> {

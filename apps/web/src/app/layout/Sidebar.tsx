@@ -3,8 +3,9 @@ import { motion as motionTokens } from '@/design-tokens'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { fetchMe, type MeResponse } from '@/shared/api/me'
-import { Button, Stack } from '@/ui'
+import { Stack, Button } from '@/ui'
 import clsx from 'clsx'
+import { useCreateStore } from '@/features/create-generation/store/useCreateStore'
 
 interface SidebarProps {
   isOpen: boolean
@@ -24,6 +25,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
   const navigate = useNavigate()
   const location = useLocation()
   const [userData, setUserData] = useState<MeResponse | null>(null)
+  const { resetForm } = useCreateStore()
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -45,6 +47,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
   }, [])
 
   const isAdminRoute = location.pathname.startsWith('/admin')
+  const isHomePage = location.pathname === '/' || location.pathname === '/login'
 
   const mainNavItems: NavItem[] = [
     { label: 'Мои генерации', path: '/generations', disabled: !isAuthenticated, icon: '📄' },
@@ -60,6 +63,14 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
   ]
 
   const navItems = isAdminRoute ? adminNavItems : mainNavItems
+
+  const handleLogoClick = () => {
+    resetForm()
+    navigate('/')
+    if (window.innerWidth < 1024) {
+      onClose()
+    }
+  }
 
   const handleNavClick = (item: NavItem) => {
     if (item.disabled) return
@@ -104,7 +115,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
             <div className="app-sidebar__content">
               <div 
                 className="app-sidebar__logo" 
-                onClick={() => navigate('/')}
+                onClick={handleLogoClick}
                 style={{ 
                   cursor: 'pointer',
                   display: 'flex',
@@ -206,7 +217,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
 
               <div className="app-sidebar__footer">
                 <Stack gap="lg">
-                  {isAuthenticated && userData && !isAdminRoute && (
+                  {isAuthenticated && userData && isHomePage && !isAdminRoute && (
                     <div className="app-sidebar__usage">
                       <div className="usage-info">
                         <span className="usage-label">Осталось генераций:</span>
@@ -284,8 +295,9 @@ const sidebarStyles = `
 .app-sidebar__content {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  overflow: hidden;
+  height: 100vh;
+  position: sticky;
+  top: 0;
 }
 
 .app-sidebar__logo {
@@ -344,6 +356,12 @@ const sidebarStyles = `
   color: var(--color-accent-base);
   border-color: var(--color-accent-base);
   font-weight: var(--font-weight-bold);
+  justify-content: center;
+}
+
+.app-sidebar__item--active .app-sidebar__item-label {
+  flex: none;
+  justify-content: center;
 }
 
 .app-sidebar__item--disabled {

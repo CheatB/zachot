@@ -1,51 +1,60 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Stack } from '@/ui';
-import { fetchModelRouting, saveModelRouting, type ModelRoutingConfig } from '@/shared/api/admin';
+import { Button, Stack, Card } from '@/ui';
+import { fetchModelRouting, saveModelRouting } from '@/shared/api/admin';
 
 const modelOptions = [
   { value: 'openai/o3', label: 'o3 (Reasoning High)' },
   { value: 'openai/o1', label: 'o1 (Reasoning Mid)' },
-  { value: 'openai/gpt-5.2', label: 'gpt-5.2 (Ultra High)' },
   { value: 'openai/gpt-4o', label: 'gpt-4o (Standard)' },
   { value: 'openai/gpt-4o-mini', label: 'gpt-4o-mini (Economy)' },
-  { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet (Best for Refine)' },
-  { value: 'deepseek/deepseek-chat', label: 'DeepSeek V3 (Ultra Economy)' },
-  { value: 'perplexity/sonar-pro', label: 'Perplexity Sonar Pro (Search)' },
-  { value: 'perplexity/sonar-deep-research', label: 'Perplexity Deep Research' },
+  { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet' },
+  { value: 'deepseek/deepseek-r1', label: 'DeepSeek R1 (Reasoning)' },
+  { value: 'deepseek/deepseek-chat', label: 'DeepSeek V3' },
+  { value: 'perplexity/sonar-pro', label: 'Sonar Pro (Search)' },
+  { value: 'perplexity/sonar-deep-research', label: 'Deep Research' },
 ];
 
+const fallbackOptions = [
+  { value: 'google/gemini-2.0-flash-exp:free', label: 'Gemini 2.0 Flash (Free)' },
+  { value: 'mistralai/mistral-7b-instruct:free', label: 'Mistral 7B (Free)' },
+  { value: 'meta-llama/llama-3.1-8b-instruct:free', label: 'Llama 3.1 8B (Free)' },
+  { value: 'open-orca/mistral-7b-openorca:free', label: 'OpenOrca 7B (Free)' },
+];
+
+const modelDescriptions = {
+  main: [
+    { name: 'o3 / o1', strengths: 'Железная логика, исключительное качество планирования сложных работ.', weaknesses: 'Дорого и медленно (до 30 сек на ответ).', recommended: 'Лучший выбор для этапов "Цель и Идея" и "План работы".' },
+    { name: 'gpt-4o', strengths: 'Золотой стандарт. Идеальный баланс качества текста и скорости.', weaknesses: 'Средняя цена.', recommended: 'Для основного написания текста (курсовые, статьи).' },
+    { name: 'Claude 3.5 Sonnet', strengths: 'Самый "человечный" и живой язык. Понимает тончайшие нюансы ТЗ.', weaknesses: 'Частые отказы по цензуре.', recommended: 'Незаменим для этапа "Очеловечивание" и эссе.' },
+    { name: 'DeepSeek R1', strengths: 'Умный расчет и математика на уровне o1.', weaknesses: 'Может тормозить в пиковые часы.', recommended: 'Для решения сложных задач.' },
+    { name: 'Perplexity Sonar', strengths: 'Прямой доступ к свежим научным статьям и новостям.', weaknesses: 'Не умеет писать длинные связные тексты.', recommended: 'Использовать ТОЛЬКО на этапе "Источники".' },
+  ],
+  fallback: [
+    { name: 'Gemini 2.0 Flash', strengths: 'Молниеносная скорость и огромное окно контекста.', weaknesses: 'Иногда слишком краткие ответы.', recommended: 'Идеальный резерв для генерации длинных текстов.' },
+    { name: 'Mistral 7B', strengths: 'Очень стабильная и предсказуемая.', weaknesses: 'Скромная логика.', recommended: 'Резерв для структуры и коротких докладов.' },
+    { name: 'Llama 3.1 8B', strengths: 'Хорошее знание русского языка среди малых моделей.', weaknesses: 'Склонность к повторам.', recommended: 'Резерв для стиля и правок.' },
+  ]
+};
+
 const ModelRoutingPage: React.FC = () => {
-  const [config, setConfig] = useState<ModelRoutingConfig | null>(null);
+  const [config, setConfig] = useState<any>(null);
   const [isSaving, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    const defaultConfig: ModelRoutingConfig = {
-      // Текстовые работы
-      referat: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      kursach: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      essay: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
-      doklad: { structure: 'openai/gpt-4o-mini', suggest_details: 'openai/o1', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'openai/gpt-4o-mini' },
-      article: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'perplexity/sonar-deep-research', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      composition: { structure: 'openai/gpt-4o-mini', suggest_details: 'openai/o1', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
-      other: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      
-      // Презентации
-      presentation: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
-      
-      // Задачи
-      task: { task_solve: 'deepseek/deepseek-r1' },
-    };
-    fetchModelRouting().then(data => setConfig({ ...defaultConfig, ...data }));
+    fetchModelRouting().then(setConfig);
   }, []);
 
-  const handleModelChange = (workType: string, stage: string, model: string) => {
+  const handleModelChange = (type: 'main' | 'fallback', workType: string, stage: string, model: string) => {
     if (!config) return;
-    setConfig(prev => ({
-      ...prev!,
-      [workType]: {
-        ...prev![workType],
-        [stage]: model
+    setConfig((prev: any) => ({
+      ...prev,
+      [type]: {
+        ...prev[type],
+        [workType]: {
+          ...prev[type][workType],
+          [stage]: model
+        }
       }
     }));
   };
@@ -66,14 +75,14 @@ const ModelRoutingPage: React.FC = () => {
 
   if (!config) return <div>Загрузка настроек...</div>;
 
-  const ModelSelect = ({ workType, stage }: { workType: string, stage: string }) => (
+  const ModelSelect = ({ type, workType, stage, options }: { type: 'main' | 'fallback', workType: string, stage: string, options: any[] }) => (
     <div className="admin-select-wrapper">
       <select 
         className="admin-select-minimal"
-        value={config[workType]?.[stage] || ''}
-        onChange={(e) => handleModelChange(workType, stage, e.target.value)}
+        value={config[type]?.[workType]?.[stage] || ''}
+        onChange={(e) => handleModelChange(type, workType, stage, e.target.value)}
       >
-        {modelOptions.map(opt => (
+        {options.map(opt => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
@@ -86,80 +95,50 @@ const ModelRoutingPage: React.FC = () => {
       <header>
         <h1 style={{ color: 'var(--color-neutral-100)', marginBottom: 'var(--spacing-8)' }}>Модели и роутинг</h1>
         <p style={{ color: 'var(--color-text-secondary)' }}>
-          Персональные настройки AI-движка для каждого типа работ.
+          Управление основным интеллектом системы и аварийным режимом.
         </p>
       </header>
 
       <section className="routing-section">
-        <h2 className="routing-section__title">Текстовые работы</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: 'var(--spacing-24)' }}>
+          <h2 className="routing-section__title" style={{ marginBottom: 0 }}>Основные модели</h2>
+          <span className="admin-badge admin-badge--primary">Активный режим</span>
+        </div>
+        
         <div className="admin-table-container">
           <table className="admin-table-v2">
             <thead>
               <tr>
-                <th style={{ width: '20%' }}>Вид работы</th>
+                <th style={{ width: '15%' }}>Вид работы</th>
                 <th>Цель и Идея</th>
                 <th>План работы</th>
                 <th>Источники</th>
                 <th>Написание текста</th>
-                <th className="refine-col-header">Очеловечивание</th>
+                <th>Очеловечивание</th>
               </tr>
             </thead>
             <tbody>
+              {['referat', 'kursach', 'essay', 'doklad', 'article', 'composition', 'other'].map(wt => (
+                <tr key={wt}>
+                  <td>{wt === 'referat' ? 'Реферат' : wt === 'kursach' ? 'Курсовая' : wt === 'essay' ? 'Эссе' : wt === 'doklad' ? 'Доклад' : wt === 'article' ? 'Статья' : wt === 'composition' ? 'Сочинение' : 'Другое'}</td>
+                  <td><ModelSelect type="main" workType={wt} stage="suggest_details" options={modelOptions} /></td>
+                  <td><ModelSelect type="main" workType={wt} stage="structure" options={modelOptions} /></td>
+                  <td><ModelSelect type="main" workType={wt} stage="sources" options={modelOptions} /></td>
+                  <td><ModelSelect type="main" workType={wt} stage="generation" options={modelOptions} /></td>
+                  <td><ModelSelect type="main" workType={wt} stage="refine" options={modelOptions} /></td>
+                </tr>
+              ))}
               <tr>
-                <td>Реферат</td>
-                <td><ModelSelect workType="referat" stage="suggest_details" /></td>
-                <td><ModelSelect workType="referat" stage="structure" /></td>
-                <td><ModelSelect workType="referat" stage="sources" /></td>
-                <td><ModelSelect workType="referat" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="referat" stage="refine" /></td>
+                <td>Презентация</td>
+                <td><ModelSelect type="main" workType="presentation" stage="suggest_details" options={modelOptions} /></td>
+                <td><ModelSelect type="main" workType="presentation" stage="structure" options={modelOptions} /></td>
+                <td><ModelSelect type="main" workType="presentation" stage="sources" options={modelOptions} /></td>
+                <td><ModelSelect type="main" workType="presentation" stage="generation" options={modelOptions} /></td>
+                <td><ModelSelect type="main" workType="presentation" stage="refine" options={modelOptions} /></td>
               </tr>
               <tr>
-                <td>Курсовая работа</td>
-                <td><ModelSelect workType="kursach" stage="suggest_details" /></td>
-                <td><ModelSelect workType="kursach" stage="structure" /></td>
-                <td><ModelSelect workType="kursach" stage="sources" /></td>
-                <td><ModelSelect workType="kursach" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="kursach" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Эссе</td>
-                <td><ModelSelect workType="essay" stage="suggest_details" /></td>
-                <td><ModelSelect workType="essay" stage="structure" /></td>
-                <td><ModelSelect workType="essay" stage="sources" /></td>
-                <td><ModelSelect workType="essay" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="essay" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Доклад</td>
-                <td><ModelSelect workType="doklad" stage="suggest_details" /></td>
-                <td><ModelSelect workType="doklad" stage="structure" /></td>
-                <td><ModelSelect workType="doklad" stage="sources" /></td>
-                <td><ModelSelect workType="doklad" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="doklad" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Научная статья</td>
-                <td><ModelSelect workType="article" stage="suggest_details" /></td>
-                <td><ModelSelect workType="article" stage="structure" /></td>
-                <td><ModelSelect workType="article" stage="sources" /></td>
-                <td><ModelSelect workType="article" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="article" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Сочинение</td>
-                <td><ModelSelect workType="composition" stage="suggest_details" /></td>
-                <td><ModelSelect workType="composition" stage="structure" /></td>
-                <td><ModelSelect workType="composition" stage="sources" /></td>
-                <td><ModelSelect workType="composition" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="composition" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Другое</td>
-                <td><ModelSelect workType="other" stage="suggest_details" /></td>
-                <td><ModelSelect workType="other" stage="structure" /></td>
-                <td><ModelSelect workType="other" stage="sources" /></td>
-                <td><ModelSelect workType="other" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="other" stage="refine" /></td>
+                <td>Решение задач</td>
+                <td colSpan={5}><ModelSelect type="main" workType="task" stage="task_solve" options={modelOptions} /></td>
               </tr>
             </tbody>
           </table>
@@ -167,27 +146,43 @@ const ModelRoutingPage: React.FC = () => {
       </section>
 
       <section className="routing-section">
-        <h2 className="routing-section__title">Презентации</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: 'var(--spacing-24)' }}>
+          <h2 className="routing-section__title" style={{ marginBottom: 0 }}>Резервные модели (Fallback)</h2>
+          <span className="admin-badge admin-badge--secondary">При ошибке или 0 балансе</span>
+        </div>
+        
         <div className="admin-table-container">
           <table className="admin-table-v2">
             <thead>
               <tr>
-                <th style={{ width: '20%' }}>Вид работы</th>
+                <th style={{ width: '15%' }}>Процесс</th>
                 <th>Цель и Идея</th>
                 <th>План работы</th>
                 <th>Источники</th>
-                <th>Содержание слайдов</th>
-                <th>Визуальный стиль</th>
+                <th>Написание текста</th>
+                <th>Очеловечивание / Стиль</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Презентация</td>
-                <td><ModelSelect workType="presentation" stage="suggest_details" /></td>
-                <td><ModelSelect workType="presentation" stage="structure" /></td>
-                <td><ModelSelect workType="presentation" stage="sources" /></td>
-                <td><ModelSelect workType="presentation" stage="generation" /></td>
-                <td><ModelSelect workType="presentation" stage="refine" /></td>
+                <td>Все текстовые работы</td>
+                <td><ModelSelect type="fallback" workType="text" stage="suggest_details" options={fallbackOptions} /></td>
+                <td><ModelSelect type="fallback" workType="text" stage="structure" options={fallbackOptions} /></td>
+                <td><ModelSelect type="fallback" workType="text" stage="sources" options={fallbackOptions} /></td>
+                <td><ModelSelect type="fallback" workType="text" stage="generation" options={fallbackOptions} /></td>
+                <td><ModelSelect type="fallback" workType="text" stage="refine" options={fallbackOptions} /></td>
+              </tr>
+              <tr>
+                <td>Презентации</td>
+                <td><ModelSelect type="fallback" workType="presentation" stage="suggest_details" options={fallbackOptions} /></td>
+                <td><ModelSelect type="fallback" workType="presentation" stage="structure" options={fallbackOptions} /></td>
+                <td><ModelSelect type="fallback" workType="presentation" stage="sources" options={fallbackOptions} /></td>
+                <td><ModelSelect type="fallback" workType="presentation" stage="generation" options={fallbackOptions} /></td>
+                <td><ModelSelect type="fallback" workType="presentation" stage="refine" options={fallbackOptions} /></td>
+              </tr>
+              <tr>
+                <td>Решение задач</td>
+                <td colSpan={5}><ModelSelect type="fallback" workType="task" stage="task_solve" options={fallbackOptions} /></td>
               </tr>
             </tbody>
           </table>
@@ -195,26 +190,42 @@ const ModelRoutingPage: React.FC = () => {
       </section>
 
       <section className="routing-section">
-        <h2 className="routing-section__title">Решение задач</h2>
-        <div className="admin-table-container">
-          <table className="admin-table-v2">
-            <thead>
-              <tr>
-                <th style={{ width: '20%' }}>Вид работы</th>
-                <th>Решение задачи</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Задача</td>
-                <td><ModelSelect workType="task" stage="task_solve" /></td>
-              </tr>
-            </tbody>
-          </table>
+        <h2 className="routing-section__title">Гайд по выбору моделей</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+          <Stack gap="lg">
+            <h3 style={{ color: 'var(--color-accent-base)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              💎 Основные (Premium)
+            </h3>
+            {modelDescriptions.main.map(m => (
+              <Card key={m.name} style={{ padding: '20px', borderLeft: '4px solid var(--color-accent-base)' }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '16px' }}>{m.name}</div>
+                <Stack gap="xs">
+                  <div style={{ fontSize: '13px' }}><strong>Сила:</strong> {m.strengths}</div>
+                  <div style={{ fontSize: '13px' }}><strong>Слабость:</strong> {m.weaknesses}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--color-accent-base)', fontWeight: 'medium' }}>🎯 {m.recommended}</div>
+                </Stack>
+              </Card>
+            ))}
+          </Stack>
+          <Stack gap="lg">
+            <h3 style={{ color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              🛡️ Резервные (Free)
+            </h3>
+            {modelDescriptions.fallback.map(m => (
+              <Card key={m.name} style={{ padding: '20px', borderLeft: '4px solid var(--color-text-disabled)' }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '16px' }}>{m.name}</div>
+                <Stack gap="xs">
+                  <div style={{ fontSize: '13px' }}><strong>Сила:</strong> {m.strengths}</div>
+                  <div style={{ fontSize: '13px' }}><strong>Слабость:</strong> {m.weaknesses}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)', fontWeight: 'medium' }}>🎯 {m.recommended}</div>
+                </Stack>
+              </Card>
+            ))}
+          </Stack>
         </div>
       </section>
 
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--spacing-64)' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--spacing-64)', paddingBottom: 'var(--spacing-80)' }}>
         <Button 
           variant="primary" 
           size="lg" 
@@ -222,20 +233,20 @@ const ModelRoutingPage: React.FC = () => {
           loading={isSaving}
           style={{ minWidth: '280px', height: '56px', fontSize: 'var(--font-size-base)' }}
         >
-          Сохранить
+          Сохранить все настройки
         </Button>
       </div>
 
       {showToast && (
         <div className="admin-alert-toast">
           <div className="admin-alert-toast__icon">✅</div>
-          <div className="admin-alert-toast__text">Настройки успешно обновлены</div>
+          <div className="admin-alert-toast__text">Настройки роутинга успешно сохранены</div>
         </div>
       )}
 
       <style>{`
         .routing-section {
-          margin-bottom: var(--spacing-48);
+          margin-bottom: var(--spacing-64);
         }
         .routing-section__title {
           font-size: var(--font-size-xl);
@@ -244,39 +255,41 @@ const ModelRoutingPage: React.FC = () => {
           padding-left: var(--spacing-8);
           border-left: 4px solid var(--color-accent-base);
         }
+        .admin-badge {
+          font-size: 10px;
+          padding: 2px 8px;
+          border-radius: 4px;
+          text-transform: uppercase;
+          font-weight: bold;
+        }
+        .admin-badge--primary { background: var(--color-accent-light); color: var(--color-accent-base); }
+        .admin-badge--secondary { background: var(--color-neutral-20); color: var(--color-text-secondary); }
+
         .admin-table-container {
-          background: transparent;
-          width: 100%;
+          background: white;
+          border-radius: var(--radius-lg);
+          border: 1px solid var(--color-border-light);
+          overflow: hidden;
+          box-shadow: var(--elevation-1);
         }
         .admin-table-v2 {
           width: 100%;
-          border-collapse: separate;
-          border-spacing: 0;
-          text-align: left;
+          border-collapse: collapse;
         }
         .admin-table-v2 th {
           padding: var(--spacing-16) var(--spacing-24);
+          background: var(--color-neutral-10);
           color: var(--color-text-secondary);
-          font-size: var(--font-size-xs);
+          font-size: 11px;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          border-bottom: 2px solid var(--color-border-light);
+          border-bottom: 1px solid var(--color-border-light);
+          text-align: left;
         }
         .admin-table-v2 td {
-          padding: var(--spacing-20) var(--spacing-24);
+          padding: var(--spacing-16) var(--spacing-24);
           border-bottom: 1px solid var(--color-border-light);
-          background-color: transparent;
-        }
-        .admin-table-v2 tr:last-child td {
-          border-bottom: none;
-        }
-        
-        .refine-col-header {
-          color: var(--color-accent-base) !important;
-        }
-        .refine-cell-v2 {
-          background-color: rgba(22, 163, 74, 0.03);
-          position: relative;
+          font-size: 14px;
         }
         
         .admin-select-wrapper {
@@ -287,24 +300,24 @@ const ModelRoutingPage: React.FC = () => {
         }
         .admin-select-minimal {
           appearance: none;
-          background: transparent;
-          border: none;
+          background: var(--color-neutral-10);
+          border: 1px solid var(--color-border-light);
+          border-radius: 6px;
           color: var(--color-neutral-100);
-          font-size: var(--font-size-sm);
-          font-family: inherit;
-          font-weight: var(--font-weight-medium);
+          font-size: 12px;
+          padding: 6px 24px 6px 10px;
           cursor: pointer;
           width: 100%;
-          padding-right: 20px;
           outline: none;
-          transition: color 0.2s ease;
+          transition: all 0.2s ease;
         }
         .admin-select-minimal:hover {
-          color: var(--color-accent-base);
+          border-color: var(--color-accent-base);
+          background: white;
         }
         .admin-select-arrow {
           position: absolute;
-          right: 0;
+          right: 8px;
           pointer-events: none;
           font-size: 10px;
           color: var(--color-text-muted);
@@ -329,13 +342,6 @@ const ModelRoutingPage: React.FC = () => {
         @keyframes slide-up {
           from { transform: translate(-50%, 100%); opacity: 0; }
           to { transform: translate(-50%, 0); opacity: 1; }
-        }
-        .admin-alert-toast__icon {
-          font-size: 20px;
-        }
-        .admin-alert-toast__text {
-          font-weight: var(--font-weight-medium);
-          font-size: var(--font-size-base);
         }
       `}</style>
     </Stack>

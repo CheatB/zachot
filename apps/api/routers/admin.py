@@ -14,6 +14,21 @@ from datetime import datetime
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
+@router.get("/model-routing")
+async def get_model_routing(admin: UserDB = Depends(get_current_user)):
+    # Только админы могут видеть настройки
+    if admin.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return model_router.config
+
+@router.post("/model-routing")
+async def update_model_routing(config: dict, admin: UserDB = Depends(get_current_user)):
+    if admin.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    if model_router.save_config(config):
+        return {"status": "success"}
+    raise HTTPException(status_code=500, detail="Failed to save configuration")
+
 @router.post("/suggest-structure")
 async def suggest_structure(request: dict, user: UserDB = Depends(get_current_user)):
     """
@@ -30,8 +45,7 @@ async def suggest_structure(request: dict, user: UserDB = Depends(get_current_us
         raise HTTPException(status_code=400, detail="Topic is required")
 
     # Используем динамический роутинг
-    model_config = model_router.get_model_for_step("structure")
-    model_name = model_config["model"]
+    model_name = model_router.get_model_for_step("structure", work_type or "other")
 
     # Создаем фиктивный объект Generation для PromptService
     dummy_gen = Generation(
@@ -52,7 +66,9 @@ async def suggest_structure(request: dict, user: UserDB = Depends(get_current_us
         raw_response = await openai_service.chat_completion(
             model=model_name,
             messages=[{"role": "user", "content": prompt}],
-            json_mode=True
+            json_mode=True,
+            step_type="structure",
+            work_type=work_type or "other"
         )
         
         if not raw_response:
@@ -119,8 +135,7 @@ async def suggest_sources(request: dict, user: UserDB = Depends(get_current_user
         raise HTTPException(status_code=400, detail="Topic is required")
 
     # Используем динамический роутинг
-    model_config = model_router.get_model_for_step("sources")
-    model_name = model_config["model"]
+    model_name = model_router.get_model_for_step("sources", work_type or "other")
 
     # Создаем фиктивный объект Generation для PromptService
     dummy_gen = Generation(
@@ -141,7 +156,9 @@ async def suggest_sources(request: dict, user: UserDB = Depends(get_current_user
         raw_response = await openai_service.chat_completion(
             model=model_name,
             messages=[{"role": "user", "content": prompt}],
-            json_mode=True
+            json_mode=True,
+            step_type="sources",
+            work_type=work_type or "other"
         )
         
         if not raw_response:
@@ -167,8 +184,7 @@ async def suggest_details(request: dict, user: UserDB = Depends(get_current_user
         raise HTTPException(status_code=400, detail="Topic is required")
 
     # Используем динамический роутинг из настроек
-    model_config = model_router.get_model_for_step("suggest_details")
-    model_name = model_config["model"]
+    model_name = model_router.get_model_for_step("suggest_details")
 
     prompt = f"""
     Ты — академический консультант. На основе темы "{topic}" предложи:
@@ -182,7 +198,8 @@ async def suggest_details(request: dict, user: UserDB = Depends(get_current_user
         raw_response = await openai_service.chat_completion(
             model=model_name,
             messages=[{"role": "user", "content": prompt}],
-            json_mode=True
+            json_mode=True,
+            step_type="suggest_details"
         )
         
         if not raw_response:

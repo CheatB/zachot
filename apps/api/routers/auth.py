@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from ..database import SessionLocal, AuthTokenDB, User as UserDB
 from .generations import get_current_user
 import secrets
-from pydantic import BaseModel
+import hashlib
+from pydantic import BaseModel, EmailStr
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -10,22 +11,56 @@ class TelegramAuthLink(BaseModel):
     link: str
     token: str
 
-@router.post("/telegram/link", response_model=TelegramAuthLink)
-async def get_telegram_link(user: UserDB = Depends(get_current_user)):
+class EmailAuthRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+@router.post("/email/login")
+async def email_login(auth_req: EmailAuthRequest):
     """
-    Генерирует временный токен для привязки Telegram бота.
+    Авторизация или регистрация по e-mail.
+    """
+    with SessionLocal() as session:
+        user = session.query(UserDB).filter(UserDB.email == auth_req.email).first()
+        
+        hashed = hash_password(auth_req.password)
+        
+        if not user:
+            # Регистрация нового пользователя
+            user = UserDB(
+                email=auth_req.email,
+                hashed_password=hashed
+            )
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+            return {"status": "success", "user_id": str(user.id), "token": str(user.id), "message": "Registered"}
+        
+        # Проверка пароля
+        if user.hashed_password != hashed:
+            raise HTTPException(status_code=401, detail="Invalid password")
+            
+        return {"status": "success", "user_id": str(user.id), "token": str(user.id), "message": "Logged in"}
+
+@router.post("/telegram/link", response_model=TelegramAuthLink)
+async def get_telegram_link():
+    """
+    Генерирует временный токен для авторизации через Telegram.
     """
     token = secrets.token_urlsafe(16)
     
     with SessionLocal() as session:
         auth_token = AuthTokenDB(
             token=token,
-            user_id=user.id
+            user_id=None # При логине user_id пока неизвестен
         )
         session.add(auth_token)
         session.commit()
         
-    bot_username = "ZachetBot" # В будущем заменить на реальный юзернейм бота
+    bot_username = "zachot_tech_bot" 
     return TelegramAuthLink(
         link=f"https://t.me/{bot_username}?start={token}",
         token=token
