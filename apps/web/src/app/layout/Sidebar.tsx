@@ -235,7 +235,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
 
                   <div className="app-sidebar__legal">
                     <a href="/oferta.pdf" target="_blank" rel="noopener noreferrer" className="legal-link">Пользовательское соглашение сервиса Зачёт</a>
-                    <Link to="/privacy" className="legal-link">Политика обработки персональных данных</Link>
+                    <a href="/privacy.pdf" target="_blank" rel="noopener noreferrer" className="legal-link">Политика обработки персональных данных</a>
                   </div>
                 </Stack>
               </div>
