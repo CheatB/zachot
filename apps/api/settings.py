@@ -46,8 +46,9 @@ class Settings:
         self.jwt_secret: str = os.getenv("JWT_SECRET", "zachot-super-secret-key-2026")
 
         # T-Bank (Tinkoff) Acquiring
-        self.tbank_terminal_key: str = os.getenv("TBANK_TERMINAL_KEY", "")
-        self.tbank_secret_key: str = os.getenv("TBANK_SECRET_KEY", "")
+        # Тестовые credentials из документации T-Bank (для production заменить через ENV)
+        self.tbank_terminal_key: str = os.getenv("TBANK_TERMINAL_KEY", "1768061897408DEMO")
+        self.tbank_secret_key: str = os.getenv("TBANK_SECRET_KEY", "QNX%z2q*FEAWJSVw")
         self.tbank_api_url: str = os.getenv("TBANK_API_URL", "https://securepay.tinkoff.ru/v2")
 
 

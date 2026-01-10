@@ -19,8 +19,8 @@ async def initiate_payment(
     # Расчет суммы и описания в зависимости от периода
     base_price = 499
     if request.period == 'quarter':
-        amount = Math.round(base_price * 0.9) * 3 # Python doesn't have Math.round like JS, using round()
-        amount = round(base_price * 0.9) * 3
+        # 449 руб/мес * 3 = 1347 руб
+        amount = round(base_price * 0.9) * 3  # 449 * 3 = 1347
         description = 'Подписка "Зачёт" — 3 месяца'
     elif request.period == 'year':
         amount = round(base_price * 0.85) * 12

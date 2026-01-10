@@ -13,7 +13,6 @@ import {
 } from 'react'
 
 import type { AuthContextValue, AuthState } from './authTypes'
-import { IS_INTEGRATION } from '@/shared/config'
 import { fetchMe } from '@/shared/api/me'
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -73,7 +72,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setAuthState({
             isAuthenticated: true,
             isAuthResolved: true,
-            user: { id: response.id, role: response.role },
+            user: { 
+              id: response.id, 
+              role: response.role,
+              email: response.email,
+              telegram_username: response.telegram_username,
+              subscription: response.subscription ? {
+                ...response.subscription,
+                status: response.subscription.status || 'none',
+              } : undefined,
+              usage: response.usage,
+            },
             token: storedToken,
           })
         })
@@ -119,6 +128,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     })
   }
 
+  const refreshUser = async () => {
+    try {
+      const response = await fetchMe()
+      setAuthState((prev) => ({
+        ...prev,
+        user: prev.user ? {
+          ...prev.user,
+          subscription: response.subscription ? {
+            ...response.subscription,
+            status: response.subscription.status || 'none',
+          } : undefined,
+          usage: response.usage,
+        } : null,
+      }))
+    } catch (error) {
+      console.error('[AuthProvider] Failed to refresh user:', error)
+    }
+  }
+
   // Подписка на событие logout из API слоя
   useEffect(() => {
     const handleAuthLogout = () => {
@@ -138,6 +166,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     ...authState,
     loginFromLanding,
     logout,
+    refreshUser,
   }
 
   // Логирование для отладки

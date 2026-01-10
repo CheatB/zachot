@@ -9,7 +9,8 @@ from ..settings import settings
 logger = logging.getLogger(__name__)
 
 # Режим провайдера: "tbank" или "fake"
-PAYMENT_MODE = os.getenv("PAYMENT_MODE", "fake")  # По умолчанию fake для разработки
+# Production: используем реальный T-Bank API (securepay.tinkoff.ru работает!)
+PAYMENT_MODE = os.getenv("PAYMENT_MODE", "tbank")
 
 class TBankService:
     """
@@ -29,7 +30,8 @@ class TBankService:
         Генерирует токен безопасности для запросов Т-Банка.
         """
         # 1. Копируем данные и удаляем лишние поля
-        base_data = {k: v for k, v in data.items() if k not in ['Token', 'Shops', 'Receipt', 'Data']}
+        # ВАЖНО: исключаем вложенные объекты (DATA, Receipt, Shops) - они не участвуют в подписи
+        base_data = {k: v for k, v in data.items() if k not in ['Token', 'Shops', 'Receipt', 'DATA', 'Data']}
         
         # 2. Добавляем пароль (SecretKey)
         base_data['Password'] = self.secret_key
