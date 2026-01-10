@@ -6,7 +6,7 @@
 
 import { GenerationEvent } from '../types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export interface SSEOptions {
   onMessage?: (event: GenerationEvent) => void;
@@ -41,7 +41,7 @@ export function subscribeGenerationEvents(
   generationId: string,
   options: SSEOptions = {}
 ): () => void {
-  const url = `${API_BASE_URL}/generations/${generationId}/events`;
+  // const url = `${API_BASE_URL}/generations/${generationId}/events`;
   
   // TODO: Реальная реализация с EventSource
   // const eventSource = new EventSource(url);

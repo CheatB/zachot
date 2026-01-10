@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Stack, Card } from '@/ui';
-import { fetchModelRouting, saveModelRouting } from '@/shared/api/admin';
+import { fetchModelRouting, saveModelRouting, type FullModelRoutingConfig } from '@/shared/api/admin';
 
 const modelOptions = [
   { value: 'openai/o3', label: 'o3 (Reasoning High)' },
@@ -37,7 +37,7 @@ const modelDescriptions = {
 };
 
 const ModelRoutingPage: React.FC = () => {
-  const [config, setConfig] = useState<any>(null);
+  const [config, setConfig] = useState<FullModelRoutingConfig | null>(null);
   const [isSaving, setIsSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
@@ -47,16 +47,19 @@ const ModelRoutingPage: React.FC = () => {
 
   const handleModelChange = (type: 'main' | 'fallback', workType: string, stage: string, model: string) => {
     if (!config) return;
-    setConfig((prev: any) => ({
-      ...prev,
-      [type]: {
-        ...prev[type],
-        [workType]: {
-          ...prev[type][workType],
-          [stage]: model
+    setConfig((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        [type]: {
+          ...prev[type],
+          [workType]: {
+            ...prev[type][workType],
+            [stage]: model
+          }
         }
-      }
-    }));
+      };
+    });
   };
 
   const handleSave = async () => {
@@ -75,7 +78,7 @@ const ModelRoutingPage: React.FC = () => {
 
   if (!config) return <div>Загрузка настроек...</div>;
 
-  const ModelSelect = ({ type, workType, stage, options }: { type: 'main' | 'fallback', workType: string, stage: string, options: any[] }) => (
+  const ModelSelect = ({ type, workType, stage, options }: { type: 'main' | 'fallback', workType: string, stage: string, options: { value: string, label: string }[] }) => (
     <div className="admin-select-wrapper">
       <select 
         className="admin-select-minimal"

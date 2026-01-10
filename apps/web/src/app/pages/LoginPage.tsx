@@ -78,8 +78,8 @@ function LoginPage() {
       const result = await emailLogin(email, password)
       loginFromLanding(result.token, result.user_id)
       navigate('/')
-    } catch (err: any) {
-      setError(err.message || 'Ошибка авторизации')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Ошибка авторизации')
     } finally {
       setLoading(false)
     }

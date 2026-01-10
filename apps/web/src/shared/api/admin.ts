@@ -30,17 +30,22 @@ export interface AdminAnalytics {
   }[];
 }
 
+export interface FullModelRoutingConfig {
+  main: ModelRoutingConfig;
+  fallback: ModelRoutingConfig;
+}
+
 /**
  * Получить текущие настройки роутинга моделей
  */
-export async function fetchModelRouting(): Promise<any> {
+export async function fetchModelRouting(): Promise<FullModelRoutingConfig> {
   return apiFetch('/admin/model-routing');
 }
 
 /**
  * Сохранить настройки роутинга моделей
  */
-export async function saveModelRouting(config: any): Promise<void> {
+export async function saveModelRouting(config: FullModelRoutingConfig): Promise<void> {
   await apiFetch('/admin/model-routing', {
     method: 'POST',
     body: JSON.stringify(config),

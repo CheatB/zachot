@@ -13,7 +13,7 @@ import {
   JobQueuedResponse,
 } from '../types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 /**
  * Создает новую генерацию.
@@ -124,7 +124,7 @@ export async function actionGeneration(
  * Ставит задачу в очередь.
  */
 export async function enqueueJob(
-  generationId: string
+  _generationId: string
 ): Promise<JobQueuedResponse> {
   // TODO: Реальная реализация
   // const response = await fetch(`${API_BASE_URL}/generations/${generationId}/jobs`, {
