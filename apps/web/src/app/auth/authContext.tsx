@@ -27,6 +27,22 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [authState, setAuthState] = useState<AuthState>(() => {
+    // Пытаемся восстановить базовое состояние из localStorage ПРЯМО ПРИ ИНИЦИАЛИЗАЦИИ
+    // Это критично, чтобы AppBoundary не редиректнул на /login во время загрузки
+    if (typeof window !== 'undefined') {
+      const storedToken = localStorage.getItem(TOKEN_KEY)
+      const storedUserId = localStorage.getItem(USER_ID_KEY)
+
+      if (storedToken && storedUserId) {
+        return {
+          isAuthenticated: true,
+          isAuthResolved: false,
+          user: { id: storedUserId, role: 'user' },
+          token: storedToken,
+        }
+      }
+    }
+
     return {
       isAuthenticated: false,
       isAuthResolved: false,
@@ -38,8 +54,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   /**
    * Bootstrap auth:
    * 1. URL params (landing / integration)
-   * 2. localStorage
-   * 3. integration mode fallback
+   * 2. localStorage verification
    */
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -54,7 +69,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setAuthState({
         isAuthenticated: true,
         isAuthResolved: true,
-        user: { id: userIdFromUrl, role: 'user' }, // По умолчанию user, обновится через /me
+        user: { id: userIdFromUrl, role: 'user' },
         token: tokenFromUrl,
       })
 
@@ -62,15 +77,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return
     }
 
-    // 2️⃣ Восстановление сессии + проверка через /me
+    // 2️⃣ Верификация существующей сессии через /me
     const storedToken = localStorage.getItem(TOKEN_KEY)
 
     if (storedToken) {
-      console.log('[Auth] Found stored token, fetching user...')
-      // Проверяем валидность токена через /me
       fetchMe()
         .then((response) => {
-          console.log('[Auth] User fetched successfully:', response.email || response.telegram_username)
           setAuthState({
             isAuthenticated: true,
             isAuthResolved: true,
@@ -84,19 +96,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
           })
         })
         .catch((error) => {
-          console.error('[Auth] Failed to fetch user:', error)
-          // Если это 401, значит токен протух
+          // Если это 401, значит токен невалиден
           if (error.status === 401) {
-            console.log('[Auth] Token expired (401), clearing session')
             localStorage.removeItem(TOKEN_KEY)
             localStorage.removeItem(USER_ID_KEY)
+            setAuthState({
+              isAuthenticated: false,
+              isAuthResolved: true,
+              user: null,
+              token: null,
+            })
+          } else {
+            // Ошибка сети или сервера — сохраняем isAuthenticated: true, 
+            // чтобы не выкидывать пользователя, но помечаем resolved
+            setAuthState((prev) => ({
+              ...prev,
+              isAuthResolved: true,
+            }))
           }
-          
-          setAuthState((prev) => ({
-            ...prev,
-            isAuthResolved: true,
-            isAuthenticated: false, // Явно сбрасываем, если ошибка
-          }))
         })
       return
     }
