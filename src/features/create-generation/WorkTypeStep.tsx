@@ -9,6 +9,17 @@ import { workTypeConfigs, type WorkType, type GenerationType } from './types'
 import { Textarea } from '@/ui'
 import clsx from 'clsx'
 
+// Стоимость в кредитах по типам работ (синхронизировано с backend)
+const CREDIT_COSTS: Record<WorkType, number> = {
+  referat: 1,
+  doklad: 1,
+  essay: 1,
+  composition: 1,
+  article: 2,
+  kursach: 3,
+  other: 2,
+}
+
 interface WorkTypeStepProps {
   type: GenerationType
   selectedWorkType: WorkType | null
@@ -49,6 +60,9 @@ function WorkTypeStep({ type, selectedWorkType, onSelect, input, onInputChange }
                 }}
               >
                 <div className="work-type-card__title">{config.label}</div>
+                <div className="work-type-card__credits">
+                  {CREDIT_COSTS[config.id]} {CREDIT_COSTS[config.id] === 1 ? 'кредит' : CREDIT_COSTS[config.id] < 5 ? 'кредита' : 'кредитов'}
+                </div>
               </motion.button>
             )
           })}
@@ -124,6 +138,12 @@ const stepStyles = `
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   color: inherit;
+}
+
+.work-type-card__credits {
+  font-size: var(--font-size-xs);
+  opacity: 0.7;
+  margin-top: 2px;
 }
 
 .wizard-input-wrapper {
