@@ -244,7 +244,7 @@ function BillingPage() {
 
 const billingStyles = `
 .billing-title {
-  font-size: 42px;
+  font-size: 48px;
   font-weight: 800;
   color: #020617;
   margin-bottom: 24px;
@@ -253,10 +253,10 @@ const billingStyles = `
 }
 
 .billing-subtitle {
-  font-size: 18px;
+  font-size: 24px;
   color: #64748b;
   line-height: 1.6;
-  max-width: 500px;
+  max-width: 600px;
   margin: 0 auto;
 }
 
