@@ -2,8 +2,7 @@
  * CheckoutPage
  * Страница оплаты с встроенным виджетом Т-Банка
  * 
- * Использует integration.js для встраивания платёжной формы в iframe.
- * Документация: https://developer.tbank.ru/eacq/intro/developer/setup_js/
+ * Использует прямой редирект на платежную форму для максимальной надежности.
  */
 
 import { useEffect, useState, useCallback } from 'react'
@@ -13,28 +12,6 @@ import { motion as motionTokens } from '@/design-tokens'
 import { Container, Stack, Button, Card } from '@/ui'
 import { initiatePayment } from '@/shared/api/payments'
 import { useAuth } from '@/app/auth/useAuth'
-
-// Типы для T-Bank Integration
-declare global {
-  interface Window {
-    PaymentIntegration?: {
-      init: (config: TBankInitConfig) => Promise<void>
-      openPaymentIframe: (paymentId: string) => void
-    }
-  }
-}
-
-interface TBankInitConfig {
-  terminalKey: string
-  product: 'eacq'
-  features: {
-    iframe?: {
-      onSuccess?: () => void
-      onFail?: () => void
-      onClose?: () => void
-    }
-  }
-}
 
 type Period = 'month' | 'quarter' | 'year'
 
@@ -59,13 +36,10 @@ const PLAN_INFO: Record<Period, { name: string; price: number; priceTotal: numbe
   },
 }
 
-// Terminal Key (тестовый)
-const TERMINAL_KEY = '1768061897408DEMO'
-
 function CheckoutPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isAuthResolved } = useAuth()
   
   const period = (searchParams.get('period') as Period) || 'month'
   const plan = PLAN_INFO[period]
@@ -73,114 +47,43 @@ function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false)
 
   // Логирование для отладки
   const log = useCallback((message: string, data?: unknown) => {
     console.log(`[CheckoutPage] ${message}`, data || '')
   }, [])
 
-  // Загружаем integration.js
-  useEffect(() => {
-    if (typeof document === 'undefined') return
+  // Обработчик оплаты через редирект
+  const handlePayWithRedirect = useCallback(async () => {
+    log('Starting payment with redirect...')
+    setIsProcessing(true)
+    setError(null)
     
-    log('Loading T-Bank integration.js...')
-    
-    const existingScript = document.querySelector('script[src*="integrationjs.tbank.ru"]')
-    if (existingScript) {
-      log('Script already loaded')
-      setIsScriptLoaded(true)
-      return
+    try {
+      const result = await initiatePayment(period)
+      log('Redirecting to payment URL:', result.payment_url)
+      window.location.href = result.payment_url
+    } catch (err) {
+      log('Payment redirect failed:', err)
+      setError(err instanceof Error ? err.message : 'Ошибка при переходе к оплате')
+      setIsProcessing(false)
     }
-    
-    const script = document.createElement('script')
-    script.src = 'https://integrationjs.tbank.ru/integration.js'
-    script.async = true
-    
-    script.onload = () => {
-      log('T-Bank script loaded successfully')
-      setIsScriptLoaded(true)
-    }
-    
-    script.onerror = () => {
-      log('Failed to load T-Bank script')
-      setError('Не удалось загрузить платёжный модуль')
-      setIsLoading(false)
-    }
-    
-    document.body.appendChild(script)
-    
-    return () => {
-      // Не удаляем скрипт при unmount, он нужен для работы iframe
-    }
-  }, [log])
+  }, [period, log])
 
   // Инициализируем платёж
   useEffect(() => {
+    if (!isAuthResolved) return
+
     if (!isAuthenticated) {
-      log('User not authenticated, redirecting...')
-      navigate('/login')
+      log('User not authenticated, redirecting to login...')
+      const currentUrl = window.location.pathname + window.location.search
+      const nextUrl = encodeURIComponent(currentUrl)
+      navigate(`/login?next=${nextUrl}`)
       return
     }
     
-    if (!isScriptLoaded) return
-    
-    const initPayment = async () => {
-      log(`Initiating payment for period: ${period}`)
-      setIsLoading(true)
-      setError(null)
-      
-      try {
-        // Запрашиваем платёж у backend
-        const result = await initiatePayment(period)
-        log('Payment initiated:', result)
-        
-        // Инициализируем T-Bank widget
-        if (window.PaymentIntegration) {
-          log('Initializing T-Bank widget...')
-          
-          await window.PaymentIntegration.init({
-            terminalKey: TERMINAL_KEY,
-            product: 'eacq',
-            features: {
-              iframe: {
-                onSuccess: () => {
-                  log('Payment SUCCESS!')
-                  navigate('/')
-                },
-                onFail: () => {
-                  log('Payment FAILED')
-                  navigate('/billing?status=fail')
-                },
-                onClose: () => {
-                  log('Payment form closed')
-                  // Пользователь закрыл форму
-                },
-              },
-            },
-          })
-          
-          log('T-Bank widget initialized')
-          setIsLoading(false)
-          
-          // Открываем iframe с платёжной формой
-          // PaymentId приходит от backend, но в виджет нужно передать именно тот ID,
-          // который вернул T-Bank API (payment_id, а не order_id)
-          // Для упрощения используем редирект на payment_url
-          
-        } else {
-          throw new Error('PaymentIntegration not available')
-        }
-        
-      } catch (err) {
-        log('Payment initiation failed:', err)
-        setError(err instanceof Error ? err.message : 'Ошибка при инициализации платежа')
-        setIsLoading(false)
-      }
-    }
-    
-    initPayment()
-  }, [isAuthenticated, isScriptLoaded, period, navigate, log])
+    setIsLoading(false)
+  }, [isAuthenticated, isAuthResolved, navigate, log])
 
   // Стили
   useEffect(() => {
@@ -195,22 +98,6 @@ function CheckoutPage() {
       style.textContent = pageStyles
     }
   }, [])
-
-  // Обработчик оплаты через редирект
-  const handlePayWithRedirect = async () => {
-    log('Starting payment with redirect...')
-    setIsProcessing(true)
-    
-    try {
-      const result = await initiatePayment(period)
-      log('Redirecting to payment URL:', result.payment_url)
-      window.location.href = result.payment_url
-    } catch (err) {
-      log('Payment redirect failed:', err)
-      setError(err instanceof Error ? err.message : 'Ошибка при переходе к оплате')
-      setIsProcessing(false)
-    }
-  }
 
   if (!isAuthenticated) {
     return null
@@ -275,7 +162,7 @@ function CheckoutPage() {
             <Card className="checkout-loading-card">
               <div className="checkout-loading">
                 <div className="checkout-loading__spinner" />
-                <p>Загрузка платёжной формы...</p>
+                <p>Загрузка...</p>
               </div>
             </Card>
           ) : error ? (
@@ -284,7 +171,7 @@ function CheckoutPage() {
                 <span className="checkout-error__icon">⚠️</span>
                 <p className="checkout-error__message">{error}</p>
                 <Button variant="primary" onClick={handlePayWithRedirect} loading={isProcessing}>
-                  Перейти к оплате
+                  Попробовать еще раз
                 </Button>
               </div>
             </Card>
@@ -301,7 +188,7 @@ function CheckoutPage() {
                   loading={isProcessing}
                   className="checkout-pay__button"
                 >
-                  Оплатить {plan.priceTotal} ₽
+                  {isProcessing ? 'Переход...' : `Оплатить ${plan.priceTotal} ₽`}
                 </Button>
                 <div className="checkout-pay__security">
                   <span>🔒</span>
@@ -508,4 +395,3 @@ const pageStyles = `
 `
 
 export default CheckoutPage
-

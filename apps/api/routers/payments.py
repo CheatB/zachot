@@ -64,7 +64,8 @@ async def initiate_payment(
 
     return PaymentInitResponse(
         payment_url=res.get("PaymentURL"),
-        order_id=order_id
+        order_id=order_id,
+        payment_id=str(res.get("PaymentId"))
     )
 
 @router.post("/webhook")

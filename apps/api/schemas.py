@@ -138,6 +138,7 @@ class PaymentInitRequest(BaseModel):
 class PaymentInitResponse(BaseModel):
     payment_url: str
     order_id: str
+    payment_id: str
 
 
 class TBankWebhook(BaseModel):

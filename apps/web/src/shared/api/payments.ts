@@ -3,6 +3,7 @@ import { apiFetch } from './http';
 export interface PaymentInitResponse {
   payment_url: string;
   order_id: string;
+  payment_id: string;
 }
 
 /**
