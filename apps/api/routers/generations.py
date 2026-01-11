@@ -18,6 +18,7 @@ from ..database import SessionLocal, User as UserDB
 from packages.core_domain import Generation
 from packages.core_domain import GenerationStateMachine, InvalidGenerationTransitionError
 from packages.core_domain.enums import GenerationStatus
+from packages.billing.credits import get_credit_cost, format_credits_text
 
 logger = logging.getLogger(__name__)
 
@@ -63,10 +64,16 @@ async def create_generation(
     user: UserDB = Depends(get_current_user)
 ) -> GenerationResponse:
     try:
-        if user.generations_used >= user.generations_limit:
+        # Проверяем баланс кредитов
+        work_type = request.work_type or "other"
+        required_credits = get_credit_cost(work_type)
+        credits_balance = getattr(user, 'credits_balance', 5) or 5
+        
+        if credits_balance < required_credits:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Лимит генераций ({user.generations_limit}) исчерпан. Пожалуйста, обновите тариф."
+                detail=f"Недостаточно кредитов. Для {work_type} требуется {format_credits_text(required_credits)}, "
+                       f"доступно: {format_credits_text(credits_balance)}. Пожалуйста, обновите тариф."
             )
 
         generation_id = uuid4()
@@ -87,6 +94,17 @@ async def create_generation(
         )
         
         saved_generation = generation_store.create(generation)
+        
+        # Списываем кредиты после успешного создания
+        with SessionLocal() as session:
+            db_user = session.query(UserDB).filter(UserDB.id == user.id).first()
+            if db_user:
+                db_user.credits_balance = (db_user.credits_balance or 5) - required_credits
+                db_user.credits_used = (db_user.credits_used or 0) + required_credits
+                db_user.generations_used = (db_user.generations_used or 0) + 1
+                session.commit()
+                logger.info(f"Deducted {required_credits} credits from user {user.id}. New balance: {db_user.credits_balance}")
+        
         logger.info(f"Created generation {generation_id} for user {user.id}")
         return GenerationResponse.model_validate(saved_generation)
     except HTTPException:

@@ -88,6 +88,9 @@ class UserUsageInfo(BaseModel):
     generationsLimit: int
     tokensUsed: int = 0
     tokensLimit: int
+    # Система кредитов
+    creditsBalance: int = 5  # Текущий баланс кредитов
+    creditsUsed: int = 0     # Использовано за период
 
 
 class UserCapabilities(BaseModel):

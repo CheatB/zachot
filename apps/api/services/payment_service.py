@@ -34,6 +34,7 @@ PLANS = {
         "period_months": 1,
         "generations_limit": 5,
         "tokens_limit": 100000,
+        "credits_granted": 5,  # 5 кредитов = до 5 рефератов или 1 курсовая + 2 реферата
     },
     "quarter": {
         "name": "QUARTER", 
@@ -42,6 +43,7 @@ PLANS = {
         "period_months": 3,
         "generations_limit": 15,
         "tokens_limit": 300000,
+        "credits_granted": 15,  # 5 × 3 месяца
     },
     "year": {
         "name": "YEAR",
@@ -50,6 +52,7 @@ PLANS = {
         "period_months": 12,
         "generations_limit": 60,
         "tokens_limit": 1200000,
+        "credits_granted": 60,  # 5 × 12 месяцев
     },
 }
 
@@ -282,7 +285,7 @@ class PaymentService:
             self.db.add(subscription)
             logger.info(f"[PaymentService] Created subscription: id={subscription.id}")
         
-        # Обновляем лимиты пользователя
+        # Обновляем лимиты и начисляем кредиты пользователю
         user = self.db.query(User).filter(User.id == user_id).first()
         if user:
             user.plan_name = plan["name"]
@@ -290,7 +293,14 @@ class PaymentService:
             user.generations_limit = plan["generations_limit"]
             user.tokens_limit = plan["tokens_limit"]
             user.next_billing_date = expires_at
-            logger.info(f"[PaymentService] Updated user limits: generations={plan['generations_limit']}")
+            
+            # Начисляем кредиты
+            credits_to_add = plan.get("credits_granted", 5)
+            current_credits = getattr(user, 'credits_balance', 0) or 0
+            user.credits_balance = current_credits + credits_to_add
+            
+            logger.info(f"[PaymentService] Updated user: plan={plan['name']}, "
+                       f"credits_added={credits_to_add}, total_credits={user.credits_balance}")
         
         self.db.commit()
     

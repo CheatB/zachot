@@ -21,6 +21,8 @@ export interface MeResponse {
     generationsLimit: number;
     tokensUsed: number;
     tokensLimit: number;
+    creditsBalance: number;
+    creditsUsed: number;
   };
   fairUseMode: 'normal' | 'degraded' | 'strict';
   capabilities: {

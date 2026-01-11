@@ -50,6 +50,11 @@ class User(Base):
     monthly_price_rub = Column(Integer, default=499)
     next_billing_date = Column(DateTime, default=datetime.utcnow)
     
+    # Система кредитов (заменяет generations_limit)
+    credits_balance = Column(Integer, default=5)  # Текущий баланс кредитов
+    credits_used = Column(Integer, default=0)     # Использовано за период
+    
+    # Legacy поля (для обратной совместимости)
     generations_used = Column(Integer, default=0)
     generations_limit = Column(Integer, default=5)
     tokens_used = Column(Integer, default=0)
@@ -61,6 +66,7 @@ class User(Base):
     hashed_password = Column(String, nullable=True)
     
     generations = relationship("Generation", back_populates="user")
+    credit_transactions = relationship("CreditTransaction", back_populates="user")
 
 class Generation(Base):
     __tablename__ = "generations"
@@ -84,19 +90,46 @@ class Generation(Base):
     user = relationship("User", back_populates="generations")
 
 class Payment(Base):
+    """
+    Модель платежа.
+    
+    Статусы (согласно T-Bank API):
+    - NEW: Платеж создан, ожидает оплаты
+    - AUTHORIZED: Платеж авторизован (средства заблокированы)
+    - CONFIRMED: Платеж подтверждён (средства списаны)
+    - REJECTED: Платеж отклонён
+    - REFUNDED: Платеж возвращён
+    - PARTIAL_REFUNDED: Частичный возврат
+    - CANCELED: Платеж отменён
+    """
     __tablename__ = "payments"
     
     id = Column(GUID(), primary_key=True, default=uuid4)
     user_id = Column(GUID(), ForeignKey("users.id"))
     amount = Column(Integer) # в копейках
-    status = Column(String, default="NEW") # NEW, AUTHORIZED, CONFIRMED, REJECTED
-    payment_id = Column(String, nullable=True) # ID из Т-Банка
-    order_id = Column(String, unique=True)
+    status = Column(String, default="NEW")
+    payment_id = Column(String, nullable=True, index=True) # PaymentId из Т-Банка
+    order_id = Column(String, unique=True, index=True) # Наш уникальный OrderId
     description = Column(String)
+    
+    # Рекуррентные платежи
+    period = Column(String, nullable=True) # 'month', 'quarter', 'year'
+    rebill_id = Column(String, nullable=True, index=True) # RebillId для повторных списаний
+    recurrent_parent_id = Column(GUID(), ForeignKey("payments.id"), nullable=True) # ID первого платежа в цепочке
+    is_recurrent = Column(Integer, default=0) # 0 - обычный, 1 - рекуррентный (первый), 2 - автосписание
+    
+    # Email для чека
+    customer_email = Column(String, nullable=True)
+    customer_key = Column(String, nullable=True) # CustomerKey для привязки карты
+    
+    # Даты
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    confirmed_at = Column(DateTime, nullable=True) # Когда платёж подтверждён
     
+    # Связи
     user = relationship("User")
+    recurrent_parent = relationship("Payment", remote_side=[id], backref="child_payments")
 
 class AuthToken(Base):
     __tablename__ = "auth_tokens"
@@ -107,6 +140,82 @@ class AuthToken(Base):
     is_used = Column(Integer, default=0) # 0 - no, 1 - yes
     
     user = relationship("User")
+
+
+class CreditTransaction(Base):
+    """
+    История транзакций кредитов.
+    
+    Типы транзакций:
+    - DEBIT: Списание за генерацию
+    - CREDIT: Начисление при покупке подписки
+    - REFUND: Возврат при отмене генерации
+    - BONUS: Бонусное начисление
+    """
+    __tablename__ = "credit_transactions"
+    
+    id = Column(GUID(), primary_key=True, default=uuid4)
+    user_id = Column(GUID(), ForeignKey("users.id"), index=True)
+    
+    amount = Column(Integer)  # Положительное = начисление, отрицательное = списание
+    balance_after = Column(Integer)  # Баланс после транзакции
+    
+    transaction_type = Column(String)  # DEBIT, CREDIT, REFUND, BONUS
+    reason = Column(String)  # Причина (например, "kursach", "subscription_month")
+    
+    # Связь с генерацией (если списание)
+    generation_id = Column(GUID(), ForeignKey("generations.id"), nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="credit_transactions")
+
+
+class Subscription(Base):
+    """
+    Модель подписки пользователя.
+    
+    Статусы:
+    - ACTIVE: Подписка активна
+    - PAST_DUE: Просрочена (ожидает оплаты)
+    - CANCELED: Отменена пользователем
+    - EXPIRED: Истекла и не продлена
+    """
+    __tablename__ = "subscriptions"
+    
+    id = Column(GUID(), primary_key=True, default=uuid4)
+    user_id = Column(GUID(), ForeignKey("users.id"), unique=True) # Один пользователь = одна активная подписка
+    
+    plan_name = Column(String, default="FREE") # FREE, MONTH, QUARTER, YEAR
+    status = Column(String, default="ACTIVE") # ACTIVE, PAST_DUE, CANCELED, EXPIRED
+    
+    # Период подписки
+    period = Column(String, default="month") # month, quarter, year
+    period_months = Column(Integer, default=1) # 1, 3, 12
+    
+    # Даты
+    started_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)
+    canceled_at = Column(DateTime, nullable=True)
+    
+    # Автопродление
+    auto_renew = Column(Integer, default=1) # 0 - нет, 1 - да
+    
+    # Связь с первым платежом для рекуррентных списаний
+    initial_payment_id = Column(GUID(), ForeignKey("payments.id"), nullable=True)
+    
+    # Кредиты (начисляются при активации подписки)
+    credits_granted = Column(Integer, default=5)  # Сколько кредитов выдано при активации
+    
+    # Legacy поля (для обратной совместимости)
+    generations_limit = Column(Integer, default=5)
+    tokens_limit = Column(Integer, default=100000)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User", backref="subscription")
+    initial_payment = relationship("Payment")
 
 def create_db_engine(db_url: str):
     engine_args = {}

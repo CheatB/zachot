@@ -50,7 +50,9 @@ async def get_me(authorization: str = Header(None)):
                 "generationsUsed": user.generations_used,
                 "generationsLimit": user.generations_limit,
                 "tokensUsed": user.tokens_used,
-                "tokensLimit": user.tokens_limit
+                "tokensLimit": user.tokens_limit,
+                "creditsBalance": getattr(user, 'credits_balance', 5) or 5,
+                "creditsUsed": getattr(user, 'credits_used', 0) or 0,
             },
             fairUseMode=user.fair_use_mode,
             capabilities={
