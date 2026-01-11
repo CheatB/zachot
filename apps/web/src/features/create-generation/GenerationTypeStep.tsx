@@ -21,7 +21,7 @@ const typeOptions: (GenerationTypeOption & { illustration?: string; illustration
     title: 'Текстовая работа',
     description: 'Любой вид работы с реальными источниками, оформлением по ГОСТу и защитой от проверки на ИИ',
     icon: '',
-    illustration: '/assets/illustrations/text-work.png',
+    illustration: '/assets/illustrations/text-work.webp',
     illustrationOffsetLeft: 10 // Сдвинуто еще на 5 пикселей влево (итого 10)
   },
   {
@@ -29,14 +29,14 @@ const typeOptions: (GenerationTypeOption & { illustration?: string; illustration
     title: 'Презентация',
     description: 'Презентации по заданной теме в разных стилях оформления',
     icon: '',
-    illustration: '/assets/illustrations/presentation.png'
+    illustration: '/assets/illustrations/presentation.webp'
   },
   {
     type: 'task',
     title: 'Решение задач',
     description: 'Разберись, как решать задачки по вышке, химии или экономике. Больше 100+ предметов',
     icon: '',
-    illustration: '/assets/illustrations/tasks.png'
+    illustration: '/assets/illustrations/tasks.webp'
   },
 ]
 
@@ -255,6 +255,13 @@ const stepStyles = `
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  opacity: 0;
+  animation: illustration-fade-in 0.8s ease-out forwards;
+}
+
+@keyframes illustration-fade-in {
+  from { opacity: 0; transform: scale(0.9) translate(5px, 5px); }
+  to { opacity: 1; transform: scale(1) translate(0, 0); }
 }
 
 .wizard-type-card__check {
