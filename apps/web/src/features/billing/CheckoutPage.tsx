@@ -1,6 +1,6 @@
 /**
  * CheckoutPage
- * Страница оплаты с встроенным виджетом Т-Банка
+ * Страница оплаты
  * 
  * Использует прямой редирект на платежную форму для максимальной надежности.
  */
@@ -9,7 +9,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
-import { Container, Stack, Button, Card } from '@/ui'
+import { Stack, Button } from '@/ui'
 import { initiatePayment } from '@/shared/api/payments'
 import { useAuth } from '@/app/auth/useAuth'
 
@@ -104,30 +104,33 @@ function CheckoutPage() {
   }
 
   return (
-    <Container size="sm" className="checkout-container">
-      <Stack align="center" gap="2xl" className="checkout-stack">
-        
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: motionTokens.easing.out }}
-          className="checkout-header"
-        >
-          <h1 className="checkout-title">Оформление подписки</h1>
-          <p className="checkout-subtitle">
-            Вы оформляете подписку с автоматическим продлением
-          </p>
-        </motion.div>
+    <div className="checkout-page">
+      <div className="checkout-back-nav">
+        <Button variant="ghost" onClick={() => navigate('/billing')} className="checkout-back-button">
+          ← Назад к тарифам
+        </Button>
+      </div>
 
-        {/* Order Summary */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          style={{ width: '100%' }}
-        >
-          <Card className="checkout-summary-card">
+      <div className="checkout-content">
+        <Stack align="center" gap="2xl" className="checkout-stack">
+          
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: motionTokens.easing.out }}
+            className="checkout-header"
+          >
+            <h1 className="checkout-title">Оформление подписки</h1>
+          </motion.div>
+
+          {/* Order Summary */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            style={{ width: '100%' }}
+          >
             <div className="checkout-summary">
               <div className="checkout-summary__row">
                 <span className="checkout-summary__label">Тариф</span>
@@ -148,25 +151,21 @@ function CheckoutPage() {
                 Автопродление каждые {period === 'month' ? '30 дней' : period === 'quarter' ? '3 месяца' : '12 месяцев'}
               </div>
             </div>
-          </Card>
-        </motion.div>
+          </motion.div>
 
-        {/* Payment Form */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          style={{ width: '100%' }}
-        >
-          {isLoading ? (
-            <Card className="checkout-loading-card">
+          {/* Payment Form */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            style={{ width: '100%' }}
+          >
+            {isLoading ? (
               <div className="checkout-loading">
                 <div className="checkout-loading__spinner" />
                 <p>Загрузка...</p>
               </div>
-            </Card>
-          ) : error ? (
-            <Card className="checkout-error-card">
+            ) : error ? (
               <div className="checkout-error">
                 <span className="checkout-error__icon">⚠️</span>
                 <p className="checkout-error__message">{error}</p>
@@ -174,9 +173,7 @@ function CheckoutPage() {
                   Попробовать еще раз
                 </Button>
               </div>
-            </Card>
-          ) : (
-            <Card className="checkout-pay-card">
+            ) : (
               <div className="checkout-pay">
                 <p className="checkout-pay__info">
                   Нажмите кнопку ниже для перехода к защищённой форме оплаты Т-Банка
@@ -195,33 +192,54 @@ function CheckoutPage() {
                   <span>Безопасная оплата через Т-Банк</span>
                 </div>
               </div>
-            </Card>
-          )}
-        </motion.div>
+            )}
+          </motion.div>
 
-        {/* Back Button */}
-        <Button variant="ghost" onClick={() => navigate('/billing')}>
-          ← Вернуться к выбору тарифа
-        </Button>
-
-      </Stack>
-    </Container>
+        </Stack>
+      </div>
+    </div>
   )
 }
 
 const pageStyles = `
-.checkout-container {
-  padding-top: var(--spacing-48);
-  padding-bottom: var(--spacing-80);
+.checkout-page {
+  width: 100%;
+  padding: var(--spacing-32);
+  min-height: calc(100vh - var(--spacing-64));
+  display: flex;
+  flex-direction: column;
+}
+
+.checkout-back-nav {
+  margin-bottom: var(--spacing-24);
+}
+
+.checkout-back-button {
+  font-weight: 600 !important;
+  color: var(--color-text-secondary) !important;
+  padding-left: 0 !important;
+}
+
+.checkout-back-button:hover {
+  color: var(--color-accent-base) !important;
+}
+
+.checkout-content {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 5vh;
 }
 
 .checkout-stack {
+  width: 100%;
   max-width: 480px;
-  margin: 0 auto;
 }
 
 .checkout-header {
   text-align: center;
+  margin-bottom: var(--spacing-8);
 }
 
 .checkout-title {
@@ -232,20 +250,12 @@ const pageStyles = `
   letter-spacing: -0.03em;
 }
 
-.checkout-subtitle {
-  font-size: 16px;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-}
-
-.checkout-summary-card {
-  padding: 24px !important;
-}
-
 .checkout-summary {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: transparent;
+  padding: 0;
 }
 
 .checkout-summary__row {
@@ -288,10 +298,12 @@ const pageStyles = `
   margin-top: 8px;
 }
 
-.checkout-loading-card,
-.checkout-error-card,
-.checkout-pay-card {
-  padding: 32px !important;
+.checkout-loading,
+.checkout-error,
+.checkout-pay {
+  background: transparent;
+  padding: 32px 0;
+  text-align: center;
 }
 
 .checkout-loading {
@@ -320,7 +332,6 @@ const pageStyles = `
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  text-align: center;
 }
 
 .checkout-error__icon {
@@ -337,7 +348,6 @@ const pageStyles = `
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  text-align: center;
 }
 
 .checkout-pay__info {
@@ -363,24 +373,12 @@ const pageStyles = `
 
 /* Mobile */
 @media (max-width: 640px) {
-  .checkout-container {
-    padding-top: var(--spacing-24);
-    padding-bottom: var(--spacing-48);
+  .checkout-page {
+    padding: var(--spacing-16);
   }
   
   .checkout-title {
     font-size: 24px;
-  }
-  
-  .checkout-subtitle {
-    font-size: 14px;
-  }
-  
-  .checkout-summary-card,
-  .checkout-loading-card,
-  .checkout-error-card,
-  .checkout-pay-card {
-    padding: 20px !important;
   }
   
   .checkout-summary__value--total {
