@@ -209,12 +209,12 @@ const stepStyles = `
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
-  max-width: 70%;
+  max-width: 62%;
   height: 100%;
 }
 
 .wizard-type-card__title {
-  font-size: calc(var(--font-size-lg) + 12px); /* Увеличено еще на 3 пикселя (итого +12 от базы) */
+  font-size: calc(var(--font-size-lg) + 11px); /* Уменьшено на 1 пиксель */
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
@@ -225,7 +225,7 @@ const stepStyles = `
 }
 
 .wizard-type-card__description {
-  font-size: calc(var(--font-size-xs) + 6px);
+  font-size: calc(var(--font-size-xs) + 5px); /* Уменьшено на 1 пиксель */
   color: var(--color-text-secondary);
   line-height: 1.3;
 }
