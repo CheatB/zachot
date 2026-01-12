@@ -1,6 +1,7 @@
 import logging
 from typing import List, Dict, Any
 from packages.core_domain import Generation
+from packages.ai_services.src.prompt_manager import prompt_manager
 
 logger = logging.getLogger(__name__)
 
@@ -8,22 +9,8 @@ class PromptService:
     @staticmethod
     def construct_classifier_prompt(input_text: str) -> str:
         """Промпт для классификации запроса (задача vs болтовня)."""
-        prompt = f"""
-        Ты — системный фильтр сервиса "Зачёт". Твоя задача — определить, является ли текст ниже условием конкретной академической задачи (математика, физика, химия, программирование и т.д.).
-        
-        ТЕКСТ ПОЛЬЗОВАТЕЛЯ:
-        ---
-        {input_text}
-        ---
-        
-        ПРАВИЛА КЛАССИФИКАЦИИ:
-        1. Если текст содержит условие задачи, вопрос по конкретному примеру или данные для расчета — это "task".
-        2. Если текст является общим вопросом ("расскажи про ИИ", "как выучить питон"), просьбой написать эссе без темы, или просто приветствием — это "chat".
-        3. Если в тексте только общие слова типа "помоги", "объясни" без контекста — это "chat".
-        
-        Верни результат в формате JSON: {{"type": "task" | "chat", "reason": "краткое пояснение"}}
-        """
-        return prompt.strip()
+        prompt_template = prompt_manager.get_prompt("classifier")
+        return prompt_template.format(input_text=input_text).strip()
 
     @staticmethod
     def construct_structure_prompt(generation: Generation) -> str:
@@ -35,42 +22,25 @@ class PromptService:
         }
         
         style = complexity_guide.get(generation.complexity_level, complexity_guide["student"])
+        prompt_template = prompt_manager.get_prompt("structure")
         
-        prompt = f"""
-        Ты — экспертный академический методист. Сформулируй подробный план для работы типа {generation.work_type}.
-        Тема: {generation.input_payload.get('topic')}
-        Цель: {generation.input_payload.get('goal')}
-        Основная идея: {generation.input_payload.get('idea')}
-        Объем: {generation.input_payload.get('volume')} страниц.
-        
-        ИНСТРУКЦИЯ ПО ФОРМАТУ:
-        - Тон изложения: {style}.
-        - План должен включать: Введение, Основную часть (главы/параграфы), Заключение, Литература.
-        - НИКАКИХ приветствий и лишних рассуждений. Только структура.
-        
-        Верни результат в формате JSON: {{"structure": [{{"title": "...", "level": 1}}]}}
-        """
-        return prompt.strip()
+        return prompt_template.format(
+            work_type=generation.work_type,
+            topic=generation.input_payload.get('topic'),
+            goal=generation.input_payload.get('goal'),
+            idea=generation.input_payload.get('idea'),
+            volume=generation.input_payload.get('volume'),
+            style=style
+        ).strip()
 
     @staticmethod
     def construct_sources_prompt(generation: Generation) -> str:
         """Промпт для подбора источников литературы."""
-        prompt = f"""
-        Ты — библиограф в крупной научной библиотеке. Подбери список актуальных источников для следующей работы:
-        Тип: {generation.work_type}
-        Тема: {generation.input_payload.get('topic')}
-        
-        ТРЕБОВАНИЯ:
-        1. Минимум 5-7 источников.
-        2. Источники должны быть реальными: научные статьи, монографии, учебники, официальные документы.
-        3. Обязательно ищи не только статьи в интернете, но и доступные в сети книги и PDF-документы.
-        4. Оформи по стандарту ГОСТ Р 7.0.100–2018.
-        5. Для каждого источника напиши краткое описание (1-2 предложения), почему он важен для этой темы.
-        6. СТРОГО РЕАЛЬНЫЕ URL (прямые ссылки на PDF, страницы в КиберЛенинке, eLibrary или сайты издательств). НИКАКИХ placeholder-ов или example.com.
-        
-        Верни результат в формате JSON: {{"sources": [{{"title": "...", "url": "...", "description": "..."}}]}}
-        """
-        return prompt.strip()
+        prompt_template = prompt_manager.get_prompt("sources")
+        return prompt_template.format(
+            work_type=generation.work_type,
+            topic=generation.input_payload.get('topic')
+        ).strip()
 
     @staticmethod
     def construct_generation_prompt(generation: Generation, section_title: str, previous_context: str = "") -> str:
@@ -87,23 +57,18 @@ class PromptService:
             - Предложи 1 детальный промпт для генерации фоновой иллюстрации или обложки, если этот слайд является ключевым.
             """
 
-        prompt = f"""
-        Напиши контент для раздела "{section_title}" работы на тему "{generation.input_payload.get('topic')}".
+        previous_context_instruction = f"ПРЕДЫДУЩЕЕ СОДЕРЖАНИЕ: {previous_context}" if previous_context else ""
         
-        КОНТЕКСТ:
-        Цель: {generation.input_payload.get('goal')}
-        Идея: {generation.input_payload.get('idea')}
+        prompt_template = prompt_manager.get_prompt("generation")
         
-        ТРЕБОВАНИЯ:
-        - Академический стиль.
-        - Плотный текст без воды.
-        {layout_instruction}
-        
-        {f"ПРЕДЫДУЩЕЕ СОДЕРЖАНИЕ: {previous_context}" if previous_context else ""}
-        
-        Верни результат в формате JSON: {{"content": "...", "layout": "...", "icons": ["..."], "visual_meta": {{...}}, "image_prompt": "..."}}
-        """
-        return prompt.strip()
+        return prompt_template.format(
+            section_title=section_title,
+            topic=generation.input_payload.get('topic'),
+            goal=generation.input_payload.get('goal'),
+            idea=generation.input_payload.get('idea'),
+            layout_instruction=layout_instruction,
+            previous_context_instruction=previous_context_instruction
+        ).strip()
 
     @staticmethod
     def construct_humanize_prompt(text: str, humanity_level: int) -> str:
@@ -126,45 +91,16 @@ class PromptService:
             - Соблюдай правила русского языка, но избегай канцелярщины.
             """
 
-        prompt = f"""
-        Перепиши следующий академический текст, чтобы он выглядел так, будто его написал человек, а не ИИ.
-        
-        ТЕКСТ ДЛЯ ОБРАБОТКИ:
-        ---
-        {text}
-        ---
-        
-        ИНСТРУКЦИИ:
-        {instructions}
-        
-        ВАЖНО: Сохрани все факты, цифры и научную суть. Изменяй ТОЛЬКО стиль и структуру предложений.
-        """
-        return prompt.strip()
+        prompt_template = prompt_manager.get_prompt("humanize")
+        return prompt_template.format(
+            text=text,
+            instructions=instructions
+        ).strip()
 
     @staticmethod
     def construct_qc_prompt(text: str) -> str:
         """Промпт для слоя контроля качества (Quality Control)."""
-        prompt = f"""
-        Ты — строгий академический корректор. Проверь текст на соответствие стандартам ГОСТ и научному стилю.
-        
-        ТЕКСТ ДЛЯ ПРОВЕРКИ:
-        ---
-        {text}
-        ---
-        
-        ЗАДАЧИ:
-        1. Проверь отсутствие местоимений "я", "мой" (замени на "мы", "наш" или безличные формы).
-        2. Убери точки в конце заголовков.
-        3. Исправь стилистические ошибки и канцеляризмы.
-        4. Проверь логичность переходов между абзацами.
-        5. Удали любые фразы-клише ИИ (например, "в данной главе мы рассмотрели", "важно отметить, что").
-        
-        Верни ПОЛНОСТЬЮ исправленный текст. Никаких комментариев от себя, только текст работы.
-        """
-        return prompt.strip()
+        prompt_template = prompt_manager.get_prompt("qc")
+        return prompt_template.format(text=text).strip()
 
 prompt_service = PromptService()
-
-
-
-

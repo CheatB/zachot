@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Stack } from '@/ui';
-import { fetchModelRouting, saveModelRouting, type ModelRoutingConfig } from '@/shared/api/admin';
+import { Button, Stack, Textarea } from '@/ui';
+import { 
+  fetchModelRouting, 
+  saveModelRouting, 
+  fetchPrompts, 
+  savePrompts, 
+  type ModelRoutingConfig, 
+  type PromptConfig 
+} from '@/shared/api/admin';
 
 const modelOptions = [
   { value: 'openai/o3', label: 'o3 (Reasoning High)' },
@@ -16,27 +23,14 @@ const modelOptions = [
 
 const ModelRoutingPage: React.FC = () => {
   const [config, setConfig] = useState<ModelRoutingConfig | null>(null);
-  const [isSaving, setIsSubmitting] = useState(false);
+  const [prompts, setPrompts] = useState<PromptConfig | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [activeTab, setActiveTab] = useState<'models' | 'prompts'>('models');
 
   useEffect(() => {
-    const defaultConfig: ModelRoutingConfig = {
-      // Текстовые работы
-      referat: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      kursach: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      essay: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
-      doklad: { structure: 'openai/gpt-4o-mini', suggest_details: 'openai/o1', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'openai/gpt-4o-mini' },
-      article: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'perplexity/sonar-deep-research', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      composition: { structure: 'openai/gpt-4o-mini', suggest_details: 'openai/o1', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
-      other: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      
-      // Презентации
-      presentation: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
-      
-      // Задачи
-      task: { task_solve: 'deepseek/deepseek-r1' },
-    };
-    fetchModelRouting().then(data => setConfig({ ...defaultConfig, ...data }));
+    fetchModelRouting().then(setConfig).catch(console.error);
+    fetchPrompts().then(setPrompts).catch(console.error);
   }, []);
 
   const handleModelChange = (workType: string, stage: string, model: string) => {
@@ -50,21 +44,32 @@ const ModelRoutingPage: React.FC = () => {
     }));
   };
 
+  const handlePromptChange = (name: string, value: string) => {
+    if (!prompts) return;
+    setPrompts(prev => ({
+      ...prev!,
+      [name]: value
+    }));
+  };
+
   const handleSave = async () => {
-    if (!config) return;
-    setIsSubmitting(true);
+    setIsSaving(true);
     try {
-      await saveModelRouting(config);
+      if (activeTab === 'models' && config) {
+        await saveModelRouting(config);
+      } else if (activeTab === 'prompts' && prompts) {
+        await savePrompts(prompts);
+      }
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
     } catch (error) {
       alert('Ошибка при сохранении');
     } finally {
-      setIsSubmitting(false);
+      setIsSaving(false);
     }
   };
 
-  if (!config) return <div>Загрузка настроек...</div>;
+  if (!config || !prompts) return <div>Загрузка настроек...</div>;
 
   const ModelSelect = ({ workType, stage }: { workType: string, stage: string }) => (
     <div className="admin-select-wrapper">
@@ -84,135 +89,182 @@ const ModelRoutingPage: React.FC = () => {
   return (
     <Stack gap="xl" style={{ maxWidth: '100%' }}>
       <header>
-        <h1 style={{ color: 'var(--color-neutral-100)', marginBottom: 'var(--spacing-8)' }}>Модели и роутинг</h1>
+        <h1 style={{ color: 'var(--color-neutral-100)', marginBottom: 'var(--spacing-8)' }}>Управление моделями и промптами</h1>
         <p style={{ color: 'var(--color-text-secondary)' }}>
-          Персональные настройки AI-движка для каждого типа работ.
+          Персональные настройки AI-движка и системных промптов.
         </p>
       </header>
 
-      <section className="routing-section">
-        <h2 className="routing-section__title">Текстовые работы</h2>
-        <div className="admin-table-container">
-          <table className="admin-table-v2">
-            <thead>
-              <tr>
-                <th style={{ width: '20%' }}>Вид работы</th>
-                <th>Цель и Идея</th>
-                <th>План работы</th>
-                <th>Источники</th>
-                <th>Написание текста</th>
-                <th className="refine-col-header">Очеловечивание</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Реферат</td>
-                <td><ModelSelect workType="referat" stage="suggest_details" /></td>
-                <td><ModelSelect workType="referat" stage="structure" /></td>
-                <td><ModelSelect workType="referat" stage="sources" /></td>
-                <td><ModelSelect workType="referat" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="referat" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Курсовая работа</td>
-                <td><ModelSelect workType="kursach" stage="suggest_details" /></td>
-                <td><ModelSelect workType="kursach" stage="structure" /></td>
-                <td><ModelSelect workType="kursach" stage="sources" /></td>
-                <td><ModelSelect workType="kursach" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="kursach" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Эссе</td>
-                <td><ModelSelect workType="essay" stage="suggest_details" /></td>
-                <td><ModelSelect workType="essay" stage="structure" /></td>
-                <td><ModelSelect workType="essay" stage="sources" /></td>
-                <td><ModelSelect workType="essay" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="essay" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Доклад</td>
-                <td><ModelSelect workType="doklad" stage="suggest_details" /></td>
-                <td><ModelSelect workType="doklad" stage="structure" /></td>
-                <td><ModelSelect workType="doklad" stage="sources" /></td>
-                <td><ModelSelect workType="doklad" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="doklad" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Научная статья</td>
-                <td><ModelSelect workType="article" stage="suggest_details" /></td>
-                <td><ModelSelect workType="article" stage="structure" /></td>
-                <td><ModelSelect workType="article" stage="sources" /></td>
-                <td><ModelSelect workType="article" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="article" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Сочинение</td>
-                <td><ModelSelect workType="composition" stage="suggest_details" /></td>
-                <td><ModelSelect workType="composition" stage="structure" /></td>
-                <td><ModelSelect workType="composition" stage="sources" /></td>
-                <td><ModelSelect workType="composition" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="composition" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Другое</td>
-                <td><ModelSelect workType="other" stage="suggest_details" /></td>
-                <td><ModelSelect workType="other" stage="structure" /></td>
-                <td><ModelSelect workType="other" stage="sources" /></td>
-                <td><ModelSelect workType="other" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="other" stage="refine" /></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <div className="admin-tabs">
+        <button 
+          className={`admin-tab ${activeTab === 'models' ? 'admin-tab--active' : ''}`}
+          onClick={() => setActiveTab('models')}
+        >
+          Роутинг моделей
+        </button>
+        <button 
+          className={`admin-tab ${activeTab === 'prompts' ? 'admin-tab--active' : ''}`}
+          onClick={() => setActiveTab('prompts')}
+        >
+          Управление промптами
+        </button>
+      </div>
 
-      <section className="routing-section">
-        <h2 className="routing-section__title">Презентации</h2>
-        <div className="admin-table-container">
-          <table className="admin-table-v2">
-            <thead>
-              <tr>
-                <th style={{ width: '20%' }}>Вид работы</th>
-                <th>Цель и Идея</th>
-                <th>План работы</th>
-                <th>Источники</th>
-                <th>Содержание слайдов</th>
-                <th>Визуальный стиль</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Презентация</td>
-                <td><ModelSelect workType="presentation" stage="suggest_details" /></td>
-                <td><ModelSelect workType="presentation" stage="structure" /></td>
-                <td><ModelSelect workType="presentation" stage="sources" /></td>
-                <td><ModelSelect workType="presentation" stage="generation" /></td>
-                <td><ModelSelect workType="presentation" stage="refine" /></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {activeTab === 'models' ? (
+        <>
+          <section className="routing-section">
+            <h2 className="routing-section__title">Текстовые работы</h2>
+            <div className="admin-table-container">
+              <table className="admin-table-v2">
+                <thead>
+                  <tr>
+                    <th style={{ width: '20%' }}>Вид работы</th>
+                    <th>Цель и Идея</th>
+                    <th>План работы</th>
+                    <th>Источники</th>
+                    <th>Написание текста</th>
+                    <th className="refine-col-header">Очеловечивание</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {['referat', 'kursach', 'essay', 'doklad', 'article', 'composition', 'other'].map(type => (
+                    <tr key={type}>
+                      <td>{type.charAt(0).toUpperCase() + type.slice(1)}</td>
+                      <td><ModelSelect workType={type} stage="suggest_details" /></td>
+                      <td><ModelSelect workType={type} stage="structure" /></td>
+                      <td><ModelSelect workType={type} stage="sources" /></td>
+                      <td><ModelSelect workType={type} stage="generation" /></td>
+                      <td className="refine-cell-v2"><ModelSelect workType={type} stage="refine" /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
 
-      <section className="routing-section">
-        <h2 className="routing-section__title">Решение задач</h2>
-        <div className="admin-table-container">
-          <table className="admin-table-v2">
-            <thead>
-              <tr>
-                <th style={{ width: '20%' }}>Вид работы</th>
-                <th>Решение задачи</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Задача</td>
-                <td><ModelSelect workType="task" stage="task_solve" /></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+          <section className="routing-section">
+            <h2 className="routing-section__title">Презентации</h2>
+            <div className="admin-table-container">
+              <table className="admin-table-v2">
+                <thead>
+                  <tr>
+                    <th style={{ width: '20%' }}>Вид работы</th>
+                    <th>Цель и Идея</th>
+                    <th>План работы</th>
+                    <th>Источники</th>
+                    <th>Содержание слайдов</th>
+                    <th>Визуальный стиль</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Презентация</td>
+                    <td><ModelSelect workType="presentation" stage="suggest_details" /></td>
+                    <td><ModelSelect workType="presentation" stage="structure" /></td>
+                    <td><ModelSelect workType="presentation" stage="sources" /></td>
+                    <td><ModelSelect workType="presentation" stage="generation" /></td>
+                    <td><ModelSelect workType="presentation" stage="refine" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="routing-section">
+            <h2 className="routing-section__title">Решение задач</h2>
+            <div className="admin-table-container">
+              <table className="admin-table-v2">
+                <thead>
+                  <tr>
+                    <th style={{ width: '20%' }}>Вид работы</th>
+                    <th>Решение задачи</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Задача</td>
+                    <td><ModelSelect workType="task" stage="task_solve" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </>
+      ) : (
+        <section className="prompts-section">
+          <Stack gap="xl">
+            <div className="prompt-editor-block">
+              <h3 className="prompt-editor-block__title">1. Классификатор (Task vs Chat)</h3>
+              <p className="prompt-editor-block__desc">Определяет, является ли ввод задачей или просто общением.</p>
+              <Textarea 
+                value={prompts.classifier} 
+                onChange={(e) => handlePromptChange('classifier', e.target.value)}
+                rows={8}
+              />
+            </div>
+
+            <div className="prompt-editor-block">
+              <h3 className="prompt-editor-block__title">2. Генератор структуры (План)</h3>
+              <p className="prompt-editor-block__desc">Создает содержание работы. Использует переменные: {`{work_type}, {topic}, {goal}, {idea}, {volume}, {style}`}.</p>
+              <Textarea 
+                value={prompts.structure} 
+                onChange={(e) => handlePromptChange('structure', e.target.value)}
+                rows={10}
+              />
+            </div>
+
+            <div className="prompt-editor-block">
+              <h3 className="prompt-editor-block__title">3. Подбор источников</h3>
+              <p className="prompt-editor-block__desc">Ищет литературу. Использует переменные: {`{work_type}, {topic}`}.</p>
+              <Textarea 
+                value={prompts.sources} 
+                onChange={(e) => handlePromptChange('sources', e.target.value)}
+                rows={10}
+              />
+            </div>
+
+            <div className="prompt-editor-block">
+              <h3 className="prompt-editor-block__title">4. Генерация контента</h3>
+              <p className="prompt-editor-block__desc">Пишет основной текст. Использует переменные: {`{section_title}, {topic}, {goal}, {idea}, {layout_instruction}, {previous_context_instruction}`}.</p>
+              <Textarea 
+                value={prompts.generation} 
+                onChange={(e) => handlePromptChange('generation', e.target.value)}
+                rows={12}
+              />
+            </div>
+
+            <div className="prompt-editor-block">
+              <h3 className="prompt-editor-block__title">5. Очеловечивание (Humanize)</h3>
+              <p className="prompt-editor-block__desc">Переписывает текст для обхода детекторов. Использует переменные: {`{text}, {instructions}`}.</p>
+              <Textarea 
+                value={prompts.humanize} 
+                onChange={(e) => handlePromptChange('humanize', e.target.value)}
+                rows={10}
+              />
+            </div>
+
+            <div className="prompt-editor-block">
+              <h3 className="prompt-editor-block__title">6. Контроль качества (QC)</h3>
+              <p className="prompt-editor-block__desc">Финальная проверка стиля и ГОСТ. Использует переменные: {`{text}`}.</p>
+              <Textarea 
+                value={prompts.qc} 
+                onChange={(e) => handlePromptChange('qc', e.target.value)}
+                rows={10}
+              />
+            </div>
+
+            <div className="prompt-editor-block">
+              <h3 className="prompt-editor-block__title">7. Уточнение деталей (Goal/Idea)</h3>
+              <p className="prompt-editor-block__desc">Предлагает цель и идею. Использует переменные: {`{topic}`}.</p>
+              <Textarea 
+                value={prompts.suggest_details} 
+                onChange={(e) => handlePromptChange('suggest_details', e.target.value)}
+                rows={6}
+              />
+            </div>
+          </Stack>
+        </section>
+      )}
 
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--spacing-64)' }}>
         <Button 
@@ -222,7 +274,7 @@ const ModelRoutingPage: React.FC = () => {
           loading={isSaving}
           style={{ minWidth: '280px', height: '56px', fontSize: 'var(--font-size-base)' }}
         >
-          Сохранить
+          Сохранить изменения
         </Button>
       </div>
 
@@ -234,6 +286,50 @@ const ModelRoutingPage: React.FC = () => {
       )}
 
       <style>{`
+        .admin-tabs {
+          display: flex;
+          gap: var(--spacing-8);
+          margin-bottom: var(--spacing-32);
+          border-bottom: 1px solid var(--color-border-light);
+          padding-bottom: var(--spacing-8);
+        }
+        .admin-tab {
+          padding: var(--spacing-12) var(--spacing-24);
+          background: transparent;
+          border: none;
+          font-size: var(--font-size-base);
+          font-weight: 600;
+          color: var(--color-text-secondary);
+          cursor: pointer;
+          border-radius: var(--radius-md);
+          transition: all 0.2s ease;
+        }
+        .admin-tab:hover {
+          background-color: var(--color-neutral-5);
+          color: var(--color-neutral-100);
+        }
+        .admin-tab--active {
+          background-color: var(--color-accent-base);
+          color: white !important;
+        }
+
+        .prompt-editor-block {
+          background: white;
+          padding: var(--spacing-24);
+          border-radius: var(--radius-lg);
+          border: 1px solid var(--color-border-base);
+        }
+        .prompt-editor-block__title {
+          font-size: 16px;
+          font-weight: 700;
+          margin-bottom: 8px;
+        }
+        .prompt-editor-block__desc {
+          font-size: 13px;
+          color: var(--color-text-secondary);
+          margin-bottom: var(--spacing-16);
+        }
+
         .routing-section {
           margin-bottom: var(--spacing-48);
         }

@@ -4,10 +4,11 @@ from ..schemas import UsersAdminResponse, UserRoleUpdateRequest, UserAdminRespon
 from ..database import SessionLocal, User as UserDB
 from ..services.openai_service import openai_service
 from ..services.model_router import model_router
+from ..services.prompt_service import prompt_service
+from packages.ai_services.src.prompt_manager import prompt_manager
 from .generations import get_current_user
 import json
 
-from ..services.prompt_service import prompt_service
 from packages.core_domain import Generation
 from packages.core_domain.enums import GenerationStatus, GenerationModule
 from datetime import datetime
@@ -28,6 +29,20 @@ async def update_model_routing(config: dict, admin: UserDB = Depends(get_current
     if model_router.save_config(config):
         return {"status": "success"}
     raise HTTPException(status_code=500, detail="Failed to save configuration")
+
+@router.get("/prompts")
+async def get_prompts(admin: UserDB = Depends(get_current_user)):
+    if admin.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return prompt_manager.prompts
+
+@router.post("/prompts")
+async def update_prompts(prompts: dict, admin: UserDB = Depends(get_current_user)):
+    if admin.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    if prompt_manager.save_config(prompts):
+        return {"status": "success"}
+    raise HTTPException(status_code=500, detail="Failed to save prompts")
 
 @router.post("/suggest-structure")
 async def suggest_structure(request: dict, user: UserDB = Depends(get_current_user)):
@@ -171,7 +186,7 @@ async def suggest_sources(request: dict, user: UserDB = Depends(get_current_user
         return data
     except Exception as e:
         return {"sources": [
-            {"title": "КиберЛенинка: Роль ИИ в образовании", "url": "https://cyberleninka.ru", "description": "Научная статья о влиянии нейросетей на учебный процесс.", "isAiSelected": True}
+            {"title": "КиберЛенинке: Роль ИИ в образовании", "url": "https://cyberleninka.ru", "description": "Научная статья о влиянии нейросетей на учебный процесс.", "isAiSelected": True}
         ]}
 
 @router.post("/suggest-details")
@@ -186,13 +201,8 @@ async def suggest_details(request: dict, user: UserDB = Depends(get_current_user
     # Используем динамический роутинг из настроек
     model_name = model_router.get_model_for_step("suggest_details")
 
-    prompt = f"""
-    Ты — академический консультант. На основе темы "{topic}" предложи:
-    1. Цель работы (1 предложение)
-    2. Основную идею (тезис) работы (1-2 предложения)
-    
-    Верни результат в формате JSON: {{"goal": "...", "idea": "..."}}
-    """
+    prompt_template = prompt_manager.get_prompt("suggest_details")
+    prompt = prompt_template.format(topic=topic)
 
     try:
         raw_response = await openai_service.chat_completion(
@@ -218,13 +228,8 @@ async def suggest_title_info(request: dict, user: UserDB = Depends(get_current_u
     if not university_short:
         raise HTTPException(status_code=400, detail="University name is required")
 
-    prompt = f"""
-    Ты — сотрудник отдела кадров университета. По краткому названию вуза "{university_short}" найди:
-    1. Полное официальное название (например, для МГУ это "Московский государственный университет имени М.В. Ломоносова").
-    2. Город, в котором находится главный корпус.
-    
-    Верни результат в формате JSON: {{"university_full": "...", "city": "..."}}
-    """
+    prompt_template = prompt_manager.get_prompt("suggest_title_info")
+    prompt = prompt_template.format(university_short=university_short)
 
     try:
         raw_response = await openai_service.chat_completion(

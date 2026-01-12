@@ -6,6 +6,10 @@ export interface ModelRoutingConfig {
   };
 }
 
+export interface PromptConfig {
+  [name: string]: string;
+}
+
 export interface AdminUser {
   id: string;
   email: string;
@@ -34,19 +38,34 @@ export interface AdminAnalytics {
  * Получить текущие настройки роутинга моделей
  */
 export async function fetchModelRouting(): Promise<ModelRoutingConfig> {
-  return {
-    essay: { structure: 'o4-mini', sources: 'gpt-5-mini', generation: 'gpt-5', refine: 'gpt-5-mini' },
-    diploma: { structure: 'o3', sources: 'o4-mini', generation: 'gpt-5.2', refine: 'o4-mini' },
-    presentation: { structure: 'o4-mini', sources: 'gpt-5-mini', generation: 'gpt-5-mini', refine: 'gpt-5-mini' },
-    task: { structure: 'o3', sources: 'o4-mini', generation: 'o3', refine: 'o4-mini' },
-  };
+  return apiFetch<ModelRoutingConfig>('/admin/model-routing');
 }
 
 /**
  * Сохранить настройки роутинга моделей
  */
 export async function saveModelRouting(config: ModelRoutingConfig): Promise<void> {
-  console.log('[API] Saving model routing:', config);
+  await apiFetch('/admin/model-routing', {
+    method: 'POST',
+    body: JSON.stringify(config),
+  });
+}
+
+/**
+ * Получить текущие промпты
+ */
+export async function fetchPrompts(): Promise<PromptConfig> {
+  return apiFetch<PromptConfig>('/admin/prompts');
+}
+
+/**
+ * Сохранить промпты
+ */
+export async function savePrompts(prompts: PromptConfig): Promise<void> {
+  await apiFetch('/admin/prompts', {
+    method: 'POST',
+    body: JSON.stringify(prompts),
+  });
 }
 
 /**
@@ -121,7 +140,7 @@ export async function suggestStructure(data: {
 export async function suggestSources(data: { 
   topic: string; 
   workType: string; 
-  volume: number;
+  volume: number; 
   complexity: string;
 }): Promise<{ sources: { title: string; url: string; description: string; isAiSelected: boolean }[] }> {
   return apiFetch<{ sources: { title: string; url: string; description: string; isAiSelected: boolean }[] }>('/admin/suggest-sources', {
