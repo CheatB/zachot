@@ -120,21 +120,15 @@ function ProfilePage() {
           <h2 className="profile-section__title">Личные данные</h2>
           <div className="profile-fields">
             <div className="profile-field">
+              <span className="profile-field__label">Аккаунт</span>
+              <span className="profile-field__value" style={{ fontWeight: 'bold' }}>
+                {user?.telegram_username ? `@${user.telegram_username}` : (user?.email || '—')}
+              </span>
+            </div>
+            <div className="profile-field">
               <span className="profile-field__label">ID пользователя</span>
               <span className="profile-field__value profile-field__value--mono">{user?.id}</span>
             </div>
-            {user?.email && (
-              <div className="profile-field">
-                <span className="profile-field__label">Email</span>
-                <span className="profile-field__value">{user.email}</span>
-              </div>
-            )}
-            {user?.telegram_username && (
-              <div className="profile-field">
-                <span className="profile-field__label">Telegram</span>
-                <span className="profile-field__value">@{user.telegram_username}</span>
-              </div>
-            )}
             <div className="profile-field">
               <span className="profile-field__label">Роль</span>
               <span className="profile-field__value">{user?.role === 'admin' ? 'Администратор' : 'Пользователь'}</span>
