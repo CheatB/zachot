@@ -131,19 +131,12 @@ const stepStyles = `
 
 .wizard-type-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--spacing-24);
-  max-width: 1400px;
-  margin: 0;
+  grid-template-columns: repeat(2, 1fr); /* 2 в строку */
+  gap: var(--spacing-32);
+  max-width: 1200px; /* Ограничиваем общую ширину для лучшего вида */
+  margin: 0 auto;
   width: 100%;
   padding: 0;
-}
-
-@media (max-width: 1024px) {
-  .wizard-type-grid {
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: var(--spacing-16);
-  }
 }
 
 @media (max-width: 768px) {
@@ -156,8 +149,8 @@ const stepStyles = `
 .wizard-type-card {
   position: relative;
   width: 100%;
-  min-height: 275px;
-  padding: var(--spacing-24) var(--spacing-12); /* Отступ от краев уменьшен */
+  min-height: 360px; /* Увеличено на ~30% (было 275px) */
+  padding: var(--spacing-32) var(--spacing-24); /* Больше внутренних отступов */
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
@@ -190,34 +183,35 @@ const stepStyles = `
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
-  max-width: 58%; /* Чуть больше места для текста */
+  gap: var(--spacing-8);
+  max-width: 65%; /* Больше места для текста */
   height: 100%;
 }
 
 .wizard-type-card__title {
-  font-size: calc(var(--font-size-lg) + 9px); /* Уменьшено на 1 пиксель (было +10) */
+  font-size: calc(var(--font-size-lg) + 14px); /* Крупнее заголовок */
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
   margin-top: 0;
-  min-height: 2.4em;
+  margin-bottom: var(--spacing-8);
+  min-height: 1.5em;
   display: flex;
   align-items: flex-start;
 }
 
 .wizard-type-card__description {
-  font-size: calc(var(--font-size-xs) + 1px); /* Уменьшено на 1 пиксель (было +2) */
+  font-size: calc(var(--font-size-sm) + 2px); /* Крупнее описание */
   color: var(--color-text-secondary);
-  line-height: 1.3;
+  line-height: 1.5;
 }
 
 .wizard-type-card__illustration {
   position: absolute;
-  bottom: -15px;
-  right: -15px;
-  width: 160px;
-  height: 160px;
+  bottom: -10px;
+  right: -10px;
+  width: 240px; /* Крупнее иллюстрации */
+  height: 240px;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
