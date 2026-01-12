@@ -29,7 +29,7 @@ const Tooltip = ({ content, children, position = 'top' }: TooltipProps) => {
 
       switch (position) {
         case 'top':
-          top = triggerRect.top - tooltipRect.height - 12
+          top = triggerRect.top - tooltipRect.height - 8
           left = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2
           break
         case 'bottom':
@@ -95,8 +95,8 @@ const tooltipStyles = `
   background-color: var(--color-neutral-110);
   border-radius: var(--radius-md);
   pointer-events: none;
-  width: max-content;
-  max-width: 300px;
+  white-space: nowrap;
+  max-width: 200px;
   word-wrap: break-word;
   white-space: normal;
 }

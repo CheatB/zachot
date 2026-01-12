@@ -60,15 +60,10 @@ function AppShell({ isAuthenticated, user, children }: AppShellProps) {
     navigate('/login')
   }
 
-  const getRandomEmoji = (userId: string): string => {
-    const emojis = ['🎓', '🚀', '🧠', '📚', '💡', '✍️', '🧪', '🔭', '🎨', '💻', '🌍', '⚡️']
-    // Используем ID пользователя как сид для выбора одного и того же эмодзи для одного юзера
-    let hash = 0
-    for (let i = 0; i < userId.length; i++) {
-      hash = userId.charCodeAt(i) + ((hash << 5) - hash)
-    }
-    const index = Math.abs(hash) % emojis.length
-    return emojis[index]
+  const getInitials = (userId: string): string => {
+    if (!userId) return '??'
+    const cleanId = userId.replace(/-/g, '')
+    return cleanId.substring(0, 2).toUpperCase()
   }
 
   useEffect(() => {
@@ -107,17 +102,18 @@ function AppShell({ isAuthenticated, user, children }: AppShellProps) {
                 aria-label="Открыть меню пользователя"
                 aria-expanded={isMenuOpen}
               >
-                <span className="user-avatar-emoji">{getRandomEmoji(user.id)}</span>
+                {getInitials(user.id)}
               </button>
 
               {isMenuOpen && (
                 <div className="user-dropdown-menu">
                   <div className="user-dropdown-header">
-                    <span className="user-dropdown-id">
-                      {user.telegram_username ? `@${user.telegram_username}` : (user.email || `ID: ${user.id.substring(0, 8)}...`)}
-                    </span>
+                    <span className="user-dropdown-id">ID: {user.id.substring(0, 8)}...</span>
                   </div>
                   <nav className="user-dropdown-nav">
+                    <Link to="/account" className="user-dropdown-item" onClick={() => setIsMenuOpen(false)}>
+                      👤 Аккаунт
+                    </Link>
                     <Link to="/profile" className="user-dropdown-item" onClick={() => setIsMenuOpen(false)}>
                       ⚙️ Профиль
                     </Link>
@@ -215,29 +211,23 @@ const appShellStyles = `
   width: 44px;
   height: 44px;
   border-radius: var(--radius-full);
-  background: white;
+  background: var(--color-accent-base);
   color: var(--color-text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
   transition: all var(--motion-duration-base) var(--motion-easing-out);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 2px solid var(--color-accent-base);
+  box-shadow: 0 4px 12px var(--color-accent-shadow);
+  border: none;
   padding: 0;
-}
-
-.user-avatar-emoji {
-  font-size: 24px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .user-avatar-btn:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.15);
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.3);
 }
 
 .user-dropdown-menu {

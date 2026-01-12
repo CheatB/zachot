@@ -1,12 +1,12 @@
 /**
  * GenerationStructureStep
  * Шаг 3: Структура (содержание)
- * Updated with hierarchical numbering, larger icons with borders, and tooltips.
+ * Updated for "juicy" landing page aesthetic
  */
 
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
-import { Card, Button, Stack, Input, Tooltip } from '@/ui'
+import { Card, Button, Stack, Input } from '@/ui'
 import type { StructureItem } from './types'
 import { useState, useEffect } from 'react'
 
@@ -18,11 +18,19 @@ interface GenerationStructureStepProps {
 function GenerationStructureStep({ structure, onChange }: GenerationStructureStepProps) {
   const [items, setItems] = useState<StructureItem[]>(structure)
 
+  // Синхронизируем внутреннее состояние с пропсами, если они изменились извне (например, после загрузки ИИ)
   useEffect(() => {
     if (structure.length > 0) {
       setItems(structure)
     }
   }, [structure])
+
+  useEffect(() => {
+    if (items.length === 0 && structure.length === 0) {
+      // Только если реально пусто и ничего не пришло
+      // Можно оставить пустым или добавить дефолт
+    }
+  }, [items.length, structure.length])
 
   const handleTitleChange = (id: string, newTitle: string) => {
     const newItems = items.map(item => item.id === id ? { ...item, title: newTitle } : item)
@@ -47,22 +55,6 @@ function GenerationStructureStep({ structure, onChange }: GenerationStructureSte
     onChange(newItems)
   }
 
-  const getNumbering = (index: number) => {
-    let level1Count = 0
-    let level2Count = 0
-    
-    for (let i = 0; i <= index; i++) {
-      if (items[i].level === 1) {
-        level1Count++
-        level2Count = 0
-      } else {
-        level2Count++
-      }
-    }
-    
-    return items[index].level === 1 ? `${level1Count}.` : `${level1Count}.${level2Count}.`
-  }
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -84,73 +76,46 @@ function GenerationStructureStep({ structure, onChange }: GenerationStructureSte
             >
               <Card variant="default" style={{ 
                 padding: 'var(--spacing-12) var(--spacing-16)',
-                marginLeft: item.level === 2 ? 'var(--spacing-40)' : 0,
-                borderLeft: item.level === 1 ? '4px solid var(--color-accent-base)' : '1px solid var(--color-border-base)',
-                borderRadius: 'var(--radius-md)'
+                marginLeft: item.level === 2 ? 'var(--spacing-32)' : 0,
+                borderLeft: item.level === 1 ? '4px solid var(--color-accent-base)' : '1px solid var(--color-border-base)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-16)' }}>
-                  <div style={{ 
-                    fontSize: item.level === 1 ? '24px' : '20px', 
-                    fontWeight: 'bold', 
-                    color: 'var(--color-accent-base)',
-                    minWidth: '35px'
-                  }}>
-                    {getNumbering(index)}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-12)' }}>
+                  <div 
+                    style={{ 
+                      width: 24, 
+                      height: 24, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      color: 'var(--color-text-muted)',
+                      cursor: 'grab'
+                    }}
+                  >
+                    ⠿
                   </div>
-                  
                   <div style={{ flex: 1 }}>
                     <Input
                       value={item.title}
                       onChange={(e) => handleTitleChange(item.id, e.target.value)}
                       style={{ 
                         border: 'none', 
-                        padding: 'var(--spacing-4)', 
-                        fontSize: item.level === 1 ? '24px' : '20px',
-                        fontWeight: item.level === 1 ? 'bold' : '500',
+                        padding: 'var(--spacing-8)', 
+                        fontSize: item.level === 1 ? 'var(--font-size-base)' : 'var(--font-size-sm)',
+                        fontWeight: item.level === 1 ? 'var(--font-weight-semibold)' : 'var(--font-weight-normal)',
                         boxShadow: 'none',
                         backgroundColor: 'transparent',
                         color: 'var(--color-text-primary)'
                       }}
                     />
                   </div>
-
-                  <div style={{ display: 'flex', gap: 'var(--spacing-12)' }}>
-                    <Tooltip content="Эта кнопка позволяет перегенерировать название этого раздела">
-                      <div style={{ display: 'inline-block' }}>
-                        <Button 
-                          variant="ghost" 
-                          size="md" 
-                          onClick={() => {
-                            // Имитация перегенерации конкретного раздела
-                            handleTitleChange(item.id, item.title + " (обновлено)")
-                          }} 
-                          style={{ 
-                            padding: '12px', 
-                            border: '2px solid var(--color-accent-base)',
-                            borderRadius: 'var(--radius-md)',
-                            color: 'var(--color-accent-base)',
-                            backgroundColor: 'white'
-                          }}
-                        >
-                          <span style={{ fontSize: '28px' }}>🪄</span>
-                        </Button>
-                      </div>
-                    </Tooltip>
-                    <Button 
-                      variant="ghost" 
-                      size="md" 
-                      onClick={() => handleDelete(item.id)}
-                      style={{ 
-                        color: 'var(--color-accent-base)', 
-                        padding: '12px',
-                        border: '2px solid var(--color-accent-base)',
-                        borderRadius: 'var(--radius-md)',
-                        backgroundColor: 'white'
-                      }}
-                    >
-                      <span style={{ fontSize: '24px', fontWeight: 'bold' }}>✕</span>
-                    </Button>
-                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleDelete(item.id)}
+                    style={{ color: 'var(--color-text-muted)' }}
+                  >
+                    ✕
+                  </Button>
                 </div>
               </Card>
             </motion.div>

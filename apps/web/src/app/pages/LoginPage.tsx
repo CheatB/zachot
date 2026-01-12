@@ -44,7 +44,7 @@ function LoginPage() {
         const result = await checkTelegramAuth(token)
         if (result.status === 'success' && result.user_id) {
           if (pollingInterval.current) clearInterval(pollingInterval.current)
-          loginFromLanding(result.user_id, result.user_id, { telegram_username: result.telegram_username })
+          loginFromLanding(result.user_id, result.user_id)
           navigate('/')
         }
       } catch (error) {
@@ -77,7 +77,7 @@ function LoginPage() {
     setError(null)
     try {
       const result = await emailLogin(email, password)
-      loginFromLanding(result.token, result.user_id, { email: email })
+      loginFromLanding(result.token, result.user_id)
       navigate('/')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Ошибка авторизации')

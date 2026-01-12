@@ -1,11 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { fetchMe, type MeResponse } from '@/shared/api/me'
-import { Stack, Button } from '@/ui'
+import { Button, Stack } from '@/ui'
 import clsx from 'clsx'
-import { useCreateStore } from '@/features/create-generation/store/useCreateStore'
 
 interface SidebarProps {
   isOpen: boolean
@@ -25,7 +24,6 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
   const navigate = useNavigate()
   const location = useLocation()
   const [userData, setUserData] = useState<MeResponse | null>(null)
-  const { resetForm } = useCreateStore()
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -47,7 +45,6 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
   }, [])
 
   const isAdminRoute = location.pathname.startsWith('/admin')
-  const isHomePage = location.pathname === '/' || location.pathname === '/login'
 
   const mainNavItems: NavItem[] = [
     { label: 'Мои генерации', path: '/generations', disabled: !isAuthenticated, icon: '📄' },
@@ -63,14 +60,6 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
   ]
 
   const navItems = isAdminRoute ? adminNavItems : mainNavItems
-
-  const handleLogoClick = () => {
-    resetForm()
-    navigate('/')
-    if (window.innerWidth < 1024) {
-      onClose()
-    }
-  }
 
   const handleNavClick = (item: NavItem) => {
     if (item.disabled) return
@@ -115,7 +104,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
             <div className="app-sidebar__content">
               <div 
                 className="app-sidebar__logo" 
-                onClick={handleLogoClick}
+                onClick={() => navigate('/')}
                 style={{ 
                   cursor: 'pointer',
                   display: 'flex',
@@ -217,7 +206,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
 
               <div className="app-sidebar__footer">
                 <Stack gap="lg">
-                  {isAuthenticated && userData && isHomePage && !isAdminRoute && (
+                  {isAuthenticated && userData && !isAdminRoute && (
                     <div className="app-sidebar__usage">
                       <div className="usage-info">
                         <span className="usage-label">Осталось генераций:</span>
@@ -234,8 +223,8 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                   )}
 
                   <div className="app-sidebar__legal">
-                    <a href="/oferta.pdf" target="_blank" rel="noopener noreferrer" className="legal-link">Пользовательское соглашение сервиса Зачёт</a>
-                    <a href="/privacy.pdf" target="_blank" rel="noopener noreferrer" className="legal-link">Политика обработки персональных данных</a>
+                    <Link to="/terms" className="legal-link">Пользовательское соглашение сервиса Зачёт</Link>
+                    <Link to="/privacy" className="legal-link">Политика обработки персональных данных</Link>
                   </div>
                 </Stack>
               </div>
@@ -295,9 +284,8 @@ const sidebarStyles = `
 .app-sidebar__content {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  position: sticky;
-  top: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .app-sidebar__logo {
@@ -356,12 +344,6 @@ const sidebarStyles = `
   color: var(--color-accent-base);
   border-color: var(--color-accent-base);
   font-weight: var(--font-weight-bold);
-  justify-content: center;
-}
-
-.app-sidebar__item--active .app-sidebar__item-label {
-  flex: none;
-  justify-content: center;
 }
 
 .app-sidebar__item--disabled {

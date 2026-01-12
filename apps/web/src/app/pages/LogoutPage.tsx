@@ -13,11 +13,11 @@ function LogoutPage() {
 
   useEffect(() => {
     // Очищаем first-time флаги при logout
-    localStorage.removeItem('zachot_auth_token')
-    localStorage.removeItem('zachot_auth_user_id')
-    localStorage.removeItem('zachot_refresh_token')
-    localStorage.removeItem('zachot_first_time')
-    localStorage.removeItem('zachot_has_generations')
+    sessionStorage.removeItem('zachot_auth_token')
+    sessionStorage.removeItem('zachot_auth_user_id')
+    sessionStorage.removeItem('zachot_refresh_token')
+    sessionStorage.removeItem('zachot_first_time')
+    sessionStorage.removeItem('zachot_has_generations')
     
     logout()
     // Редирект на страницу логина внутри приложения

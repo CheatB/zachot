@@ -69,14 +69,6 @@ function ProgressSteps({ steps, currentStepIndex }: ProgressStepsProps) {
                         repeat: Infinity,
                         ease: motionTokens.easing.inOut,
                       }}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        borderRadius: '50%'
-                      }}
                     />
                   )}
                 </div>
@@ -147,7 +139,6 @@ const progressStepsStyles = `
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
-  width: 40px;
 }
 
 .progress-steps__dot {
@@ -163,7 +154,6 @@ const progressStepsStyles = `
   color: var(--color-text-muted);
   position: relative;
   transition: all var(--motion-duration-base) ease;
-  z-index: 2;
 }
 
 .progress-steps__dot--active {
@@ -202,11 +192,8 @@ const progressStepsStyles = `
   width: 2px;
   height: 60px;
   background-color: var(--color-border-base);
-  margin-top: -2px;
-  margin-bottom: -2px;
+  margin-top: var(--spacing-8);
   transition: all var(--motion-duration-base) ease;
-  position: relative;
-  z-index: 1;
 }
 
 .progress-steps__line--completed {

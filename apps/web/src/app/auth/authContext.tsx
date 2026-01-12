@@ -12,7 +12,7 @@ import {
   ReactNode,
 } from 'react'
 
-import type { AuthContextValue, AuthState, User } from './authTypes'
+import type { AuthContextValue, AuthState } from './authTypes'
 import { fetchMe } from '@/shared/api/me'
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -27,22 +27,6 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [authState, setAuthState] = useState<AuthState>(() => {
-    // Пытаемся восстановить базовое состояние из localStorage ПРЯМО ПРИ ИНИЦИАЛИЗАЦИИ
-    // Это критично, чтобы AppBoundary не редиректнул на /login во время загрузки
-    if (typeof window !== 'undefined') {
-      const storedToken = localStorage.getItem(TOKEN_KEY)
-      const storedUserId = localStorage.getItem(USER_ID_KEY)
-
-      if (storedToken && storedUserId) {
-        return {
-          isAuthenticated: true,
-          isAuthResolved: false,
-          user: { id: storedUserId, role: 'user' },
-          token: storedToken,
-        }
-      }
-    }
-
     return {
       isAuthenticated: false,
       isAuthResolved: false,
@@ -54,7 +38,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   /**
    * Bootstrap auth:
    * 1. URL params (landing / integration)
-   * 2. localStorage verification
+   * 2. sessionStorage
+   * 3. integration mode fallback
    */
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -63,13 +48,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // 1️⃣ Вход через URL (лендинг / интеграция)
     if (tokenFromUrl && userIdFromUrl) {
-      localStorage.setItem(TOKEN_KEY, tokenFromUrl)
-      localStorage.setItem(USER_ID_KEY, userIdFromUrl)
+      sessionStorage.setItem(TOKEN_KEY, tokenFromUrl)
+      sessionStorage.setItem(USER_ID_KEY, userIdFromUrl)
 
       setAuthState({
         isAuthenticated: true,
         isAuthResolved: true,
-        user: { id: userIdFromUrl, role: 'user' },
+        user: { id: userIdFromUrl, role: 'user' }, // По умолчанию user, обновится через /me
         token: tokenFromUrl,
       })
 
@@ -77,10 +62,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return
     }
 
-    // 2️⃣ Верификация существующей сессии через /me
-    const storedToken = localStorage.getItem(TOKEN_KEY)
+    // 2️⃣ Восстановление сессии + проверка через /me
+    const storedToken = sessionStorage.getItem(TOKEN_KEY)
 
     if (storedToken) {
+      // Проверяем валидность токена через /me
       fetchMe()
         .then((response) => {
           setAuthState({
@@ -90,30 +76,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
               id: response.id, 
               role: response.role,
               email: response.email,
-              telegram_username: response.telegram_username
+              telegram_username: response.telegram_username,
+              subscription: response.subscription ? {
+                ...response.subscription,
+                status: response.subscription.status || 'none',
+              } : undefined,
+              usage: response.usage,
             },
             token: storedToken,
           })
         })
-        .catch((error) => {
-          // Если это 401, значит токен невалиден
-          if (error.status === 401) {
-            localStorage.removeItem(TOKEN_KEY)
-            localStorage.removeItem(USER_ID_KEY)
-            setAuthState({
-              isAuthenticated: false,
-              isAuthResolved: true,
-              user: null,
-              token: null,
-            })
-          } else {
-            // Ошибка сети или сервера — сохраняем isAuthenticated: true, 
-            // чтобы не выкидывать пользователя, но помечаем resolved
-            setAuthState((prev) => ({
-              ...prev,
-              isAuthResolved: true,
-            }))
-          }
+        .catch(() => {
+          // Ошибка /me — auth не прошла
+          setAuthState((prev) => ({
+            ...prev,
+            isAuthResolved: true,
+          }))
         })
       return
     }
@@ -125,22 +103,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }))
   }, [])
 
-  const loginFromLanding = (token: string, userId: string, details?: Partial<User>) => {
-    localStorage.setItem(TOKEN_KEY, token)
-    localStorage.setItem(USER_ID_KEY, userId)
+  const loginFromLanding = (token: string, userId: string) => {
+    sessionStorage.setItem(TOKEN_KEY, token)
+    sessionStorage.setItem(USER_ID_KEY, userId)
 
     setAuthState({
       isAuthenticated: true,
       isAuthResolved: true,
-      user: { id: userId, role: 'user', ...details },
+      user: { id: userId, role: 'user' },
       token,
     })
   }
 
   const logout = () => {
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_ID_KEY)
-    localStorage.removeItem(REFRESH_TOKEN_KEY)
+    sessionStorage.removeItem(TOKEN_KEY)
+    sessionStorage.removeItem(USER_ID_KEY)
+    sessionStorage.removeItem(REFRESH_TOKEN_KEY)
 
     setAuthState({
       isAuthenticated: false,
@@ -148,6 +126,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
       user: null,
       token: null,
     })
+  }
+
+  const refreshUser = async () => {
+    try {
+      const response = await fetchMe()
+      setAuthState((prev) => ({
+        ...prev,
+        user: prev.user ? {
+          ...prev.user,
+          subscription: response.subscription ? {
+            ...response.subscription,
+            status: response.subscription.status || 'none',
+          } : undefined,
+          usage: response.usage,
+        } : null,
+      }))
+    } catch (error) {
+      console.error('[AuthProvider] Failed to refresh user:', error)
+    }
   }
 
   // Подписка на событие logout из API слоя
@@ -169,6 +166,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     ...authState,
     loginFromLanding,
     logout,
+    refreshUser,
   }
 
   // Логирование для отладки

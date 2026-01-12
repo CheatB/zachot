@@ -38,7 +38,8 @@ function NotFoundPage() {
           <div className="error-code">404</div>
           <h1 className="error-title">Страница не найдена</h1>
           <p className="error-subtitle">
-            Похоже, эта страница ушла на каникулы или её никогда не существовало.
+            Похоже, эта страница ушла на каникулы или её никогда не существовало. 
+            Но не волнуйтесь, ваша учеба все еще под контролем!
           </p>
           
           <div style={{ marginTop: '40px' }}>

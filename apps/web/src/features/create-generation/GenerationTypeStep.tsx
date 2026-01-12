@@ -21,7 +21,7 @@ const typeOptions: (GenerationTypeOption & { illustration?: string; illustration
     title: 'Текстовая работа',
     description: 'Любой вид работы с реальными источниками, оформлением по ГОСТу и защитой от проверки на ИИ',
     icon: '',
-    illustration: '/assets/illustrations/text-work.webp',
+    illustration: '/assets/illustrations/text-work.png',
     illustrationOffsetLeft: 10 // Сдвинуто еще на 5 пикселей влево (итого 10)
   },
   {
@@ -29,14 +29,14 @@ const typeOptions: (GenerationTypeOption & { illustration?: string; illustration
     title: 'Презентация',
     description: 'Презентации по заданной теме в разных стилях оформления',
     icon: '',
-    illustration: '/assets/illustrations/presentation.webp'
+    illustration: '/assets/illustrations/presentation.png'
   },
   {
     type: 'task',
     title: 'Решение задач',
     description: 'Разберись, как решать задачки по вышке, химии или экономике. Больше 100+ предметов',
     icon: '',
-    illustration: '/assets/illustrations/tasks.webp'
+    illustration: '/assets/illustrations/tasks.png'
   },
 ]
 
@@ -175,18 +175,17 @@ const stepStyles = `
   position: relative;
   width: 100%;
   min-height: 275px; /* Увеличено на 10px (было 265px) */
-  padding: var(--spacing-24) var(--spacing-8);
+  padding: var(--spacing-24) var(--spacing-16);
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
-  text-align: center;
+  text-align: left;
   cursor: pointer;
   transition: all var(--motion-duration-base) var(--motion-easing-out);
   box-shadow: var(--elevation-1);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  align-items: center;
   overflow: hidden;
   isolation: isolate;
 }
@@ -210,7 +209,7 @@ const stepStyles = `
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
-  max-width: 85%;
+  max-width: 70%;
   height: 100%;
 }
 
@@ -222,13 +221,11 @@ const stepStyles = `
   margin-top: 0;
   min-height: 2.4em;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+  align-items: flex-start;
 }
 
 .wizard-type-card__description {
-  font-size: calc(var(--font-size-xs) + 4px);
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   line-height: 1.3;
 }
@@ -255,13 +252,6 @@ const stepStyles = `
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  opacity: 0;
-  animation: illustration-fade-in 0.8s ease-out forwards;
-}
-
-@keyframes illustration-fade-in {
-  from { opacity: 0; transform: scale(0.9) translate(5px, 5px); }
-  to { opacity: 1; transform: scale(1) translate(0, 0); }
 }
 
 .wizard-type-card__check {

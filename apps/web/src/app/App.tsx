@@ -10,7 +10,6 @@ import LoginPage from './pages/LoginPage'
 import LogoutPage from './pages/LogoutPage'
 import ProfilePage from './pages/ProfilePage'
 import BillingPage from './pages/BillingPage'
-import CheckoutPage from '@/features/billing/CheckoutPage'
 import NotFoundPage from './pages/NotFoundPage'
 import GenerationsPage from '@/features/generations/GenerationsPage'
 import CreateGenerationPage from '@/features/create-generation/CreateGenerationPage'
@@ -58,7 +57,6 @@ function AppRoutes() {
         <Route path="/logout" element={<LogoutPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/billing" element={<BillingPage />} />
-        <Route path="/billing/checkout" element={<CheckoutPage />} />
         <Route path="/generations" element={<GenerationsPage />} />
         <Route path="/generations/new" element={<CreateGenerationPage />} />
         <Route path="/generations/:id/recovery" element={<GenerationRecoveryPage />} />

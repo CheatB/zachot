@@ -1,50 +1,51 @@
 /**
  * CheckoutPage
- * Страница оплаты
+ * Страница оформления подписки с редиректом на платёжную форму Т-Банка.
  * 
- * Использует прямой редирект на платежную форму для максимальной надежности.
+ * Простой flow:
+ * 1. Показываем информацию о заказе
+ * 2. При нажатии "Оплатить" → запрос к API → редирект на PaymentURL
  */
 
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
-import { Stack, Button } from '@/ui'
+import { Container, Stack, Button, Card } from '@/ui'
 import { initiatePayment } from '@/shared/api/payments'
 import { useAuth } from '@/app/auth/useAuth'
 
 type Period = 'month' | 'quarter' | 'year'
 
-const PLAN_INFO: Record<Period, { name: string; price: number; priceTotal: number; description: string }> = {
+const PLAN_INFO: Record<Period, { name: string; price: number; priceTotal: number; months: number }> = {
   month: {
     name: '1 месяц',
     price: 499,
     priceTotal: 499,
-    description: 'Подписка на интернет-сервис "Зачёт" на 1 месяц',
+    months: 1,
   },
   quarter: {
     name: '3 месяца',
     price: 449,
     priceTotal: 1347,
-    description: 'Подписка на интернет-сервис "Зачёт" на 3 месяца',
+    months: 3,
   },
   year: {
     name: '12 месяцев',
     price: 424,
     priceTotal: 5088,
-    description: 'Подписка на интернет-сервис "Зачёт" на 12 месяцев',
+    months: 12,
   },
 }
 
 function CheckoutPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { isAuthenticated, isAuthResolved } = useAuth()
+  const { isAuthenticated } = useAuth()
   
   const period = (searchParams.get('period') as Period) || 'month'
   const plan = PLAN_INFO[period]
   
-  const [isLoading, setIsLoading] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -53,37 +54,13 @@ function CheckoutPage() {
     console.log(`[CheckoutPage] ${message}`, data || '')
   }, [])
 
-  // Обработчик оплаты через редирект
-  const handlePayWithRedirect = useCallback(async () => {
-    log('Starting payment with redirect...')
-    setIsProcessing(true)
-    setError(null)
-    
-    try {
-      const result = await initiatePayment(period)
-      log('Redirecting to payment URL:', result.payment_url)
-      window.location.href = result.payment_url
-    } catch (err) {
-      log('Payment redirect failed:', err)
-      setError(err instanceof Error ? err.message : 'Ошибка при переходе к оплате')
-      setIsProcessing(false)
-    }
-  }, [period, log])
-
-  // Инициализируем платёж
+  // Редирект если не авторизован
   useEffect(() => {
-    if (!isAuthResolved) return
-
     if (!isAuthenticated) {
       log('User not authenticated, redirecting to login...')
-      const currentUrl = window.location.pathname + window.location.search
-      const nextUrl = encodeURIComponent(currentUrl)
-      navigate(`/login?next=${nextUrl}`)
-      return
+      navigate('/login')
     }
-    
-    setIsLoading(false)
-  }, [isAuthenticated, isAuthResolved, navigate, log])
+  }, [isAuthenticated, navigate, log])
 
   // Стили
   useEffect(() => {
@@ -99,38 +76,67 @@ function CheckoutPage() {
     }
   }, [])
 
+  // Обработчик оплаты
+  const handlePay = async () => {
+    log(`Starting payment for period: ${period}`)
+    setIsProcessing(true)
+    setError(null)
+    
+    try {
+      const result = await initiatePayment(period)
+      log('Payment initiated:', result)
+      
+      // Проверяем демо-режим
+      if (result.payment_url.includes('status=demo')) {
+        log('Demo mode detected, simulating payment success...')
+        // В демо-режиме редиректим на главную с сообщением об успехе
+        navigate('/?payment=demo_success&order_id=' + result.order_id)
+        return
+      }
+      
+      // Редирект на платёжную форму Т-Банка
+      window.location.href = result.payment_url
+      
+    } catch (err) {
+      log('Payment initiation failed:', err)
+      setError(
+        err instanceof Error 
+          ? err.message 
+          : 'Не удалось инициализировать платёж. Попробуйте позже.'
+      )
+      setIsProcessing(false)
+    }
+  }
+
   if (!isAuthenticated) {
     return null
   }
 
   return (
-    <div className="checkout-page">
-      <div className="checkout-back-nav">
-        <Button variant="ghost" onClick={() => navigate('/billing')} className="checkout-back-button">
-          ← Назад к тарифам
-        </Button>
-      </div>
+    <Container size="sm" className="checkout-container">
+      <Stack align="center" gap="2xl" className="checkout-stack">
+        
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: motionTokens.easing.out }}
+          className="checkout-header"
+        >
+          <h1 className="checkout-title">Оформление подписки</h1>
+          <p className="checkout-subtitle">
+            Вы оформляете подписку с автоматическим продлением
+          </p>
+        </motion.div>
 
-      <div className="checkout-content">
-        <Stack align="center" gap="2xl" className="checkout-stack">
-          
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: motionTokens.easing.out }}
-            className="checkout-header"
-          >
-            <h1 className="checkout-title">Оформление подписки</h1>
-          </motion.div>
-
-          {/* Order Summary */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            style={{ width: '100%' }}
-          >
+        {/* Order Summary */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          style={{ width: '100%' }}
+        >
+          <Card className="checkout-summary-card">
             <div className="checkout-summary">
               <div className="checkout-summary__row">
                 <span className="checkout-summary__label">Тариф</span>
@@ -148,98 +154,70 @@ function CheckoutPage() {
                 </span>
               </div>
               <div className="checkout-summary__note">
-                Автопродление каждые {period === 'month' ? '30 дней' : period === 'quarter' ? '3 месяца' : '12 месяцев'}
+                Автопродление каждые {plan.months === 1 ? '30 дней' : `${plan.months} мес.`}
               </div>
             </div>
-          </motion.div>
+          </Card>
+        </motion.div>
 
-          {/* Payment Form */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            style={{ width: '100%' }}
-          >
-            {isLoading ? (
-              <div className="checkout-loading">
-                <div className="checkout-loading__spinner" />
-                <p>Загрузка...</p>
-              </div>
-            ) : error ? (
-              <div className="checkout-error">
-                <span className="checkout-error__icon">⚠️</span>
-                <p className="checkout-error__message">{error}</p>
-                <Button variant="primary" onClick={handlePayWithRedirect} loading={isProcessing}>
-                  Попробовать еще раз
-                </Button>
-              </div>
-            ) : (
-              <div className="checkout-pay">
-                <p className="checkout-pay__info">
-                  Нажмите кнопку ниже для перехода к защищённой форме оплаты Т-Банка
-                </p>
-                <Button 
-                  variant="primary" 
-                  size="lg" 
-                  onClick={handlePayWithRedirect}
-                  loading={isProcessing}
-                  className="checkout-pay__button"
-                >
-                  {isProcessing ? 'Переход...' : `Оплатить ${plan.priceTotal} ₽`}
-                </Button>
-                <div className="checkout-pay__security">
-                  <span>🔒</span>
-                  <span>Безопасная оплата через Т-Банк</span>
+        {/* Pay Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          style={{ width: '100%' }}
+        >
+          <Card className="checkout-pay-card">
+            <div className="checkout-pay">
+              {error && (
+                <div className="checkout-error">
+                  <span className="checkout-error__icon">⚠️</span>
+                  <p className="checkout-error__message">{error}</p>
                 </div>
+              )}
+              
+              <Button 
+                variant="primary" 
+                size="lg" 
+                onClick={handlePay}
+                loading={isProcessing}
+                disabled={isProcessing}
+                className="checkout-pay__button"
+              >
+                {isProcessing ? 'Переход к оплате...' : `Оплатить ${plan.priceTotal} ₽`}
+              </Button>
+              
+              <div className="checkout-pay__security">
+                <span>🔒</span>
+                <span>Безопасная оплата через Т-Банк</span>
               </div>
-            )}
-          </motion.div>
+            </div>
+          </Card>
+        </motion.div>
 
-        </Stack>
-      </div>
-    </div>
+        {/* Back Button */}
+        <Button variant="ghost" onClick={() => navigate('/billing')}>
+          ← Вернуться к выбору тарифа
+        </Button>
+
+      </Stack>
+    </Container>
   )
 }
 
 const pageStyles = `
-.checkout-page {
-  width: 100%;
-  padding: var(--spacing-32);
-  min-height: calc(100vh - var(--spacing-64));
-  display: flex;
-  flex-direction: column;
-}
-
-.checkout-back-nav {
-  margin-bottom: var(--spacing-24);
-}
-
-.checkout-back-button {
-  font-weight: 600 !important;
-  color: var(--color-text-secondary) !important;
-  padding-left: 0 !important;
-}
-
-.checkout-back-button:hover {
-  color: var(--color-accent-base) !important;
-}
-
-.checkout-content {
-  flex: 1;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 5vh;
+.checkout-container {
+  padding-top: var(--spacing-48);
+  padding-bottom: var(--spacing-80);
 }
 
 .checkout-stack {
-  width: 100%;
   max-width: 480px;
+  margin: 0 auto;
 }
 
 .checkout-header {
   text-align: center;
-  margin-bottom: var(--spacing-8);
 }
 
 .checkout-title {
@@ -250,12 +228,20 @@ const pageStyles = `
   letter-spacing: -0.03em;
 }
 
+.checkout-subtitle {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.checkout-summary-card {
+  padding: 24px !important;
+}
+
 .checkout-summary {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: transparent;
-  padding: 0;
 }
 
 .checkout-summary__row {
@@ -298,49 +284,8 @@ const pageStyles = `
   margin-top: 8px;
 }
 
-.checkout-loading,
-.checkout-error,
-.checkout-pay {
-  background: transparent;
-  padding: 32px 0;
-  text-align: center;
-}
-
-.checkout-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  color: var(--color-text-secondary);
-}
-
-.checkout-loading__spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--color-neutral-20);
-  border-top-color: var(--color-accent-base);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.checkout-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-
-.checkout-error__icon {
-  font-size: 48px;
-}
-
-.checkout-error__message {
-  color: var(--color-danger-base);
-  font-size: 15px;
+.checkout-pay-card {
+  padding: 32px !important;
 }
 
 .checkout-pay {
@@ -348,11 +293,27 @@ const pageStyles = `
   flex-direction: column;
   align-items: center;
   gap: 20px;
+  text-align: center;
 }
 
-.checkout-pay__info {
-  font-size: 15px;
-  color: var(--color-text-secondary);
+.checkout-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 12px;
+  width: 100%;
+}
+
+.checkout-error__icon {
+  font-size: 32px;
+}
+
+.checkout-error__message {
+  color: var(--color-danger-base);
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -373,12 +334,22 @@ const pageStyles = `
 
 /* Mobile */
 @media (max-width: 640px) {
-  .checkout-page {
-    padding: var(--spacing-16);
+  .checkout-container {
+    padding-top: var(--spacing-24);
+    padding-bottom: var(--spacing-48);
   }
   
   .checkout-title {
     font-size: 24px;
+  }
+  
+  .checkout-subtitle {
+    font-size: 14px;
+  }
+  
+  .checkout-summary-card,
+  .checkout-pay-card {
+    padding: 20px !important;
   }
   
   .checkout-summary__value--total {

@@ -11,22 +11,17 @@ export class ApiError extends Error {
 }
 
 function getAuthToken(): string | null {
-  return localStorage.getItem('zachot_auth_token')
+  return sessionStorage.getItem('zachot_auth_token')
 }
 
 let refreshPromise: Promise<void> | null = null
 
 function performLogout() {
-  console.log('[HTTP] Unauthorized access, performing logout redirect')
-  localStorage.removeItem('zachot_auth_token')
-  localStorage.removeItem('zachot_auth_user_id')
-  localStorage.removeItem('zachot_refresh_token')
+  sessionStorage.removeItem('zachot_auth_token')
+  sessionStorage.removeItem('zachot_auth_user_id')
+  sessionStorage.removeItem('zachot_refresh_token')
   window.dispatchEvent(new CustomEvent('auth:logout'))
-  
-  // Делаем редирект только если мы не на странице логина
-  if (!window.location.pathname.includes('/login')) {
-    window.location.href = '/login'
-  }
+  window.location.href = '/login'
 }
 
 async function performFetch<T>(
@@ -59,9 +54,9 @@ async function performFetch<T>(
         refreshPromise = (async () => {
           try {
             const tokens = await refreshSession()
-            localStorage.setItem('zachot_auth_token', tokens.accessToken)
+            sessionStorage.setItem('zachot_auth_token', tokens.accessToken)
             if (tokens.refreshToken) {
-              localStorage.setItem('zachot_refresh_token', tokens.refreshToken)
+              sessionStorage.setItem('zachot_refresh_token', tokens.refreshToken)
             }
           } catch (error) {
             performLogout()

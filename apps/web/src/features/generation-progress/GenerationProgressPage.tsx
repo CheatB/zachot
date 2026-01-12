@@ -45,7 +45,7 @@ function GenerationProgressPage() {
   const [startedAt] = useState(new Date())
   const [elapsedTime, setElapsedTime] = useState(0)
   const [isReturning] = useState(() => {
-    return localStorage.getItem(`generation_${id}_visited`) === 'true'
+    return sessionStorage.getItem(`generation_${id}_visited`) === 'true'
   })
 
   useEffect(() => {
@@ -72,7 +72,7 @@ function GenerationProgressPage() {
 
   useEffect(() => {
     if (id && isAuthenticated) {
-      localStorage.setItem(`generation_${id}_visited`, 'true')
+      sessionStorage.setItem(`generation_${id}_visited`, 'true')
     }
   }, [id, isAuthenticated])
 
