@@ -38,7 +38,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   /**
    * Bootstrap auth:
    * 1. URL params (landing / integration)
-   * 2. sessionStorage
+   * 2. localStorage
    * 3. integration mode fallback
    */
   useEffect(() => {
@@ -48,8 +48,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // 1️⃣ Вход через URL (лендинг / интеграция)
     if (tokenFromUrl && userIdFromUrl) {
-      sessionStorage.setItem(TOKEN_KEY, tokenFromUrl)
-      sessionStorage.setItem(USER_ID_KEY, userIdFromUrl)
+      localStorage.setItem(TOKEN_KEY, tokenFromUrl)
+      localStorage.setItem(USER_ID_KEY, userIdFromUrl)
 
       setAuthState({
         isAuthenticated: true,
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     // 2️⃣ Восстановление сессии + проверка через /me
-    const storedToken = sessionStorage.getItem(TOKEN_KEY)
+    const storedToken = localStorage.getItem(TOKEN_KEY)
 
     if (storedToken) {
       // Проверяем валидность токена через /me
@@ -104,8 +104,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [])
 
   const loginFromLanding = (token: string, userId: string) => {
-    sessionStorage.setItem(TOKEN_KEY, token)
-    sessionStorage.setItem(USER_ID_KEY, userId)
+    localStorage.setItem(TOKEN_KEY, token)
+    localStorage.setItem(USER_ID_KEY, userId)
 
     setAuthState({
       isAuthenticated: true,
@@ -116,9 +116,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const logout = () => {
-    sessionStorage.removeItem(TOKEN_KEY)
-    sessionStorage.removeItem(USER_ID_KEY)
-    sessionStorage.removeItem(REFRESH_TOKEN_KEY)
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(USER_ID_KEY)
+    localStorage.removeItem(REFRESH_TOKEN_KEY)
 
     setAuthState({
       isAuthenticated: false,
