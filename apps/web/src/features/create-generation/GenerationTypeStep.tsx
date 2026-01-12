@@ -78,8 +78,8 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
           style={{
             fontSize: 'var(--font-size-2xl)',
             fontWeight: 'var(--font-weight-bold)',
-            marginBottom: 'var(--spacing-12)',
-            color: 'var(--color-text-primary)',
+            marginBottom: 'var(--spacing-8)',
+            color: 'var(--color-neutral-100)',
             letterSpacing: '-0.02em',
             textAlign: 'left'
           }}
@@ -91,7 +91,7 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
           style={{
             fontSize: 'var(--font-size-base)',
             color: 'var(--color-text-secondary)',
-            marginBottom: '78px',
+            marginBottom: 'var(--spacing-40)',
             lineHeight: 'var(--line-height-relaxed)',
             textAlign: 'left'
           }}
@@ -182,7 +182,7 @@ const stepStyles = `
   position: relative;
   width: 100%;
   min-height: 275px; /* Увеличено на 10px (было 265px) */
-  padding: var(--spacing-24) 8px;
+  padding: var(--spacing-24) 4px;
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
@@ -216,12 +216,12 @@ const stepStyles = `
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
-  max-width: 55%;
+  max-width: 52%;
   height: 100%;
 }
 
 .wizard-type-card__title {
-  font-size: calc(var(--font-size-lg) + 11px); /* Уменьшено на 1 пиксель */
+  font-size: calc(var(--font-size-lg) + 10px); /* Уменьшено на 1 пиксель */
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
@@ -232,7 +232,7 @@ const stepStyles = `
 }
 
 .wizard-type-card__description {
-  font-size: calc(var(--font-size-xs) + 3px); /* Уменьшено еще на 2 пикселя */
+  font-size: calc(var(--font-size-xs) + 2px); /* Уменьшено еще на 1 пиксель */
   color: var(--color-text-secondary);
   line-height: 1.3;
 }
