@@ -3,7 +3,7 @@ import { motion as motionTokens } from '@/design-tokens'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { fetchMe, type MeResponse } from '@/shared/api/me'
-import { Button, Stack, Tooltip } from '@/ui'
+import { Stack } from '@/ui'
 import clsx from 'clsx'
 
 interface SidebarProps {
@@ -200,45 +200,22 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                     </button>
                   </div>
                 )}
+
+                {isAuthenticated && userData && !isAdminRoute && (
+                  <div className="app-sidebar__credits-top">
+                    <div className="credits-display-block">
+                      <div className="credits-display-icon">💎</div>
+                      <div className="credits-display-info">
+                        <span className="credits-display-label">Баланс кредитов</span>
+                        <span className="credits-display-value">{userData.usage.creditsBalance ?? 0} кр.</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </nav>
 
               <div className="app-sidebar__footer">
                 <Stack gap="lg">
-                  {isAuthenticated && userData && !isAdminRoute && (
-                    <div className="app-sidebar__usage">
-                      <div className="usage-card">
-                        <div className="usage-card__title">
-                          {userData.usage.creditsBalance ?? 0} кредитов
-                          <Tooltip content="Кредиты используются для генерации текстовых работ и презентаций.">
-                            <span className="usage-card__help">?</span>
-                          </Tooltip>
-                        </div>
-                        <p className="usage-card__subtitle">
-                          и безлимит на решение учебных задач
-                        </p>
-                        
-                        <div className="usage-card__actions">
-                          <Button 
-                            variant="secondary" 
-                            size="sm" 
-                            onClick={() => navigate('/billing')}
-                            className="usage-card__btn"
-                          >
-                            Управлять подпиской
-                          </Button>
-                          <Button 
-                            variant="primary" 
-                            size="sm" 
-                            onClick={() => navigate('/billing')}
-                            className="usage-card__btn usage-card__btn--buy"
-                          >
-                            Докупить кредиты
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   <div className="app-sidebar__legal">
                     <Link to="/terms" className="legal-link">Пользовательское соглашение сервиса Зачёт</Link>
                     <Link to="/privacy" className="legal-link">Политика обработки персональных данных</Link>
@@ -323,7 +300,7 @@ const sidebarStyles = `
 .app-sidebar__list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-24); /* Увеличено расстояние (было 16) */
+  gap: var(--spacing-24);
   list-style: none;
   margin-bottom: var(--spacing-32);
 }
@@ -333,10 +310,58 @@ const sidebarStyles = `
   margin-top: var(--spacing-24);
 }
 
+.app-sidebar__credits-top {
+  width: 100%;
+  margin-top: var(--spacing-12);
+}
+
+.credits-display-block {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-16);
+  background-color: var(--color-neutral-10);
+  border: 1px solid var(--color-border-base);
+  border-radius: var(--radius-md);
+  text-align: left;
+}
+
+.credits-display-icon {
+  font-size: 24px;
+  background: white;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  box-shadow: var(--elevation-1);
+}
+
+.credits-display-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.credits-display-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.credits-display-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-neutral-100);
+}
+
 .app-sidebar__item {
   width: 100%;
   padding: var(--spacing-12) var(--spacing-20);
-  font-size: var(--font-size-xl); /* Увеличено на 4px (было base/16px, стало xl/20px) */
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-medium);
   color: var(--color-neutral-80);
   background-color: transparent;
@@ -387,70 +412,6 @@ const sidebarStyles = `
   padding: var(--spacing-24);
   border-top: 1px solid var(--color-border-light);
   background-color: var(--color-neutral-10);
-}
-
-.app-sidebar__usage {
-  padding: 0;
-  margin-bottom: var(--spacing-8);
-}
-
-.usage-card {
-  background-color: white;
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--color-border-light);
-  padding: var(--spacing-20);
-  box-shadow: var(--elevation-1);
-}
-
-.usage-card__title {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-8);
-  font-size: var(--font-size-xl);
-  font-weight: 800;
-  color: var(--color-neutral-100);
-  margin-bottom: var(--spacing-4);
-}
-
-.usage-card__help {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: var(--radius-full);
-  border: 1.5px solid var(--color-text-muted);
-  color: var(--color-text-muted);
-  font-size: 12px;
-  font-weight: bold;
-  cursor: help;
-}
-
-.usage-card__subtitle {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-  margin-bottom: var(--spacing-20);
-}
-
-.usage-card__actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-8);
-}
-
-.usage-card__btn {
-  width: 100% !important;
-  height: 44px !important;
-  font-size: 14px !important;
-  border-radius: 12px !important;
-  justify-content: center !important;
-}
-
-.usage-card__btn--buy {
-  background-color: var(--color-neutral-100) !important;
-  color: white !important;
-  border: none !important;
 }
 
 .app-sidebar__referral {
