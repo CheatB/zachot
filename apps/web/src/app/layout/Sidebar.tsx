@@ -3,7 +3,7 @@ import { motion as motionTokens } from '@/design-tokens'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { fetchMe, type MeResponse } from '@/shared/api/me'
-import { Button, Stack } from '@/ui'
+import { Button, Stack, Tooltip } from '@/ui'
 import clsx from 'clsx'
 
 interface SidebarProps {
@@ -70,8 +70,6 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
       onClose()
     }
   }
-
-  const remainingGens = userData ? userData.usage.generationsLimit - userData.usage.generationsUsed : 0
 
   return (
     <>
@@ -208,17 +206,36 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                 <Stack gap="lg">
                   {isAuthenticated && userData && !isAdminRoute && (
                     <div className="app-sidebar__usage">
-                      <div className="usage-info">
-                        <span className="usage-label">Осталось генераций:</span>
-                        <span className={clsx('usage-value', remainingGens === 0 && 'usage-value--empty')}>
-                          {remainingGens}
-                        </span>
+                      <div className="usage-card">
+                        <div className="usage-card__title">
+                          {userData.usage.creditsBalance ?? 0} кредитов
+                          <Tooltip content="Кредиты используются для генерации текстовых работ и презентаций.">
+                            <span className="usage-card__help">?</span>
+                          </Tooltip>
+                        </div>
+                        <p className="usage-card__subtitle">
+                          и безлимит на решение учебных задач
+                        </p>
+                        
+                        <div className="usage-card__actions">
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={() => navigate('/billing')}
+                            className="usage-card__btn"
+                          >
+                            Управлять подпиской
+                          </Button>
+                          <Button 
+                            variant="primary" 
+                            size="sm" 
+                            onClick={() => navigate('/billing')}
+                            className="usage-card__btn usage-card__btn--buy"
+                          >
+                            Докупить кредиты
+                          </Button>
+                        </div>
                       </div>
-                      {remainingGens === 0 && (
-                        <Button variant="primary" size="sm" onClick={() => navigate('/billing')} style={{ marginTop: 'var(--spacing-8)', width: '100%' }}>
-                          Докупить
-                        </Button>
-                      )}
                     </div>
                   )}
 
@@ -373,32 +390,67 @@ const sidebarStyles = `
 }
 
 .app-sidebar__usage {
-  padding: var(--spacing-12) var(--spacing-16);
+  padding: 0;
+  margin-bottom: var(--spacing-8);
+}
+
+.usage-card {
   background-color: white;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-base);
-  margin-bottom: var(--spacing-48); /* Увеличен еще больше для "воздуха" */
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border-light);
+  padding: var(--spacing-20);
+  box-shadow: var(--elevation-1);
 }
 
-.usage-info {
+.usage-card__title {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: var(--spacing-8);
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  color: var(--color-neutral-100);
+  margin-bottom: var(--spacing-4);
 }
 
-.usage-label {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-}
-
-.usage-value {
-  font-size: var(--font-size-sm);
+.usage-card__help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--color-text-muted);
+  color: var(--color-text-muted);
+  font-size: 12px;
   font-weight: bold;
-  color: var(--color-accent-base);
+  cursor: help;
 }
 
-.usage-value--empty {
-  color: var(--color-danger-base);
+.usage-card__subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  margin-bottom: var(--spacing-20);
+}
+
+.usage-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.usage-card__btn {
+  width: 100% !important;
+  height: 44px !important;
+  font-size: 14px !important;
+  border-radius: 12px !important;
+  justify-content: center !important;
+}
+
+.usage-card__btn--buy {
+  background-color: var(--color-neutral-100) !important;
+  color: white !important;
+  border: none !important;
 }
 
 .app-sidebar__referral {
