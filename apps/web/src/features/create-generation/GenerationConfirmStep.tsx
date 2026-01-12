@@ -16,6 +16,7 @@ interface GenerationConfirmStepProps {
   input: string
   hasFiles: boolean
   useSmartProcessing: boolean
+  useAiImages: boolean
   complexityLevel: ComplexityLevel
   humanityLevel: number
   volume: number
@@ -40,6 +41,7 @@ function GenerationConfirmStep({
   input, 
   hasFiles, 
   useSmartProcessing,
+  useAiImages,
   complexityLevel,
   humanityLevel,
   volume,
@@ -109,7 +111,14 @@ function GenerationConfirmStep({
                   <SummaryItem label="Сложность:" value={complexityLevel === 'student' ? 'Студенческая' : 'Школьная'} step={1.7} />
                   <SummaryItem label="Очеловечивание:" value={`${humanityLevel}%`} step={1.7} />
                   <SummaryItem label="Объём:" value={`${volume} стр.`} step={3} />
-                  <SummaryItem label="Оформление:" value={getFormattingSummary()} step={5.5} />
+                  {type === 'text' && <SummaryItem label="Оформление:" value={getFormattingSummary()} step={5.5} />}
+                  {type === 'presentation' && (
+                    <SummaryItem 
+                      label="Иллюстрации:" 
+                      value={useAiImages ? 'Генерировать (+150 ₽)' : 'Без иллюстраций'} 
+                      step={2} 
+                    />
+                  )}
                 </>
               )}
 

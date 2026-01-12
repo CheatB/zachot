@@ -30,6 +30,7 @@ const initialForm: CreateGenerationForm = {
   structure: [],
   sources: [],
   formatting: DEFAULT_GOST_FORMATTING,
+  useAiImages: true,
   useSmartProcessing: true 
 }
 

@@ -20,6 +20,7 @@ import GenerationStructureStep from './GenerationStructureStep'
 import GenerationSourcesStep from './GenerationSourcesStep'
 import GenerationConfirmStep from './GenerationConfirmStep'
 import GenerationFormattingStep from './GenerationFormattingStep'
+import GenerationVisualsStep from './GenerationVisualsStep'
 import StepLoader, { StepLoaderTask } from './components/StepLoader'
 import type { CreateGenerationForm, GenerationType, WorkType, PresentationStyle, TaskMode, ComplexityLevel } from './types'
 import { workTypeConfigs, DEFAULT_GOST_FORMATTING } from './types'
@@ -27,7 +28,7 @@ import { motion as motionTokens } from '@/design-tokens'
 import { createGeneration, updateGeneration, executeAction, createJob, getGenerationById } from '@/shared/api/generations'
 import { suggestDetails, suggestStructure, suggestSources } from '@/shared/api/admin'
 
-type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 3 | 4 | 5 | 5.5 | 6
+type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 2 | 3 | 4 | 5 | 5.5 | 6
 
 function CreateGenerationPage() {
   const navigate = useNavigate()
@@ -62,6 +63,7 @@ function CreateGenerationPage() {
     structure: [],
     sources: [],
     formatting: DEFAULT_GOST_FORMATTING,
+    useAiImages: true,
     useSmartProcessing: true 
   })
 
@@ -88,6 +90,7 @@ function CreateGenerationPage() {
           structure: gen.settings_payload.structure || [],
           sources: gen.settings_payload.sources || [],
           formatting: gen.settings_payload.formatting || DEFAULT_GOST_FORMATTING,
+          useAiImages: gen.input_payload.use_ai_images ?? true,
           useSmartProcessing: gen.input_payload.use_smart_processing ?? true
         })
         if (gen.input_payload.current_step) {
@@ -126,6 +129,11 @@ function CreateGenerationPage() {
         return {
           title: 'Настройка стиля и качества',
           subtitle: 'Эти параметры влияют на используемый словарь и защиту от обнаружения ИИ.'
+        }
+      case 2:
+        return {
+          title: 'Визуальное оформление',
+          subtitle: 'Добавьте уникальные иллюстрации, созданные искусственным интеллектом.'
         }
       case 3:
         return {
@@ -176,6 +184,7 @@ function CreateGenerationPage() {
         volume: currentForm.volume,
         presentation_style: currentForm.presentationStyle,
         task_mode: currentForm.taskMode,
+        use_ai_images: currentForm.useAiImages,
         has_files: currentForm.taskFiles.length > 0,
         use_smart_processing: currentForm.useSmartProcessing,
         current_step: stepOverride ?? currentStepRef.current
@@ -302,9 +311,11 @@ function CreateGenerationPage() {
     } else if (currentStep === 1.5 && form.workType && form.input.trim()) {
       nextStep = 1.7
     } else if (currentStep === 1.6 && form.presentationStyle && form.input.trim()) {
+      nextStep = 2
+    } else if (currentStep === 1.7) {
       startAiAnalysis()
       return
-    } else if (currentStep === 1.7) {
+    } else if (currentStep === 2) {
       startAiAnalysis()
       return
     } else if (currentStep === 3) {
@@ -346,6 +357,11 @@ function CreateGenerationPage() {
         })
       return
     } else if (currentStep === 4) {
+      if (form.type === 'presentation') {
+        setCurrentStep(6)
+        saveDraft(form, 6)
+        return
+      }
       setTransitionState({
         title: 'Подбираю литературу',
         tasks: [
@@ -401,8 +417,10 @@ function CreateGenerationPage() {
       prevStep = 1.2
     } else if (currentStep === 1.7) {
       prevStep = 1.5
+    } else if (currentStep === 2) {
+      prevStep = 1.6
     } else if (currentStep === 3) {
-      if (form.type === 'presentation') prevStep = 1.6
+      if (form.type === 'presentation') prevStep = 2
       else if (form.type === 'text') prevStep = 1.7
       else prevStep = 1
     } else if (currentStep === 4) {
@@ -413,6 +431,7 @@ function CreateGenerationPage() {
       prevStep = 5
     } else if (currentStep === 6) {
       if (form.type === 'task') prevStep = 1.3
+      else if (form.type === 'presentation') prevStep = 4
       else prevStep = 5.5
     }
 
@@ -499,18 +518,21 @@ function CreateGenerationPage() {
         </motion.div>
 
           <div className="wizard-progress" style={{ marginBottom: 'var(--spacing-40)', width: '100%', justifyContent: 'flex-start' }}>
-            {[1, 1.2, 1.3, 1.5, 1.6, 1.7, 3, 4, 5, 5.5, 6].map((step) => {
+            {[1, 1.2, 1.3, 1.5, 1.6, 1.7, 2, 3, 4, 5, 5.5, 6].map((step) => {
               const shouldShow = (s: number) => {
-                if (s === 1.5 || s === 1.7) return form.type === 'text'
+                if (s === 1.5) return form.type === 'text'
                 if (s === 1.6) return form.type === 'presentation'
+                if (s === 1.7) return form.type === 'text'
+                if (s === 2) return form.type === 'presentation'
                 if (s === 1.2 || s === 1.3) return form.type === 'task'
-                if (s === 3 || s === 4 || s === 5 || s === 5.5) return form.type !== 'task'
+                if (s === 3 || s === 4) return form.type !== 'task'
+                if (s === 5 || s === 5.5) return form.type === 'text'
                 return true
               }
               if (!shouldShow(step)) return null
               
               const isActive = step === currentStep
-              const isCompleted = step < currentStep || (step === 1 && currentStep > 1) || (step === 1.2 && currentStep > 1.2) || (step === 1.3 && currentStep > 1.3) || (step === 1.5 && currentStep > 1.5) || (step === 1.6 && currentStep > 1.6) || (step === 1.7 && currentStep > 1.7) || (step === 2 && currentStep > 2) || (step === 3 && currentStep > 3) || (step === 4 && currentStep > 4) || (step === 5 && currentStep > 5)
+              const isCompleted = step < currentStep || (step === 1 && currentStep > 1) || (step === 1.2 && currentStep > 1.2) || (step === 1.3 && currentStep > 1.3) || (step === 1.5 && currentStep > 1.5) || (step === 1.6 && currentStep > 1.6) || (step === 1.7 && currentStep > 1.7) || (step === 2 && currentStep > 2) || (step === 3 && currentStep > 3) || (step === 4 && currentStep > 4) || (step === 5 && currentStep > 5) || (step === 5.5 && currentStep > 5.5)
 
               return (
                 <div key={step} className="wizard-progress__item">
@@ -548,6 +570,7 @@ function CreateGenerationPage() {
                 {currentStep === 1.5 && form.type && <WorkTypeStep key="step-1-5" type={form.type} selectedWorkType={form.workType} onSelect={handleWorkTypeSelect} input={form.input} onInputChange={handleInputChange} />}
                 {currentStep === 1.6 && form.type && <PresentationStyleStep key="step-1-6" type={form.type} selectedStyle={form.presentationStyle} onSelect={handlePresentationStyleSelect} input={form.input} onInputChange={handleInputChange} />}
                 {currentStep === 1.7 && <GenerationStyleStep key="step-1-7" complexity={form.complexityLevel} humanity={form.humanityLevel} onChange={(updates) => setForm(prev => ({...prev, ...updates}))} />}
+                {currentStep === 2 && <GenerationVisualsStep key="step-2" useAiImages={form.useAiImages} onSelect={(val) => setForm(prev => ({ ...prev, useAiImages: val }))} />}
                 {currentStep === 3 && <GenerationGoalStep key="step-3" form={form} isLoading={isSuggesting} onChange={(updates) => setForm(prev => ({ ...prev, ...updates }))} />}
                 {currentStep === 4 && <GenerationStructureStep key="step-4" structure={form.structure} onChange={(structure) => setForm(prev => ({ ...prev, structure }))} />}
                 {currentStep === 5 && <GenerationSourcesStep key="step-5" sources={form.sources} onChange={(sources) => setForm(prev => ({ ...prev, sources }))} />}
@@ -561,6 +584,7 @@ function CreateGenerationPage() {
                     input={form.input} 
                     hasFiles={form.taskFiles.length > 0}
                     useSmartProcessing={form.useSmartProcessing}
+                    useAiImages={form.useAiImages}
                     complexityLevel={form.complexityLevel}
                     humanityLevel={form.humanityLevel}
                     volume={form.volume}

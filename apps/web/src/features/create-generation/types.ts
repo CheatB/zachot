@@ -185,6 +185,7 @@ export interface CreateGenerationForm {
   structure: StructureItem[]
   sources: SourceItem[]
   formatting: FormattingSettings
+  useAiImages: boolean
   useSmartProcessing: boolean
 }
 
