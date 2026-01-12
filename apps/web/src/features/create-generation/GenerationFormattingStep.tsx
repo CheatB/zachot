@@ -18,7 +18,7 @@ interface GenerationFormattingStepProps {
 function GenerationFormattingStep({ formatting, onChange }: GenerationFormattingStepProps) {
   const [localFormatting, setLocalFormatting] = useState<FormattingSettings>(formatting || DEFAULT_GOST_FORMATTING)
 
-  const handleChange = (key: keyof FormattingSettings, value: any) => {
+  const handleChange = <K extends keyof FormattingSettings>(key: K, value: FormattingSettings[K]) => {
     const updated = { ...localFormatting, [key]: value }
     setLocalFormatting(updated)
     onChange(updated)

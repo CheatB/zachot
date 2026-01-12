@@ -109,7 +109,7 @@ function GenerationStructureStep({ structure, onChange }: GenerationStructureSte
       newItems.splice(prevChapterIndex, 0, ...chapterRange)
     } else {
       // Find the next chapter's end index
-      let nextChapterIndex = chapterIndex + chapterRangeCount
+      const nextChapterIndex = chapterIndex + chapterRangeCount
       if (nextChapterIndex >= items.length) return // Already at bottom
       
       let nextChapterRangeCount = 1
