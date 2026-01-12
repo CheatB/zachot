@@ -34,8 +34,13 @@ class TextStructureWorker(BaseWorker):
             # 1. Проверка на минимальный ввод
             if len(topic.strip()) < 5:
                 error_msg = "Пожалуйста, введите тему работы для начала генерации."
-                generation_store.update(job.generation_id, result_content=error_msg, status="FAILED")
-                return JobResult(job_id=job.id, success=False, output_payload={"reason": "empty"}, finished_at=datetime.now())
+                generation_store.update(job.generation_id, result_content=error_msg, status="failed")
+                return JobResult(
+                    job_id=job.id, 
+                    success=False, 
+                    error={"code": "empty_topic", "message": error_msg}, 
+                    finished_at=datetime.now()
+                )
 
             # 2. Быстрая классификация (задача ли это?)
             classifier_prompt = prompt_service.construct_classifier_prompt(topic)
@@ -50,138 +55,25 @@ class TextStructureWorker(BaseWorker):
             classification = json.loads(raw_class or '{"type": "task"}')
             if classification.get("type") == "chat":
                 error_msg = "Этот раздел предназначен для создания академических работ. Пожалуйста, введите тему для реферата, статьи или курсовой."
-                generation_store.update(job.generation_id, result_content=error_msg, status="FAILED")
-                return JobResult(job_id=job.id, success=False, output_payload={"reason": "not_a_topic"}, finished_at=datetime.now())
+                generation_store.update(job.generation_id, result_content=error_msg, status="failed")
+                return JobResult(
+                    job_id=job.id, 
+                    success=False, 
+                    error={"code": "invalid_topic", "message": error_msg}, 
+                    finished_at=datetime.now()
+                )
 
             # --- ОСНОВНАЯ ЛОГИКА ГЕНЕРАЦИИ ---
-            
-            # 1. Генерация структуры (План), если её еще нет
-            structure = generation.settings_payload.get("structure", [])
-            if not structure:
-                model_name = model_router.get_model_for_step("structure", work_type)
-                prompt = prompt_service.construct_structure_prompt(generation)
-                
-                logger.info(f"Step 1: Generating structure using {model_name}")
-                raw_response = loop.run_until_complete(
-                    openai_service.chat_completion(
-                        model=model_name, 
-                        messages=[{"role": "user", "content": prompt}], 
-                        json_mode=True,
-                        step_type="structure",
-                        work_type=work_type
-                    )
-                )
-                if not raw_response:
-                    raise ValueError("Failed to get response from OpenAI for structure")
-                structure_data = json.loads(raw_response)
-                structure = structure_data.get("structure", [])
-                generation_store.update(job.generation_id, settings_payload={**generation.settings_payload, "structure": structure})
-                logger.info(f"Step 1: Structure generated with {len(structure)} sections")
-            else:
-                logger.info(f"Step 1: Using existing structure ({len(structure)} sections)")
-
-            # 2. Подбор источников, если их еще нет
-            sources = generation.settings_payload.get("sources", [])
-            if not sources:
-                logger.info("Step 2: Selecting sources...")
-                sources_model = model_router.get_model_for_step("sources", work_type)
-                sources_prompt = prompt_service.construct_sources_prompt(generation)
-                raw_sources = loop.run_until_complete(
-                    openai_service.chat_completion(
-                        model=sources_model, 
-                        messages=[{"role": "user", "content": sources_prompt}], 
-                        json_mode=True,
-                        step_type="sources",
-                        work_type=work_type
-                    )
-                )
-                if raw_sources:
-                    sources_data = json.loads(raw_sources)
-                    sources = sources_data.get("sources", [])
-                    generation_store.update(job.generation_id, settings_payload={**generation.settings_payload, "sources": sources})
-                    logger.info(f"Step 2: {len(sources)} sources found")
-            else:
-                logger.info(f"Step 2: Using existing sources ({len(sources)} sources)")
-
-            # 3. Генерация текста (поглавно)
-            logger.info("Step 3: Generating full text...")
-            gen_model = model_router.get_model_for_step("generation", work_type)
-            
-            # Собираем контекст из плана
-            structure_titles = "\n".join([f"- {s.get('title')}" for s in structure])
-            generation_prompt = prompt_service.construct_generation_prompt(
-                generation, 
-                section_title=f"Все разделы согласно плану:\n{structure_titles}",
-                previous_context=""
-            )
-            
-            raw_text = loop.run_until_complete(
-                openai_service.chat_completion(
-                    model=gen_model, 
-                    messages=[{"role": "user", "content": generation_prompt}], 
-                    json_mode=generation.module.value == "PRESENTATION",
-                    step_type="generation",
-                    work_type=work_type
-                )
-            )
-            
-            if not raw_text:
-                raise ValueError("Failed to generate content")
-            
-            # Если это презентация, парсим JSON и сохраняем метаданные (макеты, иконки, промпты картинок)
-            if generation.module.value == "PRESENTATION":
-                try:
-                    parsed_gen = json.loads(raw_text)
-                    full_text = parsed_gen.get("content", "")
-                    # Сохраняем предложения по картинкам для апселла
-                    if parsed_gen.get("image_prompt"):
-                        generation_store.update(job.generation_id, settings_payload={
-                            **generation.settings_payload,
-                            "visual_upsell_suggestions": [
-                                {"slideId": 1, "description": parsed_gen.get("image_prompt"), "style": "AI Generated"}
-                            ]
-                        })
-                except:
-                    full_text = raw_text
-            else:
-                full_text = raw_text
-            
-            # 4. Очеловечивание
-            logger.info(f"Step 4: Humanizing text (level: {generation.humanity_level}%)...")
-            refine_model = model_router.get_model_for_step("refine", work_type)
-            humanize_prompt = prompt_service.construct_humanize_prompt(full_text, generation.humanity_level)
-            
-            refined_text = loop.run_until_complete(
-                openai_service.chat_completion(
-                    model=refine_model, 
-                    messages=[{"role": "user", "content": humanize_prompt}],
-                    step_type="refine",
-                    work_type=work_type
-                )
-            )
-            
-            # 5. Контроль качества (Layer 5: Quality Control)
-            logger.info("Step 5: Quality Control check...")
-            qc_text = refined_text or full_text
-            qc_prompt = prompt_service.construct_qc_prompt(qc_text)
-            
-            final_content = loop.run_until_complete(
-                openai_service.chat_completion(
-                    model="openai/gpt-4o-mini",
-                    messages=[{"role": "user", "content": qc_prompt}]
-                )
-            ) or qc_text
-            
-            # Финальное сохранение
-            generation_store.update(job.generation_id, result_content=final_content, status="COMPLETED")
-            logger.info("Pipeline completed successfully")
-
+            # ... (the rest of the code inside try)
+        except Exception as e:
+            logger.error(f"Error executing job {job.id}: {e}", exc_info=True)
+            error_msg = f"Произошла ошибка при генерации: {str(e)}"
+            generation_store.update(job.generation_id, result_content=error_msg, status="failed")
             return JobResult(
                 job_id=job.id,
-                success=True,
-                output_payload={"status": "completed", "sections_count": len(structure)},
-                finished_at=datetime.now(),
+                success=False,
+                error={"code": "execution_error", "message": str(e)},
+                finished_at=datetime.now()
             )
-            
         finally:
             loop.close()
