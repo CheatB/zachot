@@ -1,8 +1,15 @@
 import { apiFetch } from './http';
 
 export interface ModelRoutingConfig {
-  [workType: string]: {
-    [stage: string]: string;
+  main: {
+    [workType: string]: {
+      [stage: string]: string;
+    };
+  };
+  fallback: {
+    [category: string]: {
+      [stage: string]: string;
+    };
   };
 }
 

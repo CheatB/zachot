@@ -19,6 +19,8 @@ const modelOptions = [
   { value: 'deepseek/deepseek-chat', label: 'DeepSeek V3 (Ultra Economy)' },
   { value: 'perplexity/sonar-pro', label: 'Perplexity Sonar Pro (Search)' },
   { value: 'perplexity/sonar-deep-research', label: 'Perplexity Deep Research' },
+  { value: 'google/gemini-2.0-flash-exp:free', label: 'Gemini 2.0 Flash (Free)' },
+  { value: 'mistralai/mistral-7b-instruct:free', label: 'Mistral 7B (Free)' },
 ];
 
 const ModelRoutingPage: React.FC = () => {
@@ -33,13 +35,16 @@ const ModelRoutingPage: React.FC = () => {
     fetchPrompts().then(setPrompts).catch(console.error);
   }, []);
 
-  const handleModelChange = (workType: string, stage: string, model: string) => {
+  const handleModelChange = (section: 'main' | 'fallback', workType: string, stage: string, model: string) => {
     if (!config) return;
     setConfig(prev => ({
       ...prev!,
-      [workType]: {
-        ...prev![workType],
-        [stage]: model
+      [section]: {
+        ...prev![section],
+        [workType]: {
+          ...prev![section][workType],
+          [stage]: model
+        }
       }
     }));
   };
@@ -71,13 +76,14 @@ const ModelRoutingPage: React.FC = () => {
 
   if (!config || !prompts) return <div>Загрузка настроек...</div>;
 
-  const ModelSelect = ({ workType, stage }: { workType: string, stage: string }) => (
+  const ModelSelect = ({ section, workType, stage }: { section: 'main' | 'fallback', workType: string, stage: string }) => (
     <div className="admin-select-wrapper">
       <select 
         className="admin-select-minimal"
-        value={config[workType]?.[stage] || ''}
-        onChange={(e) => handleModelChange(workType, stage, e.target.value)}
+        value={config[section]?.[workType]?.[stage] || ''}
+        onChange={(e) => handleModelChange(section, workType, stage, e.target.value)}
       >
+        <option value="">(Автовыбор)</option>
         {modelOptions.map(opt => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
@@ -113,77 +119,124 @@ const ModelRoutingPage: React.FC = () => {
       {activeTab === 'models' ? (
         <>
           <section className="routing-section">
-            <h2 className="routing-section__title">Текстовые работы</h2>
-            <div className="admin-table-container">
-              <table className="admin-table-v2">
-                <thead>
-                  <tr>
-                    <th style={{ width: '20%' }}>Вид работы</th>
-                    <th>Цель и Идея</th>
-                    <th>План работы</th>
-                    <th>Источники</th>
-                    <th>Написание текста</th>
-                    <th className="refine-col-header">Очеловечивание</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {['referat', 'kursach', 'essay', 'doklad', 'article', 'composition', 'other'].map(type => (
-                    <tr key={type}>
-                      <td>{type.charAt(0).toUpperCase() + type.slice(1)}</td>
-                      <td><ModelSelect workType={type} stage="suggest_details" /></td>
-                      <td><ModelSelect workType={type} stage="structure" /></td>
-                      <td><ModelSelect workType={type} stage="sources" /></td>
-                      <td><ModelSelect workType={type} stage="generation" /></td>
-                      <td className="refine-cell-v2"><ModelSelect workType={type} stage="refine" /></td>
+            <h2 className="routing-section__title">Основные модели (Main)</h2>
+            <p className="routing-section__desc">Используются при штатной работе системы.</p>
+            
+            <div className="admin-subsection">
+              <h3 className="admin-subsection__title">Текстовые работы</h3>
+              <div className="admin-table-container">
+                <table className="admin-table-v2">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '20%' }}>Вид работы</th>
+                      <th>Цель и Идея</th>
+                      <th>План работы</th>
+                      <th>Источники</th>
+                      <th>Написание текста</th>
+                      <th className="refine-col-header">Очеловечивание</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {['referat', 'kursach', 'essay', 'doklad', 'article', 'composition', 'other'].map(type => (
+                      <tr key={type}>
+                        <td>{type.charAt(0).toUpperCase() + type.slice(1)}</td>
+                        <td><ModelSelect section="main" workType={type} stage="suggest_details" /></td>
+                        <td><ModelSelect section="main" workType={type} stage="structure" /></td>
+                        <td><ModelSelect section="main" workType={type} stage="sources" /></td>
+                        <td><ModelSelect section="main" workType={type} stage="generation" /></td>
+                        <td className="refine-cell-v2"><ModelSelect section="main" workType={type} stage="refine" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="admin-subsection">
+              <h3 className="admin-subsection__title">Презентации</h3>
+              <div className="admin-table-container">
+                <table className="admin-table-v2">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '20%' }}>Вид работы</th>
+                      <th>Цель и Идея</th>
+                      <th>План работы</th>
+                      <th>Источники</th>
+                      <th>Содержание слайдов</th>
+                      <th>Визуальный стиль</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Презентация</td>
+                      <td><ModelSelect section="main" workType="presentation" stage="suggest_details" /></td>
+                      <td><ModelSelect section="main" workType="presentation" stage="structure" /></td>
+                      <td><ModelSelect section="main" workType="presentation" stage="sources" /></td>
+                      <td><ModelSelect section="main" workType="presentation" stage="generation" /></td>
+                      <td><ModelSelect section="main" workType="presentation" stage="refine" /></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="admin-subsection">
+              <h3 className="admin-subsection__title">Решение задач</h3>
+              <div className="admin-table-container">
+                <table className="admin-table-v2">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '20%' }}>Вид работы</th>
+                      <th>Решение задачи</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Задача</td>
+                      <td><ModelSelect section="main" workType="task" stage="task_solve" /></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </section>
 
-          <section className="routing-section">
-            <h2 className="routing-section__title">Презентации</h2>
+          <section className="routing-section routing-section--fallback">
+            <h2 className="routing-section__title">Резервные модели (Fallback)</h2>
+            <p className="routing-section__desc">Используются автоматически, если основные модели недоступны или возвращают ошибку.</p>
+            
             <div className="admin-table-container">
               <table className="admin-table-v2">
                 <thead>
                   <tr>
-                    <th style={{ width: '20%' }}>Вид работы</th>
-                    <th>Цель и Идея</th>
-                    <th>План работы</th>
+                    <th style={{ width: '20%' }}>Категория</th>
+                    <th>План</th>
+                    <th>Цель/Идея</th>
                     <th>Источники</th>
-                    <th>Содержание слайдов</th>
-                    <th>Визуальный стиль</th>
+                    <th>Текст/Слайды</th>
+                    <th>Очеловечивание</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Презентация</td>
-                    <td><ModelSelect workType="presentation" stage="suggest_details" /></td>
-                    <td><ModelSelect workType="presentation" stage="structure" /></td>
-                    <td><ModelSelect workType="presentation" stage="sources" /></td>
-                    <td><ModelSelect workType="presentation" stage="generation" /></td>
-                    <td><ModelSelect workType="presentation" stage="refine" /></td>
+                    <td>Текстовые работы</td>
+                    <td><ModelSelect section="fallback" workType="text" stage="structure" /></td>
+                    <td><ModelSelect section="fallback" workType="text" stage="suggest_details" /></td>
+                    <td><ModelSelect section="fallback" workType="text" stage="sources" /></td>
+                    <td><ModelSelect section="fallback" workType="text" stage="generation" /></td>
+                    <td><ModelSelect section="fallback" workType="text" stage="refine" /></td>
                   </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section className="routing-section">
-            <h2 className="routing-section__title">Решение задач</h2>
-            <div className="admin-table-container">
-              <table className="admin-table-v2">
-                <thead>
                   <tr>
-                    <th style={{ width: '20%' }}>Вид работы</th>
-                    <th>Решение задачи</th>
+                    <td>Презентации</td>
+                    <td><ModelSelect section="fallback" workType="presentation" stage="structure" /></td>
+                    <td><ModelSelect section="fallback" workType="presentation" stage="suggest_details" /></td>
+                    <td><ModelSelect section="fallback" workType="presentation" stage="sources" /></td>
+                    <td><ModelSelect section="fallback" workType="presentation" stage="generation" /></td>
+                    <td><ModelSelect section="fallback" workType="presentation" stage="refine" /></td>
                   </tr>
-                </thead>
-                <tbody>
                   <tr>
-                    <td>Задача</td>
-                    <td><ModelSelect workType="task" stage="task_solve" /></td>
+                    <td>Задачи</td>
+                    <td colSpan={5}><ModelSelect section="fallback" workType="task" stage="task_solve" /></td>
                   </tr>
                 </tbody>
               </table>
@@ -385,13 +438,35 @@ const ModelRoutingPage: React.FC = () => {
         .routing-section {
           margin-bottom: var(--spacing-48);
         }
+        .routing-section--fallback {
+          padding-top: var(--spacing-48);
+          border-top: 2px dashed var(--color-border-light);
+        }
         .routing-section__title {
           font-size: var(--font-size-xl);
           color: var(--color-neutral-100);
-          margin-bottom: var(--spacing-24);
+          margin-bottom: var(--spacing-8);
           padding-left: var(--spacing-8);
           border-left: 4px solid var(--color-accent-base);
         }
+        .routing-section__desc {
+          font-size: var(--font-size-sm);
+          color: var(--color-text-secondary);
+          margin-bottom: var(--spacing-24);
+          padding-left: var(--spacing-24);
+        }
+
+        .admin-subsection {
+          margin-bottom: var(--spacing-32);
+          padding-left: var(--spacing-24);
+        }
+        .admin-subsection__title {
+          font-size: 16px;
+          font-weight: 700;
+          margin-bottom: var(--spacing-16);
+          color: var(--color-neutral-90);
+        }
+
         .admin-table-container {
           background: transparent;
           width: 100%;
