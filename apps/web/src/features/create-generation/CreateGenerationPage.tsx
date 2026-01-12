@@ -300,6 +300,11 @@ function CreateGenerationPage() {
         setTransitionState(null)
         setCurrentStep(3)
       })
+      .catch(err => {
+        console.error('Failed to suggest details:', err)
+        setTransitionState(null)
+        setCurrentStep(3) // Переходим на следующий шаг даже при ошибке, пользователь заполнит сам
+      })
       .finally(() => setIsSuggesting(false))
   }
 

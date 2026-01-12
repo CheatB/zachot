@@ -128,12 +128,13 @@ const ModelRoutingPage: React.FC = () => {
                 <table className="admin-table-v2">
                   <thead>
                     <tr>
-                      <th style={{ width: '20%' }}>Вид работы</th>
+                      <th style={{ width: '15%' }}>Вид работы</th>
                       <th>Цель и Идея</th>
                       <th>План работы</th>
                       <th>Источники</th>
-                      <th>Написание текста</th>
-                      <th className="refine-col-header">Очеловечивание</th>
+                      <th>Текст</th>
+                      <th>Очеловечивание</th>
+                      <th>Оформление</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -144,7 +145,8 @@ const ModelRoutingPage: React.FC = () => {
                         <td><ModelSelect section="main" workType={type} stage="structure" /></td>
                         <td><ModelSelect section="main" workType={type} stage="sources" /></td>
                         <td><ModelSelect section="main" workType={type} stage="generation" /></td>
-                        <td className="refine-cell-v2"><ModelSelect section="main" workType={type} stage="refine" /></td>
+                        <td><ModelSelect section="main" workType={type} stage="refine" /></td>
+                        <td><ModelSelect section="main" workType={type} stage="formatting" /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -158,12 +160,13 @@ const ModelRoutingPage: React.FC = () => {
                 <table className="admin-table-v2">
                   <thead>
                     <tr>
-                      <th style={{ width: '20%' }}>Вид работы</th>
+                      <th style={{ width: '15%' }}>Вид работы</th>
                       <th>Цель и Идея</th>
                       <th>План работы</th>
                       <th>Источники</th>
-                      <th>Содержание слайдов</th>
+                      <th>Слайды</th>
                       <th>Визуальный стиль</th>
+                      <th>Оформление</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -174,6 +177,7 @@ const ModelRoutingPage: React.FC = () => {
                       <td><ModelSelect section="main" workType="presentation" stage="sources" /></td>
                       <td><ModelSelect section="main" workType="presentation" stage="generation" /></td>
                       <td><ModelSelect section="main" workType="presentation" stage="refine" /></td>
+                      <td><ModelSelect section="main" workType="presentation" stage="formatting" /></td>
                     </tr>
                   </tbody>
                 </table>
@@ -186,7 +190,7 @@ const ModelRoutingPage: React.FC = () => {
                 <table className="admin-table-v2">
                   <thead>
                     <tr>
-                      <th style={{ width: '20%' }}>Вид работы</th>
+                      <th style={{ width: '15%' }}>Вид работы</th>
                       <th>Решение задачи</th>
                     </tr>
                   </thead>
@@ -203,18 +207,19 @@ const ModelRoutingPage: React.FC = () => {
 
           <section className="routing-section routing-section--fallback">
             <h2 className="routing-section__title">Резервные модели (Fallback)</h2>
-            <p className="routing-section__desc">Используются автоматически, если основные модели недоступны или возвращают ошибку.</p>
+            <p className="routing-section__desc">Используются автоматически, если основные модели недоступны.</p>
             
             <div className="admin-table-container">
               <table className="admin-table-v2">
                 <thead>
                   <tr>
-                    <th style={{ width: '20%' }}>Категория</th>
+                    <th style={{ width: '15%' }}>Категория</th>
                     <th>План</th>
                     <th>Цель/Идея</th>
                     <th>Источники</th>
                     <th>Текст/Слайды</th>
                     <th>Очеловечивание</th>
+                    <th>Оформление</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -225,6 +230,7 @@ const ModelRoutingPage: React.FC = () => {
                     <td><ModelSelect section="fallback" workType="text" stage="sources" /></td>
                     <td><ModelSelect section="fallback" workType="text" stage="generation" /></td>
                     <td><ModelSelect section="fallback" workType="text" stage="refine" /></td>
+                    <td><ModelSelect section="fallback" workType="text" stage="formatting" /></td>
                   </tr>
                   <tr>
                     <td>Презентации</td>
@@ -233,10 +239,11 @@ const ModelRoutingPage: React.FC = () => {
                     <td><ModelSelect section="fallback" workType="presentation" stage="sources" /></td>
                     <td><ModelSelect section="fallback" workType="presentation" stage="generation" /></td>
                     <td><ModelSelect section="fallback" workType="presentation" stage="refine" /></td>
+                    <td><ModelSelect section="fallback" workType="presentation" stage="formatting" /></td>
                   </tr>
                   <tr>
                     <td>Задачи</td>
-                    <td colSpan={5}><ModelSelect section="fallback" workType="task" stage="task_solve" /></td>
+                    <td colSpan={6}><ModelSelect section="fallback" workType="task" stage="task_solve" /></td>
                   </tr>
                 </tbody>
               </table>
@@ -252,7 +259,7 @@ const ModelRoutingPage: React.FC = () => {
               <Stack gap="xl">
                 <div className="prompt-editor-block">
                   <h3 className="prompt-editor-block__title">1.1 Классификатор (Task vs Chat)</h3>
-                  <p className="prompt-editor-block__desc">Определяет, является ли ввод условием задачи или просто общением. Использует: {`{input_text}`}.</p>
+                  <p className="prompt-editor-block__desc">Определяет категорию запроса. Использует: {`{input_text}`}.</p>
                   <Textarea 
                     value={prompts.classifier} 
                     onChange={(e) => handlePromptChange('classifier', e.target.value)}
@@ -262,7 +269,7 @@ const ModelRoutingPage: React.FC = () => {
 
                 <div className="prompt-editor-block">
                   <h3 className="prompt-editor-block__title">1.2 Формирование цели и идеи</h3>
-                  <p className="prompt-editor-block__desc">Предлагает научную цель и основной тезис на основе темы. Использует: {`{topic}`}.</p>
+                  <p className="prompt-editor-block__desc">Предлагает научную цель и тезис. Использует: {`{topic}`}.</p>
                   <Textarea 
                     value={prompts.suggest_details} 
                     onChange={(e) => handlePromptChange('suggest_details', e.target.value)}
@@ -288,7 +295,7 @@ const ModelRoutingPage: React.FC = () => {
 
                 <div className="prompt-editor-block">
                   <h3 className="prompt-editor-block__title">2.2 Подбор источников литературы</h3>
-                  <p className="prompt-editor-block__desc">Ищет реальные научные источники по ГОСТу. Использует: {`{work_type}, {topic}`}.</p>
+                  <p className="prompt-editor-block__desc">Ищет реальные научные источники. Использует: {`{work_type}, {topic}`}.</p>
                   <Textarea 
                     value={prompts.sources} 
                     onChange={(e) => handlePromptChange('sources', e.target.value)}
@@ -314,7 +321,7 @@ const ModelRoutingPage: React.FC = () => {
 
                 <div className="prompt-editor-block">
                   <h3 className="prompt-editor-block__title">3.2 Очеловечивание (Humanize)</h3>
-                  <p className="prompt-editor-block__desc">Переписывает текст для обхода детекторов ИИ. Использует: {`{text}, {instructions}`}.</p>
+                  <p className="prompt-editor-block__desc">Стирает следы ИИ. Использует: {`{text}, {instructions}`}.</p>
                   <Textarea 
                     value={prompts.humanize} 
                     onChange={(e) => handlePromptChange('humanize', e.target.value)}
@@ -323,8 +330,18 @@ const ModelRoutingPage: React.FC = () => {
                 </div>
 
                 <div className="prompt-editor-block">
-                  <h3 className="prompt-editor-block__title">3.3 Контроль качества (QC)</h3>
-                  <p className="prompt-editor-block__desc">Финальная проверка стиля, логики и оформления. Использует: {`{text}`}.</p>
+                  <h3 className="prompt-editor-block__title">3.3 Оформление (Formatting)</h3>
+                  <p className="prompt-editor-block__desc">Приводит текст к стандарту ГОСТ. Использует: {`{fontFamily}, {fontSize}, {lineSpacing}, {margins}, {text}`}.</p>
+                  <Textarea 
+                    value={prompts.formatting} 
+                    onChange={(e) => handlePromptChange('formatting', e.target.value)}
+                    rows={8}
+                  />
+                </div>
+
+                <div className="prompt-editor-block">
+                  <h3 className="prompt-editor-block__title">3.4 Контроль качества (QC)</h3>
+                  <p className="prompt-editor-block__desc">Финальная проверка логики и стиля. Использует: {`{text}`}.</p>
                   <Textarea 
                     value={prompts.qc} 
                     onChange={(e) => handlePromptChange('qc', e.target.value)}
@@ -340,7 +357,7 @@ const ModelRoutingPage: React.FC = () => {
               <Stack gap="xl">
                 <div className="prompt-editor-block">
                   <h3 className="prompt-editor-block__title">4.1 Данные для титульного листа</h3>
-                  <p className="prompt-editor-block__desc">Дополняет информацию о ВУЗе и городе. Использует: {`{university_short}`}.</p>
+                  <p className="prompt-editor-block__desc">Дополняет информацию о ВУЗе. Использует: {`{university_short}`}.</p>
                   <Textarea 
                     value={prompts.suggest_title_info} 
                     onChange={(e) => handlePromptChange('suggest_title_info', e.target.value)}
