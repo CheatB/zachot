@@ -6,7 +6,7 @@
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { Card, Badge, Button, Stack } from '@/ui'
-import type { GenerationType, GenerationTypeInfo, WorkType, TaskMode } from './types'
+import type { GenerationType, GenerationTypeInfo, WorkType, TaskMode, FormattingSettings } from './types'
 import { workTypeConfigs } from './types'
 
 interface GenerationConfirmStepProps {
@@ -16,6 +16,7 @@ interface GenerationConfirmStepProps {
   input: string
   hasFiles: boolean
   useSmartProcessing: boolean
+  formatting: FormattingSettings
   onToggleSmartProcessing: (val: boolean) => void
   onConfirm: () => void
   onBack: () => void
@@ -35,6 +36,7 @@ function GenerationConfirmStep({
   input, 
   hasFiles, 
   useSmartProcessing,
+  formatting,
   onToggleSmartProcessing,
   onConfirm, 
   onBack, 
@@ -43,6 +45,11 @@ function GenerationConfirmStep({
   const typeInfo = typeInfoMap[type]
   const workTypeLabel = workType ? workTypeConfigs[workType].label : null
   const taskModeLabel = taskMode === 'quick' ? 'Быстрое решение' : 'Пошаговый разбор'
+
+  const getFormattingSummary = () => {
+    if (type === 'task') return null
+    return `${formatting.fontFamily}, ${formatting.fontSize}pt, ${formatting.lineSpacing === 1.5 ? '1.5 инт.' : `инт. ${formatting.lineSpacing}`}`
+  }
 
   return (
     <motion.div
@@ -90,6 +97,13 @@ function GenerationConfirmStep({
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>Прикреплено:</span>
                     <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-success-base)' }}>✓ Файл(ы) загружен(ы)</span>
+                  </div>
+                )}
+
+                {type !== 'task' && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>Оформление:</span>
+                    <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-primary)' }}>{getFormattingSummary()}</span>
                   </div>
                 )}
               </Stack>

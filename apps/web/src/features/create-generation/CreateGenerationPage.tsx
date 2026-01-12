@@ -19,14 +19,15 @@ import GenerationGoalStep from './GenerationGoalStep'
 import GenerationStructureStep from './GenerationStructureStep'
 import GenerationSourcesStep from './GenerationSourcesStep'
 import GenerationConfirmStep from './GenerationConfirmStep'
+import GenerationFormattingStep from './GenerationFormattingStep'
 import StepLoader, { StepLoaderTask } from './components/StepLoader'
 import type { CreateGenerationForm, GenerationType, WorkType, PresentationStyle, TaskMode, ComplexityLevel } from './types'
-import { workTypeConfigs } from './types'
+import { workTypeConfigs, DEFAULT_GOST_FORMATTING } from './types'
 import { motion as motionTokens } from '@/design-tokens'
 import { createGeneration, updateGeneration, executeAction, createJob, getGenerationById } from '@/shared/api/generations'
 import { suggestDetails, suggestStructure, suggestSources } from '@/shared/api/admin'
 
-type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 3 | 4 | 5 | 6
+type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 3 | 4 | 5 | 5.5 | 6
 
 function CreateGenerationPage() {
   const navigate = useNavigate()
@@ -60,6 +61,7 @@ function CreateGenerationPage() {
     volume: 10,
     structure: [],
     sources: [],
+    formatting: DEFAULT_GOST_FORMATTING,
     useSmartProcessing: true 
   })
 
@@ -85,6 +87,7 @@ function CreateGenerationPage() {
           volume: gen.input_payload.volume || 10,
           structure: gen.settings_payload.structure || [],
           sources: gen.settings_payload.sources || [],
+          formatting: gen.settings_payload.formatting || DEFAULT_GOST_FORMATTING,
           useSmartProcessing: gen.input_payload.use_smart_processing ?? true
         })
         if (gen.input_payload.current_step) {
@@ -139,6 +142,11 @@ function CreateGenerationPage() {
           title: 'Источники литературы',
           subtitle: 'Мы подобрали актуальные источники. Вы можете добавить свои или отредактировать предложенные.'
         }
+      case 5.5:
+        return {
+          title: 'Настройка оформления',
+          subtitle: 'Выберите параметры оформления документа. По умолчанию установлены требования ГОСТ 2026.'
+        }
       case 6:
         return {
           title: 'Проверьте детали',
@@ -175,6 +183,7 @@ function CreateGenerationPage() {
       settings_payload: {
         structure: currentForm.structure,
         sources: currentForm.sources,
+        formatting: currentForm.formatting,
       }
     }
 
@@ -372,6 +381,8 @@ function CreateGenerationPage() {
         })
       return
     } else if (currentStep === 5) {
+      nextStep = 5.5
+    } else if (currentStep === 5.5) {
       nextStep = 6
     }
 
@@ -398,9 +409,11 @@ function CreateGenerationPage() {
       prevStep = 3
     } else if (currentStep === 5) {
       prevStep = 4
+    } else if (currentStep === 5.5) {
+      prevStep = 5
     } else if (currentStep === 6) {
       if (form.type === 'task') prevStep = 1.3
-      else prevStep = 5
+      else prevStep = 5.5
     }
 
     if (prevStep) {
@@ -486,12 +499,12 @@ function CreateGenerationPage() {
         </motion.div>
 
           <div className="wizard-progress" style={{ marginBottom: 'var(--spacing-40)', width: '100%', justifyContent: 'flex-start' }}>
-            {[1, 1.2, 1.3, 1.5, 1.6, 1.7, 3, 4, 5, 6].map((step) => {
+            {[1, 1.2, 1.3, 1.5, 1.6, 1.7, 3, 4, 5, 5.5, 6].map((step) => {
               const shouldShow = (s: number) => {
                 if (s === 1.5 || s === 1.7) return form.type === 'text'
                 if (s === 1.6) return form.type === 'presentation'
                 if (s === 1.2 || s === 1.3) return form.type === 'task'
-                if (s === 3 || s === 4 || s === 5) return form.type !== 'task'
+                if (s === 3 || s === 4 || s === 5 || s === 5.5) return form.type !== 'task'
                 return true
               }
               if (!shouldShow(step)) return null
@@ -538,6 +551,7 @@ function CreateGenerationPage() {
                 {currentStep === 3 && <GenerationGoalStep key="step-3" form={form} isLoading={isSuggesting} onChange={(updates) => setForm(prev => ({ ...prev, ...updates }))} />}
                 {currentStep === 4 && <GenerationStructureStep key="step-4" structure={form.structure} onChange={(structure) => setForm(prev => ({ ...prev, structure }))} />}
                 {currentStep === 5 && <GenerationSourcesStep key="step-5" sources={form.sources} onChange={(sources) => setForm(prev => ({ ...prev, sources }))} />}
+                {currentStep === 5.5 && <GenerationFormattingStep key="step-5-5" formatting={form.formatting} onChange={(formatting) => setForm(prev => ({ ...prev, formatting }))} />}
                 {currentStep === 6 && form.type && (
                   <GenerationConfirmStep 
                     key="step-6" 
@@ -547,6 +561,7 @@ function CreateGenerationPage() {
                     input={form.input} 
                     hasFiles={form.taskFiles.length > 0}
                     useSmartProcessing={form.useSmartProcessing}
+                    formatting={form.formatting}
                     onToggleSmartProcessing={(val) => setForm(prev => ({ ...prev, useSmartProcessing: val }))}
                     onConfirm={handleConfirm} 
                     onBack={handleBack} 

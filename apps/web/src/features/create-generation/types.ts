@@ -134,6 +134,42 @@ export interface SourceItem {
 
 export type ComplexityLevel = 'school' | 'student' | 'research'
 
+export interface FormattingSettings {
+  fontFamily: 'Times New Roman' | 'Arial' | 'Calibri'
+  fontSize: number
+  lineSpacing: number
+  margins: {
+    top: number
+    bottom: number
+    left: number
+    right: number
+  }
+  alignment: 'justify' | 'left'
+  paragraphIndent: number
+  bibliographyStyle: 'gost' | 'apa' | 'mla'
+  pageNumbering: 'bottom-center' | 'bottom-right' | 'top-right' | 'none'
+  hasTitlePage: boolean
+  hasTableOfContents: boolean
+}
+
+export const DEFAULT_GOST_FORMATTING: FormattingSettings = {
+  fontFamily: 'Times New Roman',
+  fontSize: 14,
+  lineSpacing: 1.5,
+  margins: {
+    top: 20,
+    bottom: 20,
+    left: 30,
+    right: 10,
+  },
+  alignment: 'justify',
+  paragraphIndent: 1.25,
+  bibliographyStyle: 'gost',
+  pageNumbering: 'bottom-center',
+  hasTitlePage: true,
+  hasTableOfContents: true,
+}
+
 export interface CreateGenerationForm {
   type: GenerationType | null
   workType: WorkType | null
@@ -148,6 +184,7 @@ export interface CreateGenerationForm {
   volume: number
   structure: StructureItem[]
   sources: SourceItem[]
+  formatting: FormattingSettings
   useSmartProcessing: boolean
 }
 
