@@ -58,7 +58,8 @@ function CheckoutPage() {
   useEffect(() => {
     if (!isAuthenticated) {
       log('User not authenticated, redirecting to login...')
-      navigate('/login')
+      const currentPath = encodeURIComponent(window.location.pathname + window.location.search);
+      navigate(`/login?next=${currentPath}`)
     }
   }, [isAuthenticated, navigate, log])
 

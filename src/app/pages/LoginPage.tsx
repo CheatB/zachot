@@ -8,7 +8,7 @@ import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { Container, Stack, Button, Card, Input } from '@/ui'
 import { useEffect, useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthContext } from '../auth/authContext'
 import { getTelegramLink, checkTelegramAuth, emailLogin } from '@/shared/api/auth'
 
@@ -17,6 +17,8 @@ type AuthView = 'main' | 'email'
 function LoginPage() {
   const { isAuthenticated, loginFromLanding } = useAuthContext()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const next = searchParams.get('next') || '/'
   const [loading, setLoading] = useState(false)
   const [authLink, setAuthLink] = useState<string | null>(null)
   const pollingInterval = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -31,12 +33,12 @@ function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/')
+      navigate(next)
     }
     return () => {
       if (pollingInterval.current) clearInterval(pollingInterval.current)
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, navigate, next])
 
   const startPolling = (token: string) => {
     pollingInterval.current = setInterval(async () => {
@@ -45,7 +47,7 @@ function LoginPage() {
         if (result.status === 'success' && result.user_id) {
           if (pollingInterval.current) clearInterval(pollingInterval.current)
           loginFromLanding(result.user_id, result.user_id)
-          navigate('/')
+          navigate(next)
         }
       } catch (error) {
         console.error('Polling error:', error)
@@ -78,7 +80,7 @@ function LoginPage() {
     try {
       const result = await emailLogin(email, password)
       loginFromLanding(result.token, result.user_id)
-      navigate('/')
+      navigate(next)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Ошибка авторизации')
     } finally {

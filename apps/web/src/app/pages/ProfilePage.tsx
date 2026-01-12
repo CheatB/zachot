@@ -193,7 +193,7 @@ function ProfilePage() {
               <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--color-accent-base)' }}>
                 {creditsBalance}
               </span>
-            </div>
+              </div>
             <div className="profile-field">
               <span className="profile-field__label">Использовано за период</span>
               <span className="profile-field__value">{creditsUsed}</span>

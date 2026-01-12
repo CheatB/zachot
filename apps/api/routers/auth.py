@@ -79,7 +79,13 @@ async def check_telegram_auth(token: str):
         if auth_token.is_used == 1:
             # Получаем пользователя для возврата его данных (опционально)
             user = session.query(UserDB).filter(UserDB.id == auth_token.user_id).first()
-            return {"status": "success", "user_id": str(user.id)}
+            if not user:
+                return {"status": "pending"}
+            return {
+                "status": "success", 
+                "user_id": str(user.id),
+                "telegram_username": user.telegram_username
+            }
         
         return {"status": "pending"}
 
