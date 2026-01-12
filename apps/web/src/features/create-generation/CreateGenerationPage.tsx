@@ -561,10 +561,14 @@ function CreateGenerationPage() {
                     input={form.input} 
                     hasFiles={form.taskFiles.length > 0}
                     useSmartProcessing={form.useSmartProcessing}
+                    complexityLevel={form.complexityLevel}
+                    humanityLevel={form.humanityLevel}
+                    volume={form.volume}
                     formatting={form.formatting}
                     onToggleSmartProcessing={(val) => setForm(prev => ({ ...prev, useSmartProcessing: val }))}
                     onConfirm={handleConfirm} 
                     onBack={handleBack} 
+                    onJumpToStep={(s) => setCurrentStep(s as WizardStep)}
                     isSubmitting={isSubmitting} 
                   />
                 )}
