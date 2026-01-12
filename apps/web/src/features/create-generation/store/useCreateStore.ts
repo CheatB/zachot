@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CreateGenerationForm } from '../types'
+import { DEFAULT_GOST_FORMATTING } from '../types'
 
 interface CreateState {
   currentStep: number
@@ -28,6 +29,7 @@ const initialForm: CreateGenerationForm = {
   volume: 10,
   structure: [],
   sources: [],
+  formatting: DEFAULT_GOST_FORMATTING,
   useSmartProcessing: true 
 }
 
