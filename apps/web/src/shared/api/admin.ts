@@ -97,21 +97,7 @@ export async function updateUserRole(userId: string, role: 'admin' | 'user'): Pr
  * Получить аналитику (админ)
  */
 export async function fetchAdminAnalytics(): Promise<AdminAnalytics> {
-  return {
-    revenueRub: 149700,
-    apiCostsUsd: 124.50,
-    marginPercent: 82,
-    totalJobs: 1240,
-    dailyStats: [
-      { date: '2026-01-01', tokens: 120000, jobs: 45 },
-      { date: '2026-01-02', tokens: 150000, jobs: 52 },
-      { date: '2026-01-03', tokens: 110000, jobs: 38 },
-      { date: '2026-01-04', tokens: 180000, jobs: 61 },
-      { date: '2026-01-05', tokens: 210000, jobs: 75 },
-      { date: '2026-01-06', tokens: 195000, jobs: 68 },
-      { date: '2026-01-07', tokens: 230000, jobs: 82 },
-    ]
-  };
+  return apiFetch<AdminAnalytics>('/admin/analytics');
 }
 
 /**

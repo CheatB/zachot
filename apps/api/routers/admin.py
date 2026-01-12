@@ -1,17 +1,18 @@
 from uuid import UUID
 from fastapi import APIRouter, HTTPException, Depends, Header
-from ..schemas import UsersAdminResponse, UserRoleUpdateRequest, UserAdminResponse
-from ..database import SessionLocal, User as UserDB
+from ..schemas import UsersAdminResponse, UserRoleUpdateRequest, UserAdminResponse, AdminAnalyticsResponse, DailyStat
+from ..database import SessionLocal, User as UserDB, Payment as PaymentDB, Generation as GenerationDB
 from ..services.openai_service import openai_service
 from ..services.model_router import model_router
 from ..services.prompt_service import prompt_service
 from packages.ai_services.src.prompt_manager import prompt_manager
 from .generations import get_current_user
 import json
+from sqlalchemy import func, cast, Date
 
 from packages.core_domain import Generation
 from packages.core_domain.enums import GenerationStatus, GenerationModule
-from datetime import datetime
+from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -43,6 +44,56 @@ async def update_prompts(prompts: dict, admin: UserDB = Depends(get_current_user
     if prompt_manager.save_config(prompts):
         return {"status": "success"}
     raise HTTPException(status_code=500, detail="Failed to save prompts")
+
+@router.get("/analytics", response_model=AdminAnalyticsResponse)
+async def get_analytics(admin: UserDB = Depends(get_current_user)):
+    if admin.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    with SessionLocal() as session:
+        # 1. Выручка (подтвержденные платежи)
+        revenue_cents = session.query(func.sum(PaymentDB.amount)).filter(PaymentDB.status == "CONFIRMED").scalar() or 0
+        revenue_rub = revenue_cents // 100
+        
+        # 2. Общее кол-во работ
+        total_jobs = session.query(func.count(GenerationDB.id)).filter(GenerationDB.status != "DRAFT").scalar() or 0
+        
+        # 3. Затраты API (оценочно: $0.01 за 1000 токенов)
+        total_tokens = session.query(func.sum(UserDB.tokens_used)).scalar() or 0
+        api_costs_usd = (total_tokens / 1000) * 0.01
+        
+        # 4. Маржа
+        # Курс доллара ~100 руб для простоты
+        costs_rub = api_costs_usd * 100
+        margin_percent = int(((revenue_rub - costs_rub) / revenue_rub * 100)) if revenue_rub > 0 else 0
+        
+        # 5. Статистика по дням (последние 7 дней)
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        daily_query = session.query(
+            cast(GenerationDB.created_at, Date).label('date'),
+            func.count(GenerationDB.id).label('jobs')
+        ).filter(
+            GenerationDB.created_at >= seven_days_ago,
+            GenerationDB.status != "DRAFT"
+        ).group_by(
+            cast(GenerationDB.created_at, Date)
+        ).all()
+        
+        daily_stats = [
+            DailyStat(
+                date=str(d.date),
+                tokens=int(total_tokens / 30), # Оценочно распределяем
+                jobs=d.jobs
+            ) for d in daily_query
+        ]
+        
+        return AdminAnalyticsResponse(
+            revenueRub=revenue_rub,
+            apiCostsUsd=round(api_costs_usd, 2),
+            marginPercent=margin_percent,
+            totalJobs=total_jobs,
+            dailyStats=daily_stats
+        )
 
 @router.post("/suggest-structure")
 async def suggest_structure(request: dict, user: UserDB = Depends(get_current_user)):

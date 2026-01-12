@@ -127,6 +127,20 @@ class UsersAdminResponse(BaseModel):
     items: list[UserAdminResponse]
 
 
+class DailyStat(BaseModel):
+    date: str
+    tokens: int
+    jobs: int
+
+
+class AdminAnalyticsResponse(BaseModel):
+    revenueRub: int
+    apiCostsUsd: float
+    marginPercent: int
+    totalJobs: int
+    dailyStats: list[DailyStat]
+
+
 class UserRoleUpdateRequest(BaseModel):
     role: Literal["admin", "user"]
 
