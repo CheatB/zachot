@@ -69,8 +69,8 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
         <h2
           className="wizard-step__title"
           style={{
-            fontSize: 'calc(var(--font-size-2xl) + 6px)',
-            fontWeight: 'var(--font-weight-heading)',
+            fontSize: 'var(--font-size-2xl)',
+            fontWeight: 'var(--font-weight-bold)',
             marginBottom: 'var(--spacing-12)',
             color: 'var(--color-text-primary)',
             letterSpacing: '-0.02em',
@@ -82,7 +82,7 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
         <p
           className="wizard-step__subtitle"
           style={{
-            fontSize: 'calc(var(--font-size-sm) + 6px)',
+            fontSize: 'var(--font-size-base)',
             color: 'var(--color-text-secondary)',
             marginBottom: '78px',
             lineHeight: 'var(--line-height-relaxed)',
@@ -175,7 +175,7 @@ const stepStyles = `
   position: relative;
   width: 100%;
   min-height: 275px; /* Увеличено на 10px (было 265px) */
-  padding: var(--spacing-24) var(--spacing-16);
+  padding: var(--spacing-24) 8px;
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
@@ -209,7 +209,7 @@ const stepStyles = `
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
-  max-width: 62%;
+  max-width: 55%;
   height: 100%;
 }
 
@@ -225,7 +225,7 @@ const stepStyles = `
 }
 
 .wizard-type-card__description {
-  font-size: calc(var(--font-size-xs) + 5px); /* Уменьшено на 1 пиксель */
+  font-size: calc(var(--font-size-xs) + 3px); /* Уменьшено еще на 2 пикселя */
   color: var(--color-text-secondary);
   line-height: 1.3;
 }
