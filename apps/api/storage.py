@@ -33,6 +33,7 @@ class SQLGenerationStore:
                 humanity_level=generation.humanity_level,
                 input_payload=generation.input_payload,
                 settings_payload=generation.settings_payload,
+                usage_metadata=generation.usage_metadata,
                 created_at=generation.created_at,
                 updated_at=generation.updated_at
             )
@@ -93,7 +94,8 @@ class SQLGenerationStore:
         return self.update(generation.id, 
                            status=generation.status.value,
                            input_payload=generation.input_payload,
-                           settings_payload=generation.settings_payload)
+                           settings_payload=generation.settings_payload,
+                           usage_metadata=generation.usage_metadata)
 
     def _map_to_domain(self, db_gen: GenerationDB) -> Generation:
         return Generation(
@@ -109,7 +111,8 @@ class SQLGenerationStore:
             updated_at=db_gen.updated_at,
             input_payload=db_gen.input_payload,
             settings_payload=db_gen.settings_payload,
-            result_content=db_gen.result_content
+            result_content=db_gen.result_content,
+            usage_metadata=db_gen.usage_metadata or []
         )
 
     def _notify_subscribers(self, generation: Generation):

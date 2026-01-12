@@ -141,6 +141,31 @@ class AdminAnalyticsResponse(BaseModel):
     dailyStats: list[DailyStat]
 
 
+class AdminGenerationUsage(BaseModel):
+    model: str
+    tokens: int
+    cost_usd: float
+    stage: str
+
+
+class AdminGenerationHistoryItem(BaseModel):
+    id: UUID
+    title: Optional[str]
+    module: str
+    status: str
+    created_at: datetime
+    user_email: str
+    usage_metadata: list[AdminGenerationUsage]
+    total_tokens: int
+    total_cost_rub: float
+    estimated_revenue_rub: float
+    estimated_profit_rub: float
+
+
+class AdminGenerationHistoryResponse(BaseModel):
+    items: list[AdminGenerationHistoryItem]
+
+
 class UserRoleUpdateRequest(BaseModel):
     role: Literal["admin", "user"]
 

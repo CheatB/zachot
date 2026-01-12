@@ -41,6 +41,27 @@ export interface AdminAnalytics {
   }[];
 }
 
+export interface AdminGenerationUsage {
+  model: string;
+  tokens: number;
+  cost_usd: number;
+  stage: string;
+}
+
+export interface AdminGenerationHistoryItem {
+  id: string;
+  title: string | null;
+  module: string;
+  status: string;
+  created_at: string;
+  user_email: string;
+  usage_metadata: AdminGenerationUsage[];
+  total_tokens: number;
+  total_cost_rub: number;
+  estimated_revenue_rub: number;
+  estimated_profit_rub: number;
+}
+
 /**
  * Получить текущие настройки роутинга моделей
  */
@@ -80,6 +101,14 @@ export async function savePrompts(prompts: PromptConfig): Promise<void> {
  */
 export async function fetchAdminUsers(): Promise<AdminUser[]> {
   const response = await apiFetch<{ items: AdminUser[] }>('/admin/users');
+  return response.items;
+}
+
+/**
+ * Получить историю генераций (админ)
+ */
+export async function fetchAdminGenerations(): Promise<AdminGenerationHistoryItem[]> {
+  const response = await apiFetch<{ items: AdminGenerationHistoryItem[] }>('/admin/generations');
   return response.items;
 }
 

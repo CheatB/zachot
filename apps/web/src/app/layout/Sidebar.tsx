@@ -55,6 +55,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
   const adminNavItems: NavItem[] = [
     { label: 'Модели и роутинг', path: '/admin/models', icon: '🤖' },
     { label: 'Пользователи', path: '/admin/users', icon: '👥' },
+    { label: 'История генераций', path: '/admin/generations', icon: '📜' },
     { label: 'Аналитика P&L', path: '/admin/analytics', icon: '📊' },
     { label: 'Выйти из админки', path: '/', icon: '🚪' },
   ]

@@ -1,17 +1,27 @@
 from uuid import UUID
 from fastapi import APIRouter, HTTPException, Depends, Header
-from ..schemas import UsersAdminResponse, UserRoleUpdateRequest, UserAdminResponse, AdminAnalyticsResponse, DailyStat
-from ..database import SessionLocal, User as UserDB, Payment as PaymentDB, Generation as GenerationDB
+from ..schemas import (
+    UsersAdminResponse, 
+    UserRoleUpdateRequest, 
+    UserAdminResponse, 
+    AdminAnalyticsResponse, 
+    DailyStat,
+    AdminGenerationHistoryResponse,
+    AdminGenerationHistoryItem,
+    AdminGenerationUsage
+)
+from ..database import SessionLocal, User as UserDB, PaymentDB, GenerationDB
 from ..services.openai_service import openai_service
 from ..services.model_router import model_router
 from ..services.prompt_service import prompt_service
 from packages.ai_services.src.prompt_manager import prompt_manager
 from .generations import get_current_user
 import json
-from sqlalchemy import func, cast, Date
+from sqlalchemy import func, cast, Date, desc
 
 from packages.core_domain import Generation
 from packages.core_domain.enums import GenerationStatus, GenerationModule
+from packages.billing.credits import get_credit_cost
 from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -94,6 +104,55 @@ async def get_analytics(admin: UserDB = Depends(get_current_user)):
             totalJobs=total_jobs,
             dailyStats=daily_stats
         )
+
+@router.get("/generations", response_model=AdminGenerationHistoryResponse)
+async def get_generations_history(admin: UserDB = Depends(get_current_user)):
+    if admin.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    with SessionLocal() as session:
+        query = session.query(
+            GenerationDB, UserDB.email
+        ).join(
+            UserDB, GenerationDB.user_id == UserDB.id
+        ).order_by(
+            desc(GenerationDB.created_at)
+        ).limit(100) # Limit to last 100 for performance
+        
+        results = query.all()
+        
+        items = []
+        for db_gen, email in results:
+            usage = db_gen.usage_metadata or []
+            total_tokens = sum(u.get('tokens', 0) for u in usage)
+            total_cost_usd = sum(u.get('cost_usd', 0.0) for u in usage)
+            
+            # Simple conversion: 1 USD = 100 RUB
+            total_cost_rub = total_cost_usd * 100
+            
+            # Estimated revenue based on work type and credit cost
+            # 1 credit approx 100 RUB (based on 499 RUB / 5 credits)
+            credit_cost = get_credit_cost(db_gen.work_type or "other")
+            estimated_revenue_rub = credit_cost * 100
+            
+            # Profit
+            estimated_profit_rub = estimated_revenue_rub - total_cost_rub
+            
+            items.append(AdminGenerationHistoryItem(
+                id=db_gen.id,
+                title=db_gen.title,
+                module=db_gen.module,
+                status=db_gen.status,
+                created_at=db_gen.created_at,
+                user_email=email,
+                usage_metadata=[AdminGenerationUsage(**u) for u in usage],
+                total_tokens=total_tokens,
+                total_cost_rub=round(total_cost_rub, 2),
+                estimated_revenue_rub=float(estimated_revenue_rub),
+                estimated_profit_rub=round(estimated_profit_rub, 2)
+            ))
+            
+        return AdminGenerationHistoryResponse(items=items)
 
 @router.post("/suggest-structure")
 async def suggest_structure(request: dict, user: UserDB = Depends(get_current_user)):
