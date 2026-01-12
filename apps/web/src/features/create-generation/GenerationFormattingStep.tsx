@@ -82,7 +82,7 @@ function GenerationFormattingStep({ formatting, onChange }: GenerationFormatting
                   </div>
                   <select 
                     value={localFormatting.fontFamily} 
-                    onChange={(e) => handleChange('fontFamily', e.target.value)}
+                    onChange={(e) => handleChange('fontFamily', e.target.value as FormattingSettings['fontFamily'])}
                     style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--color-border-base)' }}
                   >
                     <option value="Times New Roman">Times New Roman</option>
@@ -162,7 +162,7 @@ function GenerationFormattingStep({ formatting, onChange }: GenerationFormatting
                   </div>
                   <select 
                     value={localFormatting.pageNumbering} 
-                    onChange={(e) => handleChange('pageNumbering', e.target.value)}
+                    onChange={(e) => handleChange('pageNumbering', e.target.value as FormattingSettings['pageNumbering'])}
                     style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--color-border-base)' }}
                   >
                     <option value="bottom-center">Снизу по центру</option>
