@@ -32,6 +32,7 @@ const typeInfoMap: Record<GenerationType, GenerationTypeInfo> = {
   text: { title: 'Текстовая работа', placeholder: '', hint: '', helperText: '' },
   presentation: { title: 'Презентация', placeholder: '', hint: '', helperText: '' },
   task: { title: 'Решение задач', placeholder: '', hint: '', helperText: '' },
+  gost_format: { title: 'Оформление по ГОСТу', placeholder: '', hint: '', helperText: '' },
 }
 
 function GenerationConfirmStep({ 
@@ -106,6 +107,10 @@ function GenerationConfirmStep({
               
               {type === 'task' ? (
                 <SummaryItem label="Режим решения:" value={taskModeLabel} step={1.3} />
+              ) : type === 'gost_format' ? (
+                <>
+                  <SummaryItem label="Оформление:" value={getFormattingSummary()} step={5.5} />
+                </>
               ) : (
                 <>
                   <SummaryItem label="Сложность:" value={complexityLevel === 'student' ? 'Студенческая' : 'Школьная'} step={1.7} />
@@ -125,9 +130,9 @@ function GenerationConfirmStep({
               <div style={{ height: '1px', backgroundColor: 'var(--color-border-light)', margin: '16px 0' }} />
 
               <SummaryItem 
-                label={type === 'task' ? 'Условие:' : 'Тема:'} 
+                label={type === 'task' ? 'Условие:' : type === 'gost_format' ? 'Файл:' : 'Тема:'} 
                 value={input ? (input.length > 150 ? `${input.substring(0, 150)}...` : input) : (hasFiles ? 'Загружен файл' : '—')} 
-                step={type === 'task' ? 1.2 : 1.5}
+                step={type === 'task' ? 1.2 : type === 'gost_format' ? 1.8 : 1.5}
               />
             </Stack>
           </div>
@@ -176,7 +181,7 @@ function GenerationConfirmStep({
               disabled={isSubmitting}
               style={{ height: '56px', padding: '0 64px', borderRadius: '4px', fontSize: '16px' }}
             >
-              {type === 'task' ? 'Начать решение' : 'Создать работу'}
+              {type === 'task' ? 'Начать решение' : type === 'gost_format' ? 'Оформить работу' : 'Создать работу'}
             </Button>
           </div>
         </Stack>

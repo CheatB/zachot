@@ -21,6 +21,7 @@ import GenerationSourcesStep from './GenerationSourcesStep'
 import GenerationConfirmStep from './GenerationConfirmStep'
 import GenerationFormattingStep from './GenerationFormattingStep'
 import GenerationVisualsStep from './GenerationVisualsStep'
+import DocUploadStep from './DocUploadStep'
 import StepLoader, { StepLoaderTask } from './components/StepLoader'
 import type { CreateGenerationForm, GenerationType, WorkType, PresentationStyle, TaskMode, ComplexityLevel } from './types'
 import { workTypeConfigs, DEFAULT_GOST_FORMATTING } from './types'
@@ -28,7 +29,7 @@ import { motion as motionTokens } from '@/design-tokens'
 import { createGeneration, updateGeneration, executeAction, createJob, getGenerationById } from '@/shared/api/generations'
 import { suggestDetails, suggestStructure, suggestSources } from '@/shared/api/admin'
 
-type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 2 | 3 | 4 | 5 | 5.5 | 6
+type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 1.8 | 2 | 3 | 4 | 5 | 5.5 | 6
 
 function CreateGenerationPage() {
   const navigate = useNavigate()
@@ -129,6 +130,11 @@ function CreateGenerationPage() {
         return {
           title: 'Настройка стиля и качества',
           subtitle: 'Эти параметры влияют на используемый словарь и защиту от обнаружения ИИ.'
+        }
+      case 1.8:
+        return {
+          title: 'Загрузите документ',
+          subtitle: 'Мы проверим содержание и приведем его к стандарту ГОСТ.'
         }
       case 2:
         return {
@@ -304,8 +310,11 @@ function CreateGenerationPage() {
       if (form.type === 'text') nextStep = 1.5
       else if (form.type === 'presentation') nextStep = 1.6
       else if (form.type === 'task') nextStep = 1.2
+      else if (form.type === 'gost_format') nextStep = 1.8
     } else if (currentStep === 1.2 && (form.taskFiles.length > 0 || form.input.trim())) {
       nextStep = 1.3
+    } else if (currentStep === 1.8 && form.taskFiles.length > 0) {
+      nextStep = 5.5
     } else if (currentStep === 1.3 && form.taskMode) {
       nextStep = 6
     } else if (currentStep === 1.5 && form.workType && form.input.trim()) {
@@ -411,7 +420,7 @@ function CreateGenerationPage() {
   const handleBack = () => {
     let prevStep: WizardStep | null = null
 
-    if (currentStep === 1.2 || currentStep === 1.5 || currentStep === 1.6) {
+    if (currentStep === 1.2 || currentStep === 1.5 || currentStep === 1.6 || currentStep === 1.8) {
       prevStep = 1
     } else if (currentStep === 1.3) {
       prevStep = 1.2
@@ -428,7 +437,7 @@ function CreateGenerationPage() {
     } else if (currentStep === 5) {
       prevStep = 4
     } else if (currentStep === 5.5) {
-      prevStep = 5
+      prevStep = form.type === 'gost_format' ? 1.8 : 5
     } else if (currentStep === 6) {
       if (form.type === 'task') prevStep = 1.3
       else if (form.type === 'presentation') prevStep = 4
@@ -459,6 +468,7 @@ function CreateGenerationPage() {
   const canProceed = () => {
     if (currentStep === 1) return form.type !== null
     if (currentStep === 1.2) return form.taskFiles.length > 0 || form.input.trim().length > 0
+    if (currentStep === 1.8) return form.taskFiles.length > 0
     if (currentStep === 1.3) return form.taskMode !== null
     if (currentStep === 1.5) return form.workType !== null && form.input.trim().length > 0
     if (currentStep === 1.6) return form.presentationStyle !== null && form.input.trim().length > 0
@@ -518,15 +528,17 @@ function CreateGenerationPage() {
         </motion.div>
 
           <div className="wizard-progress" style={{ marginBottom: 'var(--spacing-40)', width: '100%', justifyContent: 'flex-start' }}>
-            {[1, 1.2, 1.3, 1.5, 1.6, 1.7, 2, 3, 4, 5, 5.5, 6].map((step) => {
+            {[1, 1.2, 1.3, 1.5, 1.6, 1.7, 1.8, 2, 3, 4, 5, 5.5, 6].map((step) => {
               const shouldShow = (s: number) => {
                 if (s === 1.5) return form.type === 'text'
                 if (s === 1.6) return form.type === 'presentation'
                 if (s === 1.7) return form.type === 'text'
+                if (s === 1.8) return form.type === 'gost_format'
                 if (s === 2) return form.type === 'presentation'
                 if (s === 1.2 || s === 1.3) return form.type === 'task'
-                if (s === 3 || s === 4) return form.type !== 'task'
-                if (s === 5 || s === 5.5) return form.type === 'text'
+                if (s === 3 || s === 4) return form.type === 'text' || form.type === 'presentation'
+                if (s === 5) return form.type === 'text'
+                if (s === 5.5) return form.type === 'text' || form.type === 'gost_format'
                 return true
               }
               if (!shouldShow(step)) return null
@@ -566,6 +578,7 @@ function CreateGenerationPage() {
               <div style={{ width: '100%' }}>
                 {currentStep === 1 && <GenerationTypeStep key="step-1" selectedType={form.type} onSelect={handleTypeSelect} />}
                 {currentStep === 1.2 && <TaskInputStep key="step-1-2" input={form.input} files={form.taskFiles} onInputChange={handleInputChange} onFilesChange={handleTaskFilesChange} />}
+                {currentStep === 1.8 && <DocUploadStep key="step-1-8" files={form.taskFiles} onFilesChange={handleTaskFilesChange} />}
                 {currentStep === 1.3 && <TaskModeStep key="step-1-3" selectedMode={form.taskMode} onSelect={handleTaskModeSelect} />}
                 {currentStep === 1.5 && form.type && <WorkTypeStep key="step-1-5" type={form.type} selectedWorkType={form.workType} onSelect={handleWorkTypeSelect} input={form.input} onInputChange={handleInputChange} />}
                 {currentStep === 1.6 && form.type && <PresentationStyleStep key="step-1-6" type={form.type} selectedStyle={form.presentationStyle} onSelect={handlePresentationStyleSelect} input={form.input} onInputChange={handleInputChange} />}

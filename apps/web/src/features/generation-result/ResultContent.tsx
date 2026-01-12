@@ -13,7 +13,7 @@ import { useToast } from '@/ui/primitives/Toast'
 
 interface ResultContentProps {
   content: string
-  type: 'TEXT' | 'PRESENTATION' | 'TASK'
+  type: 'TEXT' | 'PRESENTATION' | 'TASK' | 'GOST_FORMAT'
   onUpdate?: (generation: Generation) => void
 }
 

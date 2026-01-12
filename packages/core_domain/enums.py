@@ -10,6 +10,7 @@ class GenerationModule(str, Enum):
     TEXT = "TEXT"
     PRESENTATION = "PRESENTATION"
     TASK = "TASK"
+    GOST_FORMAT = "GOST_FORMAT"
 
 
 class GenerationStatus(str, Enum):

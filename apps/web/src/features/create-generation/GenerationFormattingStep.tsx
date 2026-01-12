@@ -82,7 +82,7 @@ function GenerationFormattingStep({ formatting, onChange }: GenerationFormatting
                 <div className="label-with-tool">
                   <label>Шрифт</label>
                   <Tooltip content="Основной шрифт документа. По стандарту используется Times New Roman.">
-                    <button className="info-trigger" type="button">?</button>
+                    <button className="info-trigger" type="button" aria-label="Подсказка">?</button>
                   </Tooltip>
                 </div>
                 <select 
@@ -99,7 +99,7 @@ function GenerationFormattingStep({ formatting, onChange }: GenerationFormatting
                 <div className="label-with-tool">
                   <label>Размер (pt)</label>
                   <Tooltip content="Кегль шрифта. Стандарт для вузов — 14 пунктов.">
-                    <button className="info-trigger" type="button">?</button>
+                    <button className="info-trigger" type="button" aria-label="Подсказка">?</button>
                   </Tooltip>
                 </div>
                 <Input type="number" value={localFormatting.fontSize} onChange={(e) => handleChange('fontSize', Number(e.target.value))} />
@@ -108,7 +108,7 @@ function GenerationFormattingStep({ formatting, onChange }: GenerationFormatting
                 <div className="label-with-tool">
                   <label>Интервал</label>
                   <Tooltip content="Межстрочный интервал. Рекомендуемое значение — 1.5.">
-                    <button className="info-trigger" type="button">?</button>
+                    <button className="info-trigger" type="button" aria-label="Подсказка">?</button>
                   </Tooltip>
                 </div>
                 <Input type="number" step="0.1" value={localFormatting.lineSpacing} onChange={(e) => handleChange('lineSpacing', Number(e.target.value))} />
@@ -149,7 +149,7 @@ function GenerationFormattingStep({ formatting, onChange }: GenerationFormatting
                 <div className="label-with-tool">
                   <label>Расположение номера</label>
                   <Tooltip content="Где будет отображаться номер страницы. Стандарт — снизу по центру.">
-                    <button className="info-trigger" type="button">?</button>
+                    <button className="info-trigger" type="button" aria-label="Подсказка">?</button>
                   </Tooltip>
                 </div>
                 <select 
@@ -166,11 +166,21 @@ function GenerationFormattingStep({ formatting, onChange }: GenerationFormatting
               <div className="form-field flex-row-items">
                 <label className="check-label">
                   <input type="checkbox" checked={localFormatting.hasTitlePage} onChange={(e) => handleChange('hasTitlePage', e.target.checked)} />
-                  <span>Титульный лист</span>
+                  <div className="label-with-tool">
+                    <span>Титульный лист</span>
+                    <Tooltip content="Создать первую страницу с реквизитами работы.">
+                      <button className="info-trigger" type="button" aria-label="Подсказка">?</button>
+                    </Tooltip>
+                  </div>
                 </label>
                 <label className="check-label">
                   <input type="checkbox" checked={localFormatting.hasTableOfContents} onChange={(e) => handleChange('hasTableOfContents', e.target.checked)} />
-                  <span>Содержание</span>
+                  <div className="label-with-tool">
+                    <span>Содержание</span>
+                    <Tooltip content="Сгенерировать автоматическое оглавление.">
+                      <button className="info-trigger" type="button" aria-label="Подсказка">?</button>
+                    </Tooltip>
+                  </div>
                 </label>
               </div>
             </div>
@@ -287,8 +297,8 @@ const stepStyles = `
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: var(--color-neutral-10);
   border: 1px solid var(--color-border-base);

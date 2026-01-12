@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class TextStructureWorker(BaseWorker):
     def can_handle(self, job: Job) -> bool:
-        return job.type == JobType.TEXT_STRUCTURE
+        return job.type in [JobType.TEXT_STRUCTURE, JobType.PRESENTATION_STRUCTURE]
     
     def execute(self, job: Job) -> JobResult:
         logger.info(f"Starting AI-powered pipeline for job {job.id}")

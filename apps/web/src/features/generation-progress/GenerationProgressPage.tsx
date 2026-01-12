@@ -28,13 +28,24 @@ const taskProgressSteps: ProgressStep[] = [
   { id: 'check', label: 'Проверка', description: 'Контролируем корректность вычислений и логики' },
 ]
 
+const gostProgressSteps: ProgressStep[] = [
+  { id: 'scan', label: 'Анализ документа', description: 'Проверяем текущее оформление и структуру' },
+  { id: 'correct', label: 'Исправление ошибок', description: 'Устраняем орфографические и пунктуационные недочеты' },
+  { id: 'format', label: 'Применение ГОСТа', description: 'Настраиваем шрифты, отступы и поля по стандарту' },
+  { id: 'finalize', label: 'Финализация', description: 'Подготавливаем итоговый файл для скачивания' },
+]
+
 function GenerationProgressPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
 
   const [generation, setGeneration] = useState<Generation | null>(null)
-  const steps = generation?.module === 'TASK' ? taskProgressSteps : textProgressSteps
+  const steps = generation?.module === 'TASK' 
+    ? taskProgressSteps 
+    : generation?.module === 'GOST_FORMAT'
+      ? gostProgressSteps
+      : textProgressSteps
   
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [elapsedTime, setElapsedTime] = useState(0)

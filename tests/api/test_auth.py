@@ -89,3 +89,4 @@ def test_check_telegram_auth_not_found(client):
     response = client.get("/auth/telegram/check/non_existent_token")
     assert response.status_code == 404
 
+

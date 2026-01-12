@@ -19,6 +19,7 @@ from packages.workers.circuit_breaker import CircuitBreaker
 from packages.workers.text_structure import TextStructureWorker
 from packages.workers.task_worker import TaskWorker
 from packages.workers.text_refining import TextRefiningWorker
+from packages.workers.gost_fix import GostFixWorker
 
 # Опциональный импорт для интеграции с domain
 try:

@@ -37,6 +37,7 @@ def _map_generation_module_to_job_type(module: GenerationModule) -> JobType:
         GenerationModule.TEXT: JobType.TEXT_STRUCTURE,
         GenerationModule.PRESENTATION: JobType.PRESENTATION_STRUCTURE,
         GenerationModule.TASK: JobType.TASK_SOLVE,
+        GenerationModule.GOST_FORMAT: JobType.GOST_FIX,
     }
     
     if module not in mapping:

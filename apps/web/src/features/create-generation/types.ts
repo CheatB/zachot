@@ -3,7 +3,7 @@
  * Типы для wizard создания генерации
  */
 
-export type GenerationType = 'text' | 'presentation' | 'task'
+export type GenerationType = 'text' | 'presentation' | 'task' | 'gost_format'
 
 // Типы академических работ
 export type WorkType = 

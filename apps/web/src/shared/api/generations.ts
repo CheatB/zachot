@@ -4,7 +4,7 @@ export interface Generation {
   id: string;
   title: string;
   status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'DRAFT' | 'GENERATED' | 'EXPORTED' | 'CANCELED' | 'WAITING_USER';
-  module: 'TEXT' | 'PRESENTATION' | 'TASK';
+  module: 'TEXT' | 'PRESENTATION' | 'TASK' | 'GOST_FORMAT';
   work_type?: string | null;
   complexity_level?: string;
   humanity_level?: number;

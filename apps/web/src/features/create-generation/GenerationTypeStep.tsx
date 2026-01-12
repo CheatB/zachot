@@ -38,6 +38,13 @@ const typeOptions: (GenerationTypeOption & { illustration?: string; illustration
     icon: '',
     illustration: '/assets/illustrations/tasks.png'
   },
+  {
+    type: 'gost_format',
+    title: 'Оформление по ГОСТу',
+    description: 'Загрузите свой документ, и AI исправит оформление, орфографию и пунктуацию',
+    icon: '',
+    illustration: '/assets/illustrations/text-work.png'
+  },
 ]
 
 function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps) {
