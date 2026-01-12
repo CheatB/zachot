@@ -366,8 +366,9 @@ function CreateGenerationPage() {
         })
         .catch(err => {
           console.error('Failed to suggest structure:', err)
+          alert('Не удалось автоматически создать план. Пожалуйста, попробуйте еще раз или введите пункты вручную.')
           setTransitionState(null)
-          setCurrentStep(4)
+          // Не переходим на следующий шаг, остаемся на текущем, чтобы пользователь мог нажать "Далее" снова
         })
       return
     } else if (currentStep === 4) {
@@ -406,8 +407,9 @@ function CreateGenerationPage() {
         })
         .catch(err => {
           console.error('Failed to suggest sources:', err)
+          alert('Не удалось автоматически подобрать источники. Пожалуйста, попробуйте еще раз или добавьте свои вручную на следующем шаге.')
           setTransitionState(null)
-          setCurrentStep(5)
+          setCurrentStep(5) // Здесь можно перейти, так как источники можно добавить руками
         })
       return
     } else if (currentStep === 5) {

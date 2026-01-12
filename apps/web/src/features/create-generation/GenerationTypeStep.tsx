@@ -150,7 +150,7 @@ const stepStyles = `
   position: relative;
   width: 100%;
   min-height: 360px; /* Увеличено на ~30% (было 275px) */
-  padding: var(--spacing-32) var(--spacing-24); /* Больше внутренних отступов */
+  padding: var(--spacing-32) 8px; /* Боковые отступы уменьшены вдвое (было 16px) */
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);

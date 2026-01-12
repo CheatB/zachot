@@ -91,6 +91,7 @@ async def create_generation(
             updated_at=now,
             input_payload=request.input_payload,
             settings_payload=request.settings_payload or {},
+            usage_metadata=[],
         )
         
         saved_generation = generation_store.create(generation)
