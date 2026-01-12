@@ -18,7 +18,7 @@ import TutorSection from './TutorSection'
 import VisualUpsellCard from './VisualUpsellCard'
 import { getGenerationById, type Generation } from '@/shared/api/generations'
 import { formatRelativeTime } from '@/utils/format'
-import { ENV } from '@/shared/config/env'
+import { API_BASE_URL } from '@/shared/config'
 import { useToast } from '@/ui/primitives/Toast'
 
 function GenerationResultPage() {
@@ -61,7 +61,7 @@ function GenerationResultPage() {
 
   const handleExport = (format: 'docx' | 'pdf' | 'pptx') => {
     if (!id) return;
-    const url = `${ENV.API_BASE_URL}/generations/${id}/export/${format}`;
+    const url = `${API_BASE_URL}/generations/${id}/export/${format}`;
     const link = document.body.appendChild(document.createElement('a'));
     link.href = url;
     link.setAttribute('download', `zachet_${id}.${format}`);
