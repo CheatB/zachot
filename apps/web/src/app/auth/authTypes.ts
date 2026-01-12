@@ -37,7 +37,7 @@ export interface AuthState {
 }
 
 export interface AuthContextValue extends AuthState {
-  loginFromLanding: (token: string, userId: string) => void
+  loginFromLanding: (token: string, userId: string, role?: string) => void
   logout: () => void
   refreshUser: () => Promise<void>
 }

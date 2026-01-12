@@ -192,75 +192,109 @@ const ModelRoutingPage: React.FC = () => {
         </>
       ) : (
         <section className="prompts-section">
-          <Stack gap="xl">
-            <div className="prompt-editor-block">
-              <h3 className="prompt-editor-block__title">1. Классификатор (Task vs Chat)</h3>
-              <p className="prompt-editor-block__desc">Определяет, является ли ввод задачей или просто общением.</p>
-              <Textarea 
-                value={prompts.classifier} 
-                onChange={(e) => handlePromptChange('classifier', e.target.value)}
-                rows={8}
-              />
+          <Stack gap="2xl">
+            {/* Блок 1: Анализ и подготовка */}
+            <div className="prompt-group">
+              <h2 className="prompt-group__title">Блок 1: Анализ и подготовка</h2>
+              <Stack gap="xl">
+                <div className="prompt-editor-block">
+                  <h3 className="prompt-editor-block__title">1.1 Классификатор (Task vs Chat)</h3>
+                  <p className="prompt-editor-block__desc">Определяет, является ли ввод условием задачи или просто общением. Использует: {`{input_text}`}.</p>
+                  <Textarea 
+                    value={prompts.classifier} 
+                    onChange={(e) => handlePromptChange('classifier', e.target.value)}
+                    rows={6}
+                  />
+                </div>
+
+                <div className="prompt-editor-block">
+                  <h3 className="prompt-editor-block__title">1.2 Формирование цели и идеи</h3>
+                  <p className="prompt-editor-block__desc">Предлагает научную цель и основной тезис на основе темы. Использует: {`{topic}`}.</p>
+                  <Textarea 
+                    value={prompts.suggest_details} 
+                    onChange={(e) => handlePromptChange('suggest_details', e.target.value)}
+                    rows={6}
+                  />
+                </div>
+              </Stack>
             </div>
 
-            <div className="prompt-editor-block">
-              <h3 className="prompt-editor-block__title">2. Генератор структуры (План)</h3>
-              <p className="prompt-editor-block__desc">Создает содержание работы. Использует переменные: {`{work_type}, {topic}, {goal}, {idea}, {volume}, {style}`}.</p>
-              <Textarea 
-                value={prompts.structure} 
-                onChange={(e) => handlePromptChange('structure', e.target.value)}
-                rows={10}
-              />
+            {/* Блок 2: Планирование */}
+            <div className="prompt-group">
+              <h2 className="prompt-group__title">Блок 2: Планирование</h2>
+              <Stack gap="xl">
+                <div className="prompt-editor-block">
+                  <h3 className="prompt-editor-block__title">2.1 Генерация плана (структуры)</h3>
+                  <p className="prompt-editor-block__desc">Создает содержание работы. Использует: {`{work_type}, {topic}, {goal}, {idea}, {volume}, {style}`}.</p>
+                  <Textarea 
+                    value={prompts.structure} 
+                    onChange={(e) => handlePromptChange('structure', e.target.value)}
+                    rows={8}
+                  />
+                </div>
+
+                <div className="prompt-editor-block">
+                  <h3 className="prompt-editor-block__title">2.2 Подбор источников литературы</h3>
+                  <p className="prompt-editor-block__desc">Ищет реальные научные источники по ГОСТу. Использует: {`{work_type}, {topic}`}.</p>
+                  <Textarea 
+                    value={prompts.sources} 
+                    onChange={(e) => handlePromptChange('sources', e.target.value)}
+                    rows={8}
+                  />
+                </div>
+              </Stack>
             </div>
 
-            <div className="prompt-editor-block">
-              <h3 className="prompt-editor-block__title">3. Подбор источников</h3>
-              <p className="prompt-editor-block__desc">Ищет литературу. Использует переменные: {`{work_type}, {topic}`}.</p>
-              <Textarea 
-                value={prompts.sources} 
-                onChange={(e) => handlePromptChange('sources', e.target.value)}
-                rows={10}
-              />
+            {/* Блок 3: Написание и обработка */}
+            <div className="prompt-group">
+              <h2 className="prompt-group__title">Блок 3: Написание и обработка</h2>
+              <Stack gap="xl">
+                <div className="prompt-editor-block">
+                  <h3 className="prompt-editor-block__title">3.1 Основная генерация контента</h3>
+                  <p className="prompt-editor-block__desc">Пишет текст разделов. Использует: {`{section_title}, {topic}, {goal}, {idea}, {layout_instruction}, {previous_context_instruction}`}.</p>
+                  <Textarea 
+                    value={prompts.generation} 
+                    onChange={(e) => handlePromptChange('generation', e.target.value)}
+                    rows={10}
+                  />
+                </div>
+
+                <div className="prompt-editor-block">
+                  <h3 className="prompt-editor-block__title">3.2 Очеловечивание (Humanize)</h3>
+                  <p className="prompt-editor-block__desc">Переписывает текст для обхода детекторов ИИ. Использует: {`{text}, {instructions}`}.</p>
+                  <Textarea 
+                    value={prompts.humanize} 
+                    onChange={(e) => handlePromptChange('humanize', e.target.value)}
+                    rows={8}
+                  />
+                </div>
+
+                <div className="prompt-editor-block">
+                  <h3 className="prompt-editor-block__title">3.3 Контроль качества (QC)</h3>
+                  <p className="prompt-editor-block__desc">Финальная проверка стиля, логики и оформления. Использует: {`{text}`}.</p>
+                  <Textarea 
+                    value={prompts.qc} 
+                    onChange={(e) => handlePromptChange('qc', e.target.value)}
+                    rows={8}
+                  />
+                </div>
+              </Stack>
             </div>
 
-            <div className="prompt-editor-block">
-              <h3 className="prompt-editor-block__title">4. Генерация контента</h3>
-              <p className="prompt-editor-block__desc">Пишет основной текст. Использует переменные: {`{section_title}, {topic}, {goal}, {idea}, {layout_instruction}, {previous_context_instruction}`}.</p>
-              <Textarea 
-                value={prompts.generation} 
-                onChange={(e) => handlePromptChange('generation', e.target.value)}
-                rows={12}
-              />
-            </div>
-
-            <div className="prompt-editor-block">
-              <h3 className="prompt-editor-block__title">5. Очеловечивание (Humanize)</h3>
-              <p className="prompt-editor-block__desc">Переписывает текст для обхода детекторов. Использует переменные: {`{text}, {instructions}`}.</p>
-              <Textarea 
-                value={prompts.humanize} 
-                onChange={(e) => handlePromptChange('humanize', e.target.value)}
-                rows={10}
-              />
-            </div>
-
-            <div className="prompt-editor-block">
-              <h3 className="prompt-editor-block__title">6. Контроль качества (QC)</h3>
-              <p className="prompt-editor-block__desc">Финальная проверка стиля и ГОСТ. Использует переменные: {`{text}`}.</p>
-              <Textarea 
-                value={prompts.qc} 
-                onChange={(e) => handlePromptChange('qc', e.target.value)}
-                rows={10}
-              />
-            </div>
-
-            <div className="prompt-editor-block">
-              <h3 className="prompt-editor-block__title">7. Уточнение деталей (Goal/Idea)</h3>
-              <p className="prompt-editor-block__desc">Предлагает цель и идею. Использует переменные: {`{topic}`}.</p>
-              <Textarea 
-                value={prompts.suggest_details} 
-                onChange={(e) => handlePromptChange('suggest_details', e.target.value)}
-                rows={6}
-              />
+            {/* Блок 4: Служебные */}
+            <div className="prompt-group">
+              <h2 className="prompt-group__title">Блок 4: Служебные</h2>
+              <Stack gap="xl">
+                <div className="prompt-editor-block">
+                  <h3 className="prompt-editor-block__title">4.1 Данные для титульного листа</h3>
+                  <p className="prompt-editor-block__desc">Дополняет информацию о ВУЗе и городе. Использует: {`{university_short}`}.</p>
+                  <Textarea 
+                    value={prompts.suggest_title_info} 
+                    onChange={(e) => handlePromptChange('suggest_title_info', e.target.value)}
+                    rows={6}
+                  />
+                </div>
+              </Stack>
             </div>
           </Stack>
         </section>
@@ -313,21 +347,39 @@ const ModelRoutingPage: React.FC = () => {
           color: white !important;
         }
 
+        .prompt-group {
+          padding: var(--spacing-32);
+          background-color: var(--color-neutral-5);
+          border-radius: var(--radius-xl);
+          border: 1px solid var(--color-border-light);
+        }
+        .prompt-group__title {
+          font-size: 18px;
+          font-weight: 800;
+          margin-bottom: var(--spacing-24);
+          color: var(--color-neutral-100);
+          border-left: 4px solid var(--color-accent-base);
+          padding-left: var(--spacing-16);
+        }
+
         .prompt-editor-block {
           background: white;
           padding: var(--spacing-24);
           border-radius: var(--radius-lg);
           border: 1px solid var(--color-border-base);
+          box-shadow: var(--elevation-1);
         }
         .prompt-editor-block__title {
-          font-size: 16px;
+          font-size: 15px;
           font-weight: 700;
           margin-bottom: 8px;
+          color: var(--color-neutral-100);
         }
         .prompt-editor-block__desc {
-          font-size: 13px;
+          font-size: 12px;
           color: var(--color-text-secondary);
           margin-bottom: var(--spacing-16);
+          line-height: 1.4;
         }
 
         .routing-section {

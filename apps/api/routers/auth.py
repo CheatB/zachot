@@ -37,13 +37,13 @@ async def email_login(auth_req: EmailAuthRequest):
             session.add(user)
             session.commit()
             session.refresh(user)
-            return {"status": "success", "user_id": str(user.id), "token": str(user.id), "message": "Registered"}
+            return {"status": "success", "user_id": str(user.id), "token": str(user.id), "role": user.role, "message": "Registered"}
         
         # Проверка пароля
         if user.hashed_password != hashed:
             raise HTTPException(status_code=401, detail="Invalid password")
             
-        return {"status": "success", "user_id": str(user.id), "token": str(user.id), "message": "Logged in"}
+        return {"status": "success", "user_id": str(user.id), "token": str(user.id), "role": user.role, "message": "Logged in"}
 
 @router.post("/telegram/link", response_model=TelegramAuthLink)
 async def get_telegram_link():
@@ -84,6 +84,7 @@ async def check_telegram_auth(token: str):
             return {
                 "status": "success", 
                 "user_id": str(user.id),
+                "role": user.role,
                 "telegram_username": user.telegram_username
             }
         
