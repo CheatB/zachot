@@ -1,162 +1,110 @@
 """
-Главный файл FastAPI приложения.
+FastAPI Application for Зачёт.
 
-Создаёт и настраивает FastAPI app с базовыми middleware,
-startup/shutdown hooks и подключением роутеров.
+Основное API приложение, включающее:
+- Аутентификацию
+- Генерации
+- Платежи (Т-Банк)
+- Админ-панель
 """
 
 import logging
-from contextlib import asynccontextmanager
+import os
+import sys
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from packages.core_domain import GenerationUpdated, StepUpdated, event_dispatcher
-from packages.core_domain.state_machine import GenerationStateMachine
-
-from .routers import generations, health, jobs, me, admin, payments, auth
-from .settings import settings
-from .storage import generation_store
-from .database import init_db
-
+from apps.api.database import init_db
+from apps.api.routers import payments, auth, generations, admin, me, health, jobs
 
 # Настройка логирования
 logging.basicConfig(
-    level=logging.DEBUG if settings.debug else logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
+    level=logging.DEBUG if os.getenv("DEBUG", "false").lower() == "true" else logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    stream=sys.stdout,
 )
 
 logger = logging.getLogger(__name__)
 
-
-def handle_generation_updated(event: GenerationUpdated) -> None:
-    """
-    Обработчик события GenerationUpdated.
-    
-    Загружает Generation из storage, обновляет статус через state machine
-    и сохраняет обратно. Это обновление автоматически триггерит SSE через
-    storage.save().
-    
-    Args:
-        event: Событие обновления Generation
-    """
-    try:
-        generation = generation_store.get(event.generation_id)
-        if not generation:
-            logger.warning(f"Generation {event.generation_id} not found for event")
-            return
-        
-        # Обновляем статус через state machine
-        state_machine = GenerationStateMachine()
-        try:
-            updated_generation = state_machine.transition(generation, event.status)
-        except Exception as e:
-            logger.error(f"Error transitioning generation {event.generation_id}: {e}")
-            return
-        
-        # Сохраняем обновлённую Generation
-        # Это автоматически триггерит SSE через storage.save()
-        generation_store.save(updated_generation)
-        
-        logger.info(
-            f"Generation {event.generation_id} updated to status {event.status.value} "
-            f"via domain event"
-        )
-    except Exception as e:
-        logger.error(f"Error handling GenerationUpdated event: {e}", exc_info=True)
-
-
-def handle_step_updated(event: StepUpdated) -> None:
-    """
-    Обработчик события StepUpdated.
-    
-    Логирует обновление Step. В будущем здесь можно добавить
-    обновление Step в storage, если будет добавлен Step storage.
-    
-    Args:
-        event: Событие обновления Step
-    """
-    try:
-        logger.info(
-            f"Step {event.step_id} updated: status={event.status.value}, "
-            f"progress={event.progress}% (generation {event.generation_id})"
-        )
-        # TODO: Добавить обновление Step в storage, если будет добавлен Step storage
-    except Exception as e:
-        logger.error(f"Error handling StepUpdated event: {e}", exc_info=True)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Lifecycle hooks для приложения.
-    
-    Выполняется при старте и остановке приложения.
-    Подписывается на domain events для обновления storage.
-    """
-    # Startup
-    logger.info(f"Starting {settings.service_name} in {settings.env} mode")
-    logger.info(f"Debug mode: {settings.debug}")
-    
-    logger.info("Initializing database...")
-    init_db()
-    logger.info("Database initialized successfully")
-    
-    # Подписываемся на domain events
-    event_dispatcher.subscribe(handle_generation_updated)
-    event_dispatcher.subscribe(handle_step_updated)
-    logger.info("Subscribed to domain events")
-    
-    yield
-    
-    # Shutdown
-    # Отписываемся от событий (опционально, но для чистоты)
-    event_dispatcher.unsubscribe(handle_generation_updated)
-    event_dispatcher.unsubscribe(handle_step_updated)
-    logger.info("Unsubscribed from domain events")
-    logger.info(f"Shutting down {settings.service_name}")
-
-
-# Создание FastAPI приложения
+# Создаём приложение
 app = FastAPI(
-    title=settings.service_name,
-    description="API для системы генераций образовательного продукта «Зачёт»",
-    version="0.1.0",
-    debug=settings.debug,
-    lifespan=lifespan,
+    title="Зачёт API",
+    description="API для сервиса генерации учебных работ",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
-# Настройка CORS (permissive для разработки)
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # В production следует ограничить
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://app.zachet.tech",
+        "https://zachet.tech",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Подключение роутеров
+# Подключаем роутеры
 app.include_router(health.router)
-app.include_router(generations.router)
-app.include_router(jobs.router)
-app.include_router(me.router)
-app.include_router(admin.router)
 app.include_router(payments.router)
 app.include_router(auth.router)
+app.include_router(generations.router)
+app.include_router(admin.router)
+app.include_router(me.router)
+app.include_router(jobs.router)
+
+
+@app.on_event("startup")
+async def startup():
+    """Инициализация при запуске."""
+    logger.info("Starting Зачёт API...")
+    init_db()
+    logger.info("Database initialized")
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    """Очистка при остановке."""
+    logger.info("Shutting down Зачёт API...")
+    
+    # Закрываем провайдер платежей
+    try:
+        from packages.billing.tbank_provider import _provider
+        if _provider:
+            await _provider.close()
+    except ImportError:
+        pass
+    
+    logger.info("Shutdown complete")
+
+
+@app.get("/health")
+async def health_check_root():
+    """Health check endpoint."""
+    return {"status": "ok", "service": "zachet-api"}
 
 
 @app.get("/")
 async def root():
-    """
-    Корневой эндпоинт.
-    
-    Returns:
-        Информация о сервисе
-    """
+    """Root endpoint."""
     return {
-        "service": settings.service_name,
-        "version": "0.1.0",
-        "status": "running",
+        "service": "Зачёт API",
+        "version": "1.0.0",
+        "docs": "/docs",
     }
 
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "apps.api.main:app",
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 8000)),
+        reload=os.getenv("DEBUG", "false").lower() == "true",
+    )

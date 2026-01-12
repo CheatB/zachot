@@ -101,11 +101,14 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
             }}
           >
             <div className="app-sidebar__content">
-              <div 
+              <Link 
+                to="/"
                 className="app-sidebar__logo" 
-                onClick={() => navigate('/')}
+                onClick={() => {
+                  if (window.innerWidth < 1024) onClose()
+                }}
                 style={{ 
-                  cursor: 'pointer',
+                  textDecoration: 'none',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 'var(--spacing-12)',
@@ -137,7 +140,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                 >
                   {isAdminRoute ? 'Админка' : 'Зачёт'}
                 </div>
-              </div>
+              </Link>
 
               {userData?.telegram_username && (
                 <div style={{ padding: '0 var(--spacing-24) var(--spacing-16)', fontSize: 'var(--font-size-sm)', color: 'var(--color-accent-base)', fontWeight: 600 }}>

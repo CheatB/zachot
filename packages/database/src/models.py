@@ -86,6 +86,7 @@ class Generation(Base):
     input_payload = Column(JSON)
     settings_payload = Column(JSON)
     result_content = Column(String, nullable=True)
+    usage_metadata = Column(JSON, default=list) # [{model: str, tokens: int, cost_usd: float, stage: str}]
     
     user = relationship("User", back_populates="generations")
 

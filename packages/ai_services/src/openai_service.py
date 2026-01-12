@@ -71,11 +71,17 @@ class OpenAIService:
                 data = response.json()
                 content = data["choices"][0]["message"]["content"]
                 
-                # Логируем расход
+                # Логируем и возвращаем расход
                 usage = data.get("usage", {})
-                logger.info(f"OpenAI Usage [{model}]: {usage.get('total_tokens')} tokens")
+                tokens = usage.get('total_tokens', 0)
+                logger.info(f"OpenAI Usage [{model}]: {tokens} tokens")
                 
-                return content
+                # Возвращаем кортеж (контент, токены, модель)
+                return {
+                    "content": content,
+                    "tokens": tokens,
+                    "model": model
+                }
         except httpx.HTTPStatusError as e:
             logger.error(f"OpenAI API error {e.response.status_code}: {e.response.text}")
             

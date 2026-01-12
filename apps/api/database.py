@@ -18,5 +18,13 @@ if settings.env == "test":
 engine = create_db_engine(db_url)
 SessionLocal = get_session_factory(engine)
 
+def get_db():
+    """Dependency для получения сессии БД."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 def init_db():
     Base.metadata.create_all(bind=engine)

@@ -39,6 +39,7 @@ class Generation(BaseModel):
     input_payload: dict = Field(default_factory=dict, description="Входные данные для генерации")
     settings_payload: dict = Field(default_factory=dict, description="Настройки генерации")
     result_content: Optional[str] = Field(None, description="Результат генерации (текст или JSON)")
+    usage_metadata: list = Field(default_factory=list, description="Данные о расходе токенов и стоимости")
     
     cost_estimate: float = Field(0.0, ge=0.0, description="Оценка стоимости генерации")
     cost_actual: float = Field(0.0, ge=0.0, description="Фактическая стоимость генерации")

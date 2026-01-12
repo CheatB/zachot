@@ -8,7 +8,7 @@ import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { Container, Stack, Button, Card, Input } from '@/ui'
 import { useEffect, useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuthContext } from '../auth/authContext'
 import { getTelegramLink, checkTelegramAuth, emailLogin } from '@/shared/api/auth'
 
@@ -105,8 +105,43 @@ function LoginPage() {
 
   return (
     <Container size="full">
-      <Stack align="center" gap="3xl" style={{ paddingTop: '10vh', paddingBottom: 'var(--spacing-80)' }}>
+      <Stack align="center" gap="3xl" style={{ paddingTop: '5vh', paddingBottom: 'var(--spacing-80)' }}>
         
+        {/* Logo at the top */}
+        <Link 
+          to="/" 
+          style={{ 
+            textDecoration: 'none', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 'var(--spacing-12)',
+            marginBottom: '20px' 
+          }}
+        >
+          <div style={{
+            width: '40px',
+            height: '40px',
+            backgroundColor: 'var(--color-neutral-100)',
+            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--color-neutral-0)'
+          }}>
+            <svg width="22" height="18" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 7.5L6 12.5L17 1.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <span style={{ 
+            fontSize: '24px', 
+            fontWeight: 800, 
+            color: 'var(--color-neutral-100)',
+            letterSpacing: '-0.02em'
+          }}>
+            Зачёт
+          </span>
+        </Link>
+
         {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
