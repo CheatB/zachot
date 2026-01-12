@@ -35,7 +35,12 @@ class TaskWorker(BaseWorker):
             if len(topic.strip()) < 10:
                 error_msg = "Слишком короткое условие. Пожалуйста, пришлите текст задачи или фото."
                 generation_store.update(job.generation_id, result_content=error_msg, status="FAILED")
-                return JobResult(job_id=job.id, success=False, output_payload={"reason": "too_short"}, finished_at=datetime.now())
+                return JobResult(
+                    job_id=job.id, 
+                    success=False, 
+                    error={"code": "too_short", "message": error_msg}, 
+                    finished_at=datetime.now()
+                )
 
             # 2. Семантическая классификация через дешевую модель
             classifier_prompt = prompt_service.construct_classifier_prompt(topic)
@@ -51,7 +56,12 @@ class TaskWorker(BaseWorker):
             if classification.get("type") == "chat":
                 error_msg = "Я решаю конкретные учебные задачи. Для общих вопросов или написания текстов используйте соответствующие разделы."
                 generation_store.update(job.generation_id, result_content=error_msg, status="FAILED")
-                return JobResult(job_id=job.id, success=False, output_payload={"reason": "not_a_task"}, finished_at=datetime.now())
+                return JobResult(
+                    job_id=job.id, 
+                    success=False, 
+                    error={"code": "not_a_task", "message": error_msg}, 
+                    finished_at=datetime.now()
+                )
 
             # --- ОСНОВНАЯ ЛОГИКА РЕШЕНИЯ ---
             # Выбор модели
@@ -91,7 +101,7 @@ class TaskWorker(BaseWorker):
                 raise ValueError("Failed to get solution from AI")
                 
             # Обновляем контент в базе
-            generation_store.update(job.generation_id, result_content=result_text, status="COMPLETED")
+            generation_store.update(job.generation_id, result_content=result_text, status="completed")
             logger.info("Task solved successfully")
             
             return JobResult(

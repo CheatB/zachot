@@ -34,7 +34,7 @@ class TextStructureWorker(BaseWorker):
             # 1. Проверка на минимальный ввод
             if len(topic.strip()) < 5:
                 error_msg = "Пожалуйста, введите тему работы для начала генерации."
-                generation_store.update(job.generation_id, result_content=error_msg, status="failed")
+                generation_store.update(job.generation_id, result_content=error_msg, status="FAILED")
                 return JobResult(
                     job_id=job.id, 
                     success=False, 
@@ -55,7 +55,7 @@ class TextStructureWorker(BaseWorker):
             classification = json.loads(raw_class or '{"type": "task"}')
             if classification.get("type") == "chat":
                 error_msg = "Этот раздел предназначен для создания академических работ. Пожалуйста, введите тему для реферата, статьи или курсовой."
-                generation_store.update(job.generation_id, result_content=error_msg, status="failed")
+                generation_store.update(job.generation_id, result_content=error_msg, status="FAILED")
                 return JobResult(
                     job_id=job.id, 
                     success=False, 
@@ -68,7 +68,7 @@ class TextStructureWorker(BaseWorker):
         except Exception as e:
             logger.error(f"Error executing job {job.id}: {e}", exc_info=True)
             error_msg = f"Произошла ошибка при генерации: {str(e)}"
-            generation_store.update(job.generation_id, result_content=error_msg, status="failed")
+            generation_store.update(job.generation_id, result_content=error_msg, status="FAILED")
             return JobResult(
                 job_id=job.id,
                 success=False,
