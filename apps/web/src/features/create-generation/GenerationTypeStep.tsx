@@ -73,32 +73,6 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
       style={{ width: '100%' }}
     >
       <div className="wizard-step">
-        <h2
-          className="wizard-step__title"
-          style={{
-            fontSize: 'var(--font-size-2xl)',
-            fontWeight: 'var(--font-weight-bold)',
-            marginBottom: 'var(--spacing-8)',
-            color: 'var(--color-neutral-100)',
-            letterSpacing: '-0.02em',
-            textAlign: 'left'
-          }}
-        >
-          С чего начнём?
-        </h2>
-        <p
-          className="wizard-step__subtitle"
-          style={{
-            fontSize: 'var(--font-size-base)',
-            color: 'var(--color-text-secondary)',
-            marginBottom: 'var(--spacing-40)',
-            lineHeight: 'var(--line-height-relaxed)',
-            textAlign: 'left'
-          }}
-        >
-          Выберите формат работы. На следующем шаге мы уточним тему и детали.
-        </p>
-
         <div className="wizard-type-grid">
           {typeOptions.map((option) => {
             const isSelected = selectedType === option.type
@@ -157,9 +131,9 @@ const stepStyles = `
 
 .wizard-type-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-32);
-  max-width: 1800px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-24);
+  max-width: 1400px;
   margin: 0;
   width: 100%;
   padding: 0;
@@ -167,7 +141,8 @@ const stepStyles = `
 
 @media (max-width: 1024px) {
   .wizard-type-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-16);
   }
 }
 
@@ -181,8 +156,8 @@ const stepStyles = `
 .wizard-type-card {
   position: relative;
   width: 100%;
-  min-height: 275px; /* Увеличено на 10px (было 265px) */
-  padding: var(--spacing-24) 4px;
+  min-height: 275px;
+  padding: var(--spacing-24) var(--spacing-12); /* Отступ от краев уменьшен */
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
@@ -216,12 +191,12 @@ const stepStyles = `
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
-  max-width: 52%;
+  max-width: 58%; /* Чуть больше места для текста */
   height: 100%;
 }
 
 .wizard-type-card__title {
-  font-size: calc(var(--font-size-lg) + 10px); /* Уменьшено на 1 пиксель */
+  font-size: calc(var(--font-size-lg) + 9px); /* Уменьшено на 1 пиксель (было +10) */
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
@@ -232,7 +207,7 @@ const stepStyles = `
 }
 
 .wizard-type-card__description {
-  font-size: calc(var(--font-size-xs) + 2px); /* Уменьшено еще на 1 пиксель */
+  font-size: calc(var(--font-size-xs) + 1px); /* Уменьшено на 1 пиксель (было +2) */
   color: var(--color-text-secondary);
   line-height: 1.3;
 }

@@ -104,8 +104,8 @@ function CreateGenerationPage() {
   const getStepHeader = (): { title: string; subtitle: string } => {
     if (currentStep === 1) {
       return {
-        title: 'Создать новую работу',
-        subtitle: 'Мы поможем подготовить качественную работу по всем академическим нормам'
+        title: 'С чего начнём?',
+        subtitle: 'Выберите формат работы. На следующем шаге мы уточним тему и детали.'
       }
     }
 
