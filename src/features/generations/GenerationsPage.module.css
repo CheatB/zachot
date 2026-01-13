@@ -1,0 +1,117 @@
+.container {
+  padding-top: var(--spacing-32);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: var(--spacing-24);
+  gap: var(--spacing-24);
+  flex-wrap: wrap;
+}
+
+.title {
+  margin-bottom: var(--spacing-12);
+  color: var(--color-neutral-100);
+  font-size: var(--font-size-2xl);
+}
+
+.subtitle {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  max-width: 600px;
+  margin: 0;
+}
+
+.searchWrapper {
+  margin-bottom: var(--spacing-32);
+}
+
+.searchInput {
+  max-width: 480px;
+  box-shadow: var(--elevation-1);
+  border-radius: var(--radius-md);
+}
+
+.tableWrapper {
+  background: white;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border-base);
+  overflow: hidden;
+  box-shadow: var(--elevation-1);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th {
+  padding: var(--spacing-16) var(--spacing-24);
+  background-color: var(--color-neutral-5);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--color-border-base);
+}
+
+.table td {
+  padding: var(--spacing-16) var(--spacing-24);
+  border-bottom: 1px solid var(--color-border-light);
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover td {
+  background-color: var(--color-neutral-5);
+}
+
+.genTitle {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  margin-bottom: 4px;
+}
+
+.genModule {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.credits {
+  font-weight: 700;
+  color: var(--color-neutral-100);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.creditsIcon {
+  font-size: 14px;
+}
+
+.date {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.actionCell {
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .table th:nth-child(2),
+  .table td:nth-child(2),
+  .table th:nth-child(3),
+  .table td:nth-child(3) {
+    display: none;
+  }
+}

@@ -8,7 +8,7 @@ import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { Container, Stack, Button, Card, Input } from '@/ui'
 import { useEffect, useState, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuthContext } from '../auth/authContext'
 import { getTelegramLink, checkTelegramAuth, emailLogin } from '@/shared/api/auth'
 
@@ -17,8 +17,6 @@ type AuthView = 'main' | 'email'
 function LoginPage() {
   const { isAuthenticated, loginFromLanding } = useAuthContext()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const next = searchParams.get('next') || '/'
   const [loading, setLoading] = useState(false)
   const [authLink, setAuthLink] = useState<string | null>(null)
   const pollingInterval = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -33,12 +31,12 @@ function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(next)
+      navigate('/')
     }
     return () => {
       if (pollingInterval.current) clearInterval(pollingInterval.current)
     }
-  }, [isAuthenticated, navigate, next])
+  }, [isAuthenticated, navigate])
 
   const startPolling = (token: string) => {
     pollingInterval.current = setInterval(async () => {
@@ -47,7 +45,7 @@ function LoginPage() {
         if (result.status === 'success' && result.user_id) {
           if (pollingInterval.current) clearInterval(pollingInterval.current)
           loginFromLanding(result.user_id, result.user_id)
-          navigate(next)
+          navigate('/')
         }
       } catch (error) {
         console.error('Polling error:', error)
@@ -80,7 +78,7 @@ function LoginPage() {
     try {
       const result = await emailLogin(email, password)
       loginFromLanding(result.token, result.user_id)
-      navigate(next)
+      navigate('/')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Ошибка авторизации')
     } finally {
@@ -107,8 +105,43 @@ function LoginPage() {
 
   return (
     <Container size="full">
-      <Stack align="center" gap="3xl" style={{ paddingTop: '10vh', paddingBottom: 'var(--spacing-80)' }}>
+      <Stack align="center" gap="3xl" style={{ paddingTop: '5vh', paddingBottom: 'var(--spacing-80)' }}>
         
+        {/* Logo at the top */}
+        <Link 
+          to="/" 
+          style={{ 
+            textDecoration: 'none', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 'var(--spacing-12)',
+            marginBottom: '20px' 
+          }}
+        >
+          <div style={{
+            width: '40px',
+            height: '40px',
+            backgroundColor: 'var(--color-neutral-100)',
+            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--color-neutral-0)'
+          }}>
+            <svg width="22" height="18" viewBox="0 0 18 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 7.5L6 12.5L17 1.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <span style={{ 
+            fontSize: '24px', 
+            fontWeight: 800, 
+            color: 'var(--color-neutral-100)',
+            letterSpacing: '-0.02em'
+          }}>
+            Зачёт
+          </span>
+        </Link>
+
         {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

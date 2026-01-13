@@ -1,7 +1,6 @@
 /**
  * GenerationsPage
- * Страница списка генераций
- * Updated for "juicy" landing page feel
+ * Страница списка генераций в табличном виде
  */
 
 import { useState, useCallback } from 'react'
@@ -13,13 +12,12 @@ import { Container, Stack, Button, EmptyState, Input } from '@/ui'
 import GenerationsList from './GenerationsList'
 import FirstTimeEmptyState from './FirstTimeEmptyState'
 import { type Generation } from '@/shared/api/generations'
+import styles from './GenerationsPage.module.css'
 
 function GenerationsPage() {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
-  const shouldReduceMotion = false
   
-  // Состояния для управления экранами
   const [hasGenerations, setHasGenerations] = useState<boolean | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -56,65 +54,50 @@ function GenerationsPage() {
   }
 
   return (
-    <Container size="lg">
-      <Stack gap="xl" style={{ paddingTop: 'var(--spacing-32)' }}>
-        {/* Рендерим заголовок и поиск всегда, если мы не на экране "Первая генерация" */}
+    <Container size="full">
+      <Stack gap="xl" className={styles.container}>
         {(isLoading || hasGenerations !== false) && (
           <motion.div
-            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
               duration: motionTokens.duration.slow,
               ease: motionTokens.easing.out,
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'var(--spacing-24)', gap: 'var(--spacing-24)', flexWrap: 'wrap' }}>
+            <div className={styles.header}>
               <div>
-                <h1 style={{ marginBottom: 'var(--spacing-12)', color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>
-                  Мои генерации
-                </h1>
-                <p style={{ 
-                  fontSize: 'var(--font-size-lg)', 
-                  color: 'var(--color-text-secondary)',
-                  maxWidth: '600px',
-                  margin: 0
-                }}>
-                  История ваших запросов и активные процессы
-                </p>
+                <h1 className={styles.title}>Мои генерации</h1>
+                <p className={styles.subtitle}>История ваших запросов и активные процессы</p>
               </div>
               <Button variant="primary" size="lg" onClick={handleNewGeneration}>
                 ✨ Новая генерация
               </Button>
             </div>
 
-            <div style={{ marginBottom: 'var(--spacing-32)' }}>
+            <div className={styles.searchWrapper}>
               <Input 
                 placeholder="Поиск по названию..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ 
-                  maxWidth: '480px',
-                  boxShadow: 'var(--elevation-1)',
-                  borderRadius: 'var(--radius-md)'
-                }}
+                className={styles.searchInput}
               />
             </div>
           </motion.div>
         )}
 
-        {/* Индикатор загрузки поверх списка */}
         {isLoading && hasGenerations === null && (
-          <h1 style={{ color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-2xl)' }}>Загрузка...</h1>
+          <div style={{ padding: '40px 0' }}>
+            <h2 style={{ color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-xl)' }}>Загрузка ваших данных...</h2>
+          </div>
         )}
 
-        {/* Экран для новичков */}
         {!isLoading && hasGenerations === false && (
           <div style={{ paddingTop: 'var(--spacing-48)' }}>
             <FirstTimeEmptyState onCreateFirst={handleNewGeneration} />
           </div>
         )}
 
-        {/* Сам список (он сам управляет загрузкой данных) */}
         <GenerationsList
           onGenerationClick={handleGenerationClick}
           onHasGenerations={handleDataLoaded}

@@ -1,0 +1,66 @@
+.adminTableV2 {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.adminTableV2 th {
+  padding: var(--spacing-16) var(--spacing-24);
+  background-color: var(--color-neutral-10);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--color-border-base);
+}
+.adminTableV2 td {
+  padding: var(--spacing-16) var(--spacing-24);
+  border-bottom: 1px solid var(--color-border-base);
+}
+.adminTableV2 tr:hover td {
+  background-color: var(--color-neutral-5);
+}
+
+.adminModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+.adminModalContent {
+  background: white;
+  width: 100%;
+  max-width: 700px;
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.adminModalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.adminModalHeader h3 { margin: 0; font-size: 20px; font-weight: 800; }
+.closeBtn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--color-text-muted); }
+
+.detailSection { display: flex; gap: 12px; font-size: 14px; }
+.detailSection label { font-weight: bold; color: var(--color-text-muted); min-width: 120px; }
+
+.statsGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0; }
+.statCard { background: var(--color-neutral-5); padding: 16px; border-radius: 12px; }
+.statLabel { font-size: 11px; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 4px; }
+.statValue { font-size: 18px; font-weight: 800; }
+
+.usageDetailsTable { width: 100%; border-collapse: collapse; font-size: 12px; }
+.usageDetailsTable th { text-align: left; padding: 8px; border-bottom: 1px solid var(--color-border-light); color: var(--color-text-muted); }
+.usageDetailsTable td { padding: 8px; border-bottom: 1px solid var(--color-neutral-5); }
+
+.divider { height: 1px; background: var(--color-border-light); margin: 8px 0; }
+.adminModalFooter { margin-top: 32px; display: flex; justify-content: flex-end; }
+
+

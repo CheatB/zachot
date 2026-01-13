@@ -1,5 +1,62 @@
+from datetime import datetime
+from uuid import UUID, uuid4
+from sqlalchemy import create_engine, Column, String, Integer, DateTime, ForeignKey, CHAR, TypeDecorator
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 import os
-from packages.database.src.models import Base, User, AuthToken, create_db_engine, get_session_factory
 
-engine = create_db_engine(os.getenv("DATABASE_URL", "postgresql://marka:marka_pass@localhost:5433/zachot"))
-SessionLocal = get_session_factory(engine)
+Base = declarative_base()
+
+class GUID(TypeDecorator):
+    """Platform-independent GUID type.
+    Uses PostgreSQL's UUID type, otherwise uses CHAR(32), storing as string without dashes.
+    """
+    impl = CHAR
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(PG_UUID())
+        else:
+            return dialect.type_descriptor(CHAR(32))
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        elif dialect.name == 'postgresql':
+            return str(value)
+        else:
+            if not isinstance(value, UUID):
+                return "%.32x" % UUID(value).int
+            else:
+                return "%.32x" % value.int
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        else:
+            if not isinstance(value, UUID):
+                return UUID(value)
+            else:
+                return value
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(GUID(), primary_key=True, default=uuid4)
+    email = Column(String, unique=True, index=True)
+    telegram_id = Column(String, unique=True, index=True, nullable=True)
+    telegram_username = Column(String, nullable=True)
+    hashed_password = Column(String, nullable=True)
+    generations_used = Column(Integer, default=0)
+    generations_limit = Column(Integer, default=5)
+
+class AuthToken(Base):
+    __tablename__ = "auth_tokens"
+    token = Column(String, primary_key=True)
+    user_id = Column(GUID(), ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    is_used = Column(Integer, default=0)
+    user = relationship("User")
+
+engine = create_engine(os.getenv("DATABASE_URL", "postgresql://marka:marka_pass@localhost:5433/zachot"))
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

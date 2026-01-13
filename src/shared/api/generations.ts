@@ -1,19 +1,53 @@
 import { apiFetch } from './http';
+import type { 
+  WorkType, 
+  StructureItem, 
+  SourceItem, 
+  FormattingSettings,
+  ComplexityLevel,
+  PresentationStyle,
+  TaskMode
+} from '@/features/create-generation/types';
+
+export interface GenerationInputPayload {
+  topic?: string;
+  input?: string;
+  goal?: string;
+  idea?: string;
+  volume?: number;
+  current_step?: number;
+  presentation_style?: PresentationStyle;
+  task_mode?: TaskMode;
+  use_ai_images?: boolean;
+  use_smart_processing?: boolean;
+  has_files?: boolean;
+}
+
+export interface ImageSuggestion {
+  slideId: number;
+  description: string;
+  style: string;
+}
+
+export interface GenerationSettingsPayload {
+  structure?: StructureItem[];
+  sources?: SourceItem[];
+  formatting?: FormattingSettings;
+  visual_upsell_suggestions?: ImageSuggestion[];
+}
 
 export interface Generation {
   id: string;
   title: string;
   status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'DRAFT' | 'GENERATED' | 'EXPORTED' | 'CANCELED' | 'WAITING_USER';
-  module: 'TEXT' | 'PRESENTATION' | 'TASK';
-  work_type?: string | null;
-  complexity_level?: string;
+  module: 'TEXT' | 'PRESENTATION' | 'TASK' | 'GOST_FORMAT';
+  work_type?: WorkType | null;
+  complexity_level?: ComplexityLevel;
   humanity_level?: number;
   created_at: string;
   updated_at: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  input_payload: any & { current_step?: number };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  settings_payload: any;
+  input_payload: GenerationInputPayload;
+  settings_payload: GenerationSettingsPayload;
   result_content?: string;
 }
 
@@ -26,10 +60,8 @@ export interface CreateGenerationData {
   work_type?: string | null;
   complexity_level?: string;
   humanity_level?: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  input_payload: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  settings_payload?: any;
+  input_payload: GenerationInputPayload;
+  settings_payload?: GenerationSettingsPayload;
 }
 
 export async function fetchGenerations(): Promise<GenerationsResponse> {

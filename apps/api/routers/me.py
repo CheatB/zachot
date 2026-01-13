@@ -3,35 +3,30 @@
 """
 
 from uuid import UUID
-from datetime import datetime
 from fastapi import APIRouter, HTTPException, Header
+from sqlalchemy import select
 from ..schemas import MeResponse
 from ..database import SessionLocal, User as UserDB
 
 router = APIRouter(prefix="/me", tags=["user"])
-
-# Временный ID для режима интеграции (если токен не передан)
-DEFAULT_USER_ID = UUID("00000000-0000-0000-0000-000000000001")
 
 @router.get("", response_model=MeResponse)
 async def get_me(authorization: str = Header(None)):
     """
     Возвращает информацию о текущем пользователе, его подписке и лимитах.
     """
-    # 1. Проверяем наличие токена
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
         
     token = authorization.split(" ")[1]
     try:
-        user_id = UUID(token) # В MVP токен — это просто UUID пользователя
+        user_id = UUID(token)
     except ValueError:
         raise HTTPException(status_code=401, detail="Invalid token format")
 
     with SessionLocal() as session:
-        user = session.query(UserDB).filter(UserDB.id == user_id).first()
+        user = session.execute(select(UserDB).where(UserDB.id == user_id)).scalar_one_or_none()
         
-        # 2. Если пользователя нет — возвращаем 401
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
 
@@ -43,16 +38,16 @@ async def get_me(authorization: str = Header(None)):
             subscription={
                 "planName": user.plan_name or "BASE 499",
                 "status": user.subscription_status or "active",
-                "monthlyPriceRub": user.monthly_price_rub if user.monthly_price_rub is not None else 499,
+                "monthlyPriceRub": user.monthly_price_rub,
                 "nextBillingDate": user.next_billing_date
             },
             usage={
-                "generationsUsed": user.generations_used or 0,
-                "generationsLimit": user.generations_limit or 5,
-                "tokensUsed": user.tokens_used or 0,
-                "tokensLimit": user.tokens_limit or 100000,
-                "creditsBalance": getattr(user, 'credits_balance', 5) if getattr(user, 'credits_balance', None) is not None else 5,
-                "creditsUsed": getattr(user, 'credits_used', 0) if getattr(user, 'credits_used', None) is not None else 0,
+                "generationsUsed": user.generations_used,
+                "generationsLimit": user.generations_limit,
+                "tokensUsed": user.tokens_used,
+                "tokensLimit": user.tokens_limit,
+                "creditsBalance": user.credits_balance,
+                "creditsUsed": user.credits_used,
             },
             fairUseMode=user.fair_use_mode or "normal",
             capabilities={

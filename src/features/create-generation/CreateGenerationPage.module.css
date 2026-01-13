@@ -1,0 +1,67 @@
+.wizardProgress {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  margin-bottom: var(--spacing-64);
+}
+
+.wizardProgressItem {
+  display: flex;
+  align-items: center;
+}
+
+.wizardProgressDot {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-neutral-30);
+  transition: all var(--motion-duration-slow) var(--motion-easing-out);
+  border: 2px solid var(--color-background);
+  box-shadow: 0 0 0 1px var(--color-neutral-30);
+  position: relative;
+  z-index: 2;
+}
+
+.wizardProgressDotActive {
+  background-color: var(--color-background);
+  border-color: var(--color-accent-base);
+  box-shadow: 0 0 0 4px var(--color-accent-light);
+  transform: scale(1.2);
+}
+
+.wizardProgressDotCompleted {
+  background-color: var(--color-accent-base);
+  box-shadow: 0 0 0 1px var(--color-accent-base);
+}
+
+.wizardProgressLine {
+  width: 60px;
+  height: 2px;
+  background-color: var(--color-neutral-30);
+  transition: all var(--motion-duration-slow) var(--motion-easing-out);
+  margin: 0 -1px;
+}
+
+.wizardProgressLineActive {
+  background-color: var(--color-accent-base);
+}
+
+.wizardNavigation {
+  display: flex;
+  gap: var(--spacing-16);
+}
+
+@media (max-width: 768px) {
+  .wizardProgressLine {
+    width: 30px;
+  }
+  
+  .wizardNavigation {
+    flex-direction: column-reverse;
+  }
+  
+  .wizardNavigation button {
+    width: 100%;
+  }
+}

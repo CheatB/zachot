@@ -35,6 +35,12 @@ const typeInfoMap: Record<GenerationType, GenerationTypeInfo> = {
     hint: 'Укажите известные данные и что именно нужно найти',
     helperText: 'ИИ проанализирует условие и подготовит пошаговый алгоритм решения.',
   },
+  gost_format: {
+    title: 'Оформление работы',
+    placeholder: 'Загрузите файл на следующем шаге...',
+    hint: 'AI исправит форматирование и ошибки',
+    helperText: 'Вы сможете выбрать конкретные параметры ГОСТа для оформления.',
+  },
 }
 
 function GenerationInputStep({ type, input, onInputChange }: GenerationInputStepProps) {

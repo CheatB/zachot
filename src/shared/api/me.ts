@@ -21,6 +21,8 @@ export interface MeResponse {
     generationsLimit: number;
     tokensUsed: number;
     tokensLimit: number;
+    creditsBalance: number;
+    creditsUsed: number;
   };
   fairUseMode: 'normal' | 'degraded' | 'strict';
   capabilities: {
@@ -39,4 +41,6 @@ export interface MeResponse {
 export async function fetchMe(): Promise<MeResponse> {
   return apiFetch<MeResponse>('/me')
 }
+
+
 

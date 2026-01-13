@@ -1,0 +1,242 @@
+.sidebarOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-surface-overlay);
+  z-index: var(--z-index-modal);
+}
+
+@media (min-width: 1024px) {
+  .sidebarOverlay {
+    display: none;
+  }
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 280px;
+  background-color: var(--color-neutral-10);
+  border-right: 1px solid var(--color-border-base);
+  z-index: var(--z-index-modal);
+  overflow-y: auto;
+}
+
+@media (min-width: 1024px) {
+  .sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 280px;
+    flex-shrink: 0;
+    background-color: var(--color-surface-base);
+    border-right: 1px solid var(--color-border-base);
+    z-index: var(--z-index-sticky);
+  }
+}
+
+.sidebarContent {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.sidebarLogo {
+  padding: var(--spacing-32) var(--spacing-24);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+  border-bottom: 1px solid var(--color-border-light);
+  flex-shrink: 0;
+}
+
+.sidebarNav {
+  padding: var(--spacing-24);
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebarList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  list-style: none;
+  margin-bottom: var(--spacing-32);
+}
+
+.sidebarReferralTop {
+  width: 100%;
+  margin-top: var(--spacing-24);
+}
+
+.sidebarCreditsTop {
+  width: 100%;
+  margin-top: var(--spacing-12);
+}
+
+.creditsDisplayBlock {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-16);
+  background-color: var(--color-neutral-10);
+  border: 1px solid var(--color-border-base);
+  border-radius: var(--radius-md);
+  text-align: left;
+}
+
+.creditsDisplayIcon {
+  font-size: 24px;
+  background: white;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  box-shadow: var(--elevation-1);
+}
+
+.creditsDisplayInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.creditsDisplayLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.creditsDisplayValue {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-neutral-100);
+}
+
+.sidebarItem {
+  width: 100%;
+  padding: var(--spacing-12) var(--spacing-20);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-80);
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--motion-duration-base) var(--motion-easing-out);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebarItem:hover:not(:disabled) {
+  background-color: var(--color-neutral-20);
+  color: var(--color-text-primary);
+  transform: translateX(4px);
+}
+
+.sidebarItemActive {
+  background-color: var(--color-accent-light);
+  color: var(--color-accent-base);
+  border-color: var(--color-accent-base);
+  font-weight: var(--font-weight-bold);
+}
+
+.sidebarItemDisabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sidebarItemLabel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.sidebarItemHint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-normal);
+  background: var(--color-neutral-20);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.sidebarFooter {
+  padding: var(--spacing-24);
+  border-top: 1px solid var(--color-border-light);
+  background-color: var(--color-neutral-10);
+}
+
+.sidebarReferral {
+  width: 100%;
+}
+
+.referralBlock {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-16);
+  background-color: var(--color-accent-light);
+  border: 1px dashed var(--color-accent-base);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.referralBlock:hover {
+  background-color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--elevation-1);
+}
+
+.referralIcon {
+  font-size: 24px;
+}
+
+.referralContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.referralTitle {
+  font-size: var(--font-size-sm);
+  font-weight: bold;
+  color: var(--color-accent-base);
+}
+
+.referralSubtitle {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.sidebarLegal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.legalLink {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  line-height: 1.4;
+}
+
+.legalLink:hover {
+  color: var(--color-accent-base);
+  text-decoration: underline;
+}

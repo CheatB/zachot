@@ -11,6 +11,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, HTTPException, status, Header, Depends
 from fastapi.responses import StreamingResponse, Response
 from ..services.export_service import export_service
+from ..services.generation_service import generation_service
 
 from ..schemas import ActionRequest, GenerationCreateRequest, GenerationResponse, GenerationsResponse, GenerationUpdateRequest
 from ..storage import generation_store
@@ -37,7 +38,6 @@ def get_current_user(authorization: str = Header(None)) -> UserDB:
     with SessionLocal() as session:
         user = session.query(UserDB).filter(UserDB.id == user_id).first()
         if not user:
-            # Auto-create for MVP if token looks like a UUID
             user = UserDB(id=user_id, email=f"user_{user_id.hex[:8]}@zachet.tech")
             session.add(user)
             session.commit()
@@ -46,9 +46,6 @@ def get_current_user(authorization: str = Header(None)) -> UserDB:
 
 @router.get("", response_model=GenerationsResponse)
 async def list_generations(user: UserDB = Depends(get_current_user)) -> GenerationsResponse:
-    """
-    Получает список всех генераций текущего пользователя.
-    """
     try:
         generations = generation_store.get_all_for_user(user.id)
         generations.sort(key=lambda x: x.created_at, reverse=True)
@@ -63,56 +60,16 @@ async def create_generation(
     request: GenerationCreateRequest,
     user: UserDB = Depends(get_current_user)
 ) -> GenerationResponse:
-    try:
-        # Проверяем баланс кредитов
-        work_type = request.work_type or "other"
-        required_credits = get_credit_cost(work_type)
-        credits_balance = getattr(user, 'credits_balance', 5) or 5
-        
-        if credits_balance < required_credits:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Недостаточно кредитов. Для {work_type} требуется {format_credits_text(required_credits)}, "
-                       f"доступно: {format_credits_text(credits_balance)}. Пожалуйста, обновите тариф."
-            )
-
-        generation_id = uuid4()
-        now = datetime.now()
-        generation = Generation(
-            id=generation_id,
-            user_id=user.id,
-            module=request.module,
-            status=GenerationStatus.DRAFT,
-            title=request.input_payload.get("topic") or request.input_payload.get("input"),
-            work_type=request.work_type,
-            complexity_level=request.complexity_level,
-            humanity_level=request.humanity_level,
-            created_at=now,
-            updated_at=now,
-            input_payload=request.input_payload,
-            settings_payload=request.settings_payload or {},
-            usage_metadata=[],
-        )
-        
-        saved_generation = generation_store.create(generation)
-        
-        # Списываем кредиты после успешного создания
-        with SessionLocal() as session:
-            db_user = session.query(UserDB).filter(UserDB.id == user.id).first()
-            if db_user:
-                db_user.credits_balance = (db_user.credits_balance or 5) - required_credits
-                db_user.credits_used = (db_user.credits_used or 0) + required_credits
-                db_user.generations_used = (db_user.generations_used or 0) + 1
-                session.commit()
-                logger.info(f"Deducted {required_credits} credits from user {user.id}. New balance: {db_user.credits_balance}")
-        
-        logger.info(f"Created generation {generation_id} for user {user.id}")
-        return GenerationResponse.model_validate(saved_generation)
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error creating generation: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+    saved_generation = await generation_service.create_draft(
+        user=user,
+        module=request.module,
+        input_payload=request.input_payload.model_dump(),
+        work_type=request.work_type,
+        complexity=request.complexity_level,
+        humanity=request.humanity_level,
+        settings=request.settings_payload.model_dump() if request.settings_payload else {}
+    )
+    return GenerationResponse.model_validate(saved_generation)
 
 
 @router.get("/{generation_id}", response_model=GenerationResponse)
@@ -129,18 +86,13 @@ async def update_generation(
     request: GenerationUpdateRequest,
     user: UserDB = Depends(get_current_user),
 ) -> GenerationResponse:
-    generation = generation_store.get(generation_id)
-    if generation is None or generation.user_id != user.id:
-        raise HTTPException(status_code=404, detail="Generation not found")
-    if generation.status != GenerationStatus.DRAFT:
-        raise HTTPException(status_code=409, detail="Only DRAFT generations can be updated.")
-    
-    update_data = {}
-    if request.input_payload is not None: update_data["input_payload"] = request.input_payload
-    if request.settings_payload is not None: update_data["settings_payload"] = request.settings_payload
-    if not update_data: return GenerationResponse.model_validate(generation)
-    
-    return GenerationResponse.model_validate(generation_store.update(generation_id, **update_data))
+    updated_gen = await generation_service.update_draft(
+        generation_id=generation_id,
+        user_id=user.id,
+        input_payload=request.input_payload.model_dump(exclude_unset=True) if request.input_payload else None,
+        settings_payload=request.settings_payload.model_dump(exclude_unset=True) if request.settings_payload else None
+    )
+    return GenerationResponse.model_validate(updated_gen)
 
 
 @router.post("/{generation_id}/actions", response_model=GenerationResponse)
@@ -149,26 +101,11 @@ async def execute_action(
     request: ActionRequest,
     user: UserDB = Depends(get_current_user),
 ) -> GenerationResponse:
-    generation = generation_store.get(generation_id)
-    if generation is None or generation.user_id != user.id:
-        raise HTTPException(status_code=404, detail="Generation not found")
-    
-    action = request.action
-    if action == "next":
-        target_status = GenerationStatus.RUNNING
-        if generation.status != GenerationStatus.DRAFT:
-            raise HTTPException(status_code=409, detail="Must be in DRAFT status")
-    elif action == "confirm":
-        target_status = GenerationStatus.RUNNING
-        if generation.status != GenerationStatus.WAITING_USER:
-            raise HTTPException(status_code=409, detail="Must be in WAITING_USER status")
-    elif action == "cancel":
-        target_status = GenerationStatus.CANCELED
-    else:
-        raise HTTPException(status_code=400, detail=f"Unknown action: {action}")
-    
-    updated_generation = GenerationStateMachine.transition(generation, target_status)
-    saved_generation = generation_store.save(updated_generation)
+    saved_generation = await generation_service.perform_action(
+        generation_id=generation_id,
+        user_id=user.id,
+        action=request.action
+    )
     return GenerationResponse.model_validate(saved_generation)
 
 

@@ -5,8 +5,8 @@
 
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
-import { Card, Badge, Button, Stack } from '@/ui'
-import type { GenerationType, GenerationTypeInfo, WorkType, TaskMode } from './types'
+import { Button, Stack } from '@/ui'
+import type { GenerationType, GenerationTypeInfo, WorkType, TaskMode, ComplexityLevel, FormattingSettings } from './types'
 import { workTypeConfigs } from './types'
 
 interface GenerationConfirmStepProps {
@@ -16,16 +16,23 @@ interface GenerationConfirmStepProps {
   input: string
   hasFiles: boolean
   useSmartProcessing: boolean
+  useAiImages: boolean
+  complexityLevel: ComplexityLevel
+  humanityLevel: number
+  volume: number
+  formatting: FormattingSettings
   onToggleSmartProcessing: (val: boolean) => void
   onConfirm: () => void
   onBack: () => void
+  onJumpToStep: (step: number) => void
   isSubmitting: boolean
 }
 
 const typeInfoMap: Record<GenerationType, GenerationTypeInfo> = {
-  text: { title: 'Реферат или доклад', placeholder: '', hint: '', helperText: '' },
+  text: { title: 'Текстовая работа', placeholder: '', hint: '', helperText: '' },
   presentation: { title: 'Презентация', placeholder: '', hint: '', helperText: '' },
   task: { title: 'Решение задач', placeholder: '', hint: '', helperText: '' },
+  gost_format: { title: 'Оформление по ГОСТу', placeholder: '', hint: '', helperText: '' },
 }
 
 function GenerationConfirmStep({ 
@@ -35,14 +42,51 @@ function GenerationConfirmStep({
   input, 
   hasFiles, 
   useSmartProcessing,
+  useAiImages,
+  complexityLevel,
+  humanityLevel,
+  volume,
+  formatting,
   onToggleSmartProcessing,
   onConfirm, 
-  onBack, 
+  onBack,
+  onJumpToStep,
   isSubmitting 
 }: GenerationConfirmStepProps) {
   const typeInfo = typeInfoMap[type]
   const workTypeLabel = workType ? workTypeConfigs[workType].label : null
   const taskModeLabel = taskMode === 'quick' ? 'Быстрое решение' : 'Пошаговый разбор'
+
+  const SummaryItem = ({ label, value, step }: { label: string, value: React.ReactNode, step?: number }) => (
+    <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', padding: '12px 0', gap: '24px' }}>
+      <span style={{ fontSize: '18px', color: 'var(--color-text-muted)', minWidth: '160px' }}>{label}</span>
+      <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+        <span style={{ fontSize: '20px', fontWeight: 600, color: 'var(--color-neutral-100)' }}>{value}</span>
+        {step && (
+          <button 
+            onClick={() => onJumpToStep(step)}
+            style={{ 
+              fontSize: '12px', 
+              color: 'var(--color-accent-base)', 
+              background: 'none', 
+              border: 'none', 
+              padding: 0, 
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              fontWeight: 'bold'
+            }}
+          >
+            Изменить
+          </button>
+        )}
+      </div>
+    </div>
+  )
+
+  const getFormattingSummary = () => {
+    if (type === 'task') return null
+    return `${formatting.fontFamily}, ${formatting.fontSize}pt, ${formatting.lineSpacing === 1.5 ? '1.5 инт.' : `инт. ${formatting.lineSpacing}`}`
+  }
 
   return (
     <motion.div
@@ -53,55 +97,44 @@ function GenerationConfirmStep({
         duration: motionTokens.duration.base,
         ease: motionTokens.easing.out,
       }}
+      style={{ width: '100%' }}
     >
-      <div className="wizard-step">
-        <Stack gap="md">
-          <Card className="wizard-summary-card">
-            <div className="wizard-summary" style={{ padding: 'var(--spacing-20)' }}>
-              <Stack gap="md">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>Тип работы:</span>
-                  <Badge status="neutral">{workTypeLabel || typeInfo.title}</Badge>
-                </div>
-                
-                {type === 'task' && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>Режим:</span>
-                    <Badge status="success">{taskModeLabel}</Badge>
-                  </div>
-                )}
+      <div className="wizard-step" style={{ padding: 0 }}>
+        <Stack gap="lg" style={{ width: '100%' }}>
+          <div className="wizard-summary-content">
+            <Stack gap="sm">
+              <SummaryItem label="Тип работы:" value={workTypeLabel || typeInfo.title} step={1} />
+              
+              {type === 'task' ? (
+                <SummaryItem label="Режим решения:" value={taskModeLabel} step={1.3} />
+              ) : type === 'gost_format' ? (
+                <>
+                  <SummaryItem label="Оформление:" value={getFormattingSummary()} step={5.5} />
+                </>
+              ) : (
+                <>
+                  <SummaryItem label="Сложность:" value={complexityLevel === 'student' ? 'Студенческая' : 'Школьная'} step={1.7} />
+                  <SummaryItem label="Очеловечивание:" value={`${humanityLevel}%`} step={1.7} />
+                  <SummaryItem label="Объём:" value={`${volume} стр.`} step={3} />
+                  {type === 'text' && <SummaryItem label="Оформление:" value={getFormattingSummary()} step={5.5} />}
+                  {type === 'presentation' && (
+                    <SummaryItem 
+                      label="Иллюстрации:" 
+                      value={useAiImages ? 'Генерировать (+150 ₽)' : 'Без иллюстраций'} 
+                      step={2} 
+                    />
+                  )}
+                </>
+              )}
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                    {type === 'task' ? 'Условие:' : 'Тема:'}
-                  </span>
-                  <span style={{ 
-                    fontSize: 'var(--font-size-base)', 
-                    fontWeight: 'var(--font-weight-medium)', 
-                    color: 'var(--color-text-primary)',
-                    maxWidth: '70%',
-                    textAlign: 'right'
-                  }}>
-                    {input ? (input.length > 100 ? `${input.substring(0, 100)}...` : input) : (hasFiles ? 'Загружен файл' : '—')}
-                  </span>
-                </div>
+              <div style={{ height: '1px', backgroundColor: 'var(--color-border-light)', margin: '16px 0' }} />
 
-                {hasFiles && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>Прикреплено:</span>
-                    <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-success-base)' }}>✓ Файл(ы) загружен(ы)</span>
-                  </div>
-                )}
-              </Stack>
-            </div>
-          </Card>
-
-          <div className="wizard-info-box" style={{ padding: 'var(--spacing-16)', backgroundColor: 'var(--color-neutral-10)', borderRadius: 'var(--radius-md)' }}>
-            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
-              {type === 'task' 
-                ? 'Система проанализирует условие и подготовит подробное решение.' 
-                : 'На следующем этапе вы сможете отредактировать предложенную цель и план работы.'}
-            </p>
+              <SummaryItem 
+                label={type === 'task' ? 'Условие:' : type === 'gost_format' ? 'Файл:' : 'Тема:'} 
+                value={input ? (input.length > 150 ? `${input.substring(0, 150)}...` : input) : (hasFiles ? 'Загружен файл' : '—')} 
+                step={type === 'task' ? 1.2 : type === 'gost_format' ? 1.8 : 1.5}
+              />
+            </Stack>
           </div>
 
           {type === 'presentation' && (
@@ -132,10 +165,23 @@ function GenerationConfirmStep({
             </div>
           )}
 
-          <div className="wizard-actions" style={{ display: 'flex', gap: 'var(--spacing-16)', justifyContent: 'flex-end' }}>
-            <Button variant="secondary" onClick={onBack} disabled={isSubmitting}>Назад</Button>
-            <Button variant="primary" onClick={onConfirm} loading={isSubmitting} disabled={isSubmitting}>
-              {type === 'task' ? 'Начать решение' : 'Создать черновик'}
+          <div className="wizard-actions" style={{ display: 'flex', gap: 'var(--spacing-16)', justifyContent: 'flex-end', marginTop: 'var(--spacing-24)' }}>
+            <Button 
+              variant="secondary" 
+              onClick={onBack} 
+              disabled={isSubmitting}
+              style={{ height: '56px', padding: '0 40px', borderRadius: '4px', fontSize: '16px' }}
+            >
+              Назад
+            </Button>
+            <Button 
+              variant="primary" 
+              onClick={onConfirm} 
+              loading={isSubmitting} 
+              disabled={isSubmitting}
+              style={{ height: '56px', padding: '0 64px', borderRadius: '4px', fontSize: '16px' }}
+            >
+              {type === 'task' ? 'Начать решение' : type === 'gost_format' ? 'Оформить работу' : 'Создать работу'}
             </Button>
           </div>
         </Stack>

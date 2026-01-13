@@ -1,76 +1,31 @@
-"""
-Фикстуры для тестов domain layer.
-"""
-
 import pytest
-from datetime import datetime
-from uuid import uuid4
+import asyncio
+import pytest_asyncio
+from httpx import AsyncClient
+from apps.api.main import app
+from packages.database.src.models import Base
+from apps.api.database import engine, SessionLocal
 
-from packages.core_domain import (
-    Generation,
-    Step,
-    Artifact,
-    GenerationModule,
-    GenerationStatus,
-    StepStatus,
-    ArtifactType,
-    calculate_input_hash,
-)
+@pytest.fixture(scope="session")
+def event_loop():
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
 
-
-@pytest.fixture
-def sample_generation():
-    """Создаёт тестовую Generation в статусе DRAFT."""
-    return Generation(
-        id=uuid4(),
-        user_id=uuid4(),
-        module=GenerationModule.TEXT,
-        status=GenerationStatus.DRAFT,
-        created_at=datetime.now(),
-        updated_at=datetime.now(),
-        input_payload={"topic": "Python basics"},
-    )
-
+@pytest.fixture(scope="session", autouse=True)
+def setup_db():
+    Base.metadata.create_all(bind=engine)
+    yield
 
 @pytest.fixture
-def sample_step_pending():
-    """Создаёт тестовый Step в статусе PENDING."""
-    return Step(
-        id=uuid4(),
-        generation_id=uuid4(),
-        step_type="test_step",
-        status=StepStatus.PENDING,
-        input_payload={"test": "data"},
-        input_hash=calculate_input_hash({"test": "data"}),
-    )
+def db_session():
+    session = SessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
 
-
-@pytest.fixture
-def sample_step_running():
-    """Создаёт тестовый Step в статусе RUNNING."""
-    return Step(
-        id=uuid4(),
-        generation_id=uuid4(),
-        step_type="test_step",
-        status=StepStatus.RUNNING,
-        input_payload={"test": "data"},
-        input_hash=calculate_input_hash({"test": "data"}),
-        started_at=datetime.now(),
-        progress=50,
-    )
-
-
-@pytest.fixture
-def sample_artifact():
-    """Создаёт тестовый Artifact."""
-    return Artifact(
-        id=uuid4(),
-        generation_id=uuid4(),
-        artifact_type=ArtifactType.TEXT_DOC,
-        version=1,
-        content="Test content",
-        created_at=datetime.now(),
-    )
-
-
-
+@pytest_asyncio.fixture
+async def client():
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        yield ac

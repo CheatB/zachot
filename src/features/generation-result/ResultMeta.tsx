@@ -8,7 +8,7 @@ import { motion as motionTokens } from '@/design-tokens'
 import { Card, Badge } from '@/ui'
 
 interface ResultMetaProps {
-  type: 'TEXT' | 'PRESENTATION' | 'TASK'
+  type: 'TEXT' | 'PRESENTATION' | 'TASK' | 'GOST_FORMAT'
   durationSeconds?: number
 }
 
@@ -17,6 +17,8 @@ function ResultMeta({ type, durationSeconds }: ResultMetaProps) {
     switch (t) {
       case 'TEXT':
         return 'Текст'
+      case 'GOST_FORMAT':
+        return 'Оформление'
       case 'PRESENTATION':
         return 'Презентация'
       case 'TASK':

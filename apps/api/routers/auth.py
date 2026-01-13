@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException
 from ..database import SessionLocal, AuthTokenDB, User as UserDB
-from .generations import get_current_user
 import secrets
 import hashlib
 from pydantic import BaseModel, EmailStr
@@ -89,4 +88,3 @@ async def check_telegram_auth(token: str):
             }
         
         return {"status": "pending"}
-

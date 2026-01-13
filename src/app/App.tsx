@@ -10,6 +10,7 @@ import LoginPage from './pages/LoginPage'
 import LogoutPage from './pages/LogoutPage'
 import ProfilePage from './pages/ProfilePage'
 import BillingPage from './pages/BillingPage'
+import CheckoutPage from '@/features/billing/CheckoutPage'
 import NotFoundPage from './pages/NotFoundPage'
 import GenerationsPage from '@/features/generations/GenerationsPage'
 import CreateGenerationPage from '@/features/create-generation/CreateGenerationPage'
@@ -24,6 +25,7 @@ import AppBoundary from './AppBoundary'
 import AdminLayout from '@/features/admin/components/AdminLayout'
 import ModelRoutingPage from '@/features/admin/pages/ModelRoutingPage'
 import AdminUsersPage from '@/features/admin/pages/AdminUsersPage'
+import AdminGenerationsPage from '@/features/admin/pages/AdminGenerationsPage'
 import AdminAnalyticsPage from '@/features/admin/pages/AdminAnalyticsPage'
 
 interface ProtectedRouteProps {
@@ -57,6 +59,7 @@ function AppRoutes() {
         <Route path="/logout" element={<LogoutPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/billing" element={<BillingPage />} />
+        <Route path="/billing/checkout" element={<CheckoutPage />} />
         <Route path="/generations" element={<GenerationsPage />} />
         <Route path="/generations/new" element={<CreateGenerationPage />} />
         <Route path="/generations/:id/recovery" element={<GenerationRecoveryPage />} />
@@ -76,6 +79,7 @@ function AppRoutes() {
           <Route index element={<Navigate to="/admin/models" replace />} />
           <Route path="models" element={<ModelRoutingPage />} />
           <Route path="users" element={<AdminUsersPage />} />
+          <Route path="generations" element={<AdminGenerationsPage />} />
           <Route path="analytics" element={<AdminAnalyticsPage />} />
         </Route>
 

@@ -38,6 +38,13 @@ const typeOptions: (GenerationTypeOption & { illustration?: string; illustration
     icon: '',
     illustration: '/assets/illustrations/tasks.png'
   },
+  {
+    type: 'gost_format',
+    title: 'Оформление по ГОСТу',
+    description: 'Загрузите свой документ, и AI исправит оформление, орфографию и пунктуацию',
+    icon: '',
+    illustration: '/assets/illustrations/text-work.png'
+  },
 ]
 
 function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps) {
@@ -66,32 +73,6 @@ function GenerationTypeStep({ selectedType, onSelect }: GenerationTypeStepProps)
       style={{ width: '100%' }}
     >
       <div className="wizard-step">
-        <h2
-          className="wizard-step__title"
-          style={{
-            fontSize: 'var(--font-size-2xl)',
-            fontWeight: 'var(--font-weight-heading)',
-            marginBottom: 'var(--spacing-12)',
-            color: 'var(--color-text-primary)',
-            letterSpacing: '-0.02em',
-            textAlign: 'left'
-          }}
-        >
-          С чего начнём?
-        </h2>
-        <p
-          className="wizard-step__subtitle"
-          style={{
-            fontSize: 'var(--font-size-sm)',
-            color: 'var(--color-text-secondary)',
-            marginBottom: '78px',
-            lineHeight: 'var(--line-height-relaxed)',
-            textAlign: 'left'
-          }}
-        >
-          Выберите формат работы. На следующем шаге мы уточним тему и детали.
-        </p>
-
         <div className="wizard-type-grid">
           {typeOptions.map((option) => {
             const isSelected = selectedType === option.type
@@ -150,32 +131,29 @@ const stepStyles = `
 
 .wizard-type-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr); /* 2 в строку */
   gap: var(--spacing-32);
-  max-width: 1800px;
-  margin: 0;
+  max-width: 1080px;
+  margin: 0 auto;
   width: 100%;
   padding: 0;
-}
-
-@media (max-width: 1024px) {
-  .wizard-type-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
 }
 
 @media (max-width: 768px) {
   .wizard-type-grid {
     grid-template-columns: 1fr;
     gap: var(--spacing-16);
+    max-width: 100%;
   }
 }
 
 .wizard-type-card {
   position: relative;
   width: 100%;
-  min-height: 275px; /* Увеличено на 10px (было 265px) */
-  padding: var(--spacing-24) var(--spacing-16);
+  aspect-ratio: 16 / 10; /* Пропорциональное изменение */
+  min-height: 240px;
+  max-height: 320px;
+  padding: 5% 4%; /* Пропорциональные отступы */
   background: #ffffff !important;
   border: 1px solid var(--color-border-base);
   border-radius: var(--radius-xl);
@@ -188,6 +166,13 @@ const stepStyles = `
   justify-content: flex-start;
   overflow: hidden;
   isolation: isolate;
+}
+
+@media (max-width: 1024px) {
+  .wizard-type-card {
+    aspect-ratio: auto;
+    min-height: 260px;
+  }
 }
 
 .wizard-type-card:hover {
@@ -208,34 +193,35 @@ const stepStyles = `
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
-  max-width: 70%;
+  gap: var(--spacing-8);
+  max-width: 65%; /* Больше места для текста */
   height: 100%;
 }
 
 .wizard-type-card__title {
-  font-size: calc(var(--font-size-lg) + 6px); /* Увеличено еще на 3 пикселя (итого +6 от базы) */
+  font-size: clamp(1.25rem, 2vw + 0.5rem, 2rem); /* Адаптивный шрифт */
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   line-height: var(--line-height-tight);
   margin-top: 0;
-  min-height: 2.4em;
+  margin-bottom: 2%;
+  min-height: 1.5em;
   display: flex;
   align-items: flex-start;
 }
 
 .wizard-type-card__description {
-  font-size: var(--font-size-xs);
+  font-size: clamp(0.875rem, 1vw + 0.25rem, 1rem); /* Адаптивный шрифт */
   color: var(--color-text-secondary);
-  line-height: 1.3;
+  line-height: 1.4;
 }
 
 .wizard-type-card__illustration {
   position: absolute;
-  bottom: -15px;
-  right: -15px;
-  width: 160px;
-  height: 160px;
+  bottom: -5%;
+  right: -5%;
+  width: 45%; /* Пропорциональный размер */
+  height: 60%;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
@@ -243,9 +229,12 @@ const stepStyles = `
   z-index: 1;
 }
 
-.wizard-type-card--presentation .wizard-type-card__illustration,
+.wizard-type-card--presentation .wizard-type-card__illustration {
+  bottom: -5%;
+}
+
 .wizard-type-card--task .wizard-type-card__illustration {
-  bottom: -29px;
+  bottom: -10%;
 }
 
 .wizard-type-card__illustration img {

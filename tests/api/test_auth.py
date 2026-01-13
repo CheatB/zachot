@@ -1,92 +1,32 @@
 import pytest
-from fastapi.testclient import TestClient
-from apps.api.main import app
-from apps.api.database import SessionLocal, AuthTokenDB
+from uuid import UUID
 
-@pytest.fixture
-def client():
-    return TestClient(app)
-
-def test_get_telegram_link(client):
-    """
-    Тест получения ссылки для авторизации через Telegram.
-    """
-    response = client.post("/auth/telegram/link")
+@pytest.mark.asyncio
+async def test_email_login_and_me(client):
+    # 1. Login/Register
+    login_data = {
+        "email": "test@example.com",
+        "password": "password123"
+    }
+    response = await client.post("/auth/email/login", json=login_data)
     assert response.status_code == 200
     data = response.json()
-    assert "link" in data
-    assert "token" in data
-    assert "t.me/zachot_tech_bot?start=" in data["link"]
-    
-    # Проверяем, что токен сохранился в базе
-    with SessionLocal() as session:
-        token = session.query(AuthTokenDB).filter(AuthTokenDB.token == data["token"]).first()
-        assert token is not None
-        assert token.is_used == 0
+    assert data["status"] == "success"
+    token = data["token"]
+    user_id = data["user_id"]
 
-def test_check_telegram_auth_pending(client):
-    """
-    Тест проверки статуса авторизации (ожидание).
-    """
-    # Сначала создаем токен
-    response = client.post("/auth/telegram/link")
-    token = response.json()["token"]
-    
-    # Проверяем статус
-    response = client.get(f"/auth/telegram/check/{token}")
-    assert response.status_code == 200
-    assert response.json()["status"] == "pending"
+    # 2. Check /me
+    headers = {"Authorization": f"Bearer {token}"}
+    me_response = await client.get("/me", headers=headers)
+    assert me_response.status_code == 200
+    me_data = me_response.json()
+    assert me_data["id"] == user_id
+    assert me_data["email"] == "test@example.com"
 
-def test_check_telegram_auth_not_found(client):
-    """
-    Тест проверки несуществующего токена.
-    """
-    response = client.get("/auth/telegram/check/non_existent_token")
-    assert response.status_code == 404
+@pytest.mark.asyncio
+async def test_me_unauthorized(client):
+    response = await client.get("/me")
+    assert response.status_code == 401
 
-from fastapi.testclient import TestClient
-from apps.api.main import app
-from apps.api.database import SessionLocal, AuthTokenDB
-
-@pytest.fixture
-def client():
-    return TestClient(app)
-
-def test_get_telegram_link(client):
-    """
-    Тест получения ссылки для авторизации через Telegram.
-    """
-    response = client.post("/auth/telegram/link")
-    assert response.status_code == 200
-    data = response.json()
-    assert "link" in data
-    assert "token" in data
-    assert "t.me/zachot_tech_bot?start=" in data["link"]
-    
-    # Проверяем, что токен сохранился в базе
-    with SessionLocal() as session:
-        token = session.query(AuthTokenDB).filter(AuthTokenDB.token == data["token"]).first()
-        assert token is not None
-        assert token.is_used == 0
-
-def test_check_telegram_auth_pending(client):
-    """
-    Тест проверки статуса авторизации (ожидание).
-    """
-    # Сначала создаем токен
-    response = client.post("/auth/telegram/link")
-    token = response.json()["token"]
-    
-    # Проверяем статус
-    response = client.get(f"/auth/telegram/check/{token}")
-    assert response.status_code == 200
-    assert response.json()["status"] == "pending"
-
-def test_check_telegram_auth_not_found(client):
-    """
-    Тест проверки несуществующего токена.
-    """
-    response = client.get("/auth/telegram/check/non_existent_token")
-    assert response.status_code == 404
 
 

@@ -1,9 +1,20 @@
 import { apiFetch } from './http';
 
 export interface ModelRoutingConfig {
-  [workType: string]: {
-    [stage: string]: string;
+  main: {
+    [workType: string]: {
+      [stage: string]: string;
+    };
   };
+  fallback: {
+    [category: string]: {
+      [stage: string]: string;
+    };
+  };
+}
+
+export interface PromptConfig {
+  [name: string]: string;
 }
 
 export interface AdminUser {
@@ -30,23 +41,59 @@ export interface AdminAnalytics {
   }[];
 }
 
+export interface AdminGenerationUsage {
+  model: string;
+  tokens: number;
+  cost_usd: number;
+  stage: string;
+}
+
+export interface AdminGenerationHistoryItem {
+  id: string;
+  title: string | null;
+  module: string;
+  status: string;
+  created_at: string;
+  user_email: string;
+  usage_metadata: AdminGenerationUsage[];
+  total_tokens: number;
+  total_cost_rub: number;
+  estimated_revenue_rub: number;
+  estimated_profit_rub: number;
+}
+
 /**
  * Получить текущие настройки роутинга моделей
  */
 export async function fetchModelRouting(): Promise<ModelRoutingConfig> {
-  return {
-    essay: { structure: 'o4-mini', sources: 'gpt-5-mini', generation: 'gpt-5', refine: 'gpt-5-mini' },
-    diploma: { structure: 'o3', sources: 'o4-mini', generation: 'gpt-5.2', refine: 'o4-mini' },
-    presentation: { structure: 'o4-mini', sources: 'gpt-5-mini', generation: 'gpt-5-mini', refine: 'gpt-5-mini' },
-    task: { structure: 'o3', sources: 'o4-mini', generation: 'o3', refine: 'o4-mini' },
-  };
+  return apiFetch<ModelRoutingConfig>('/admin/model-routing');
 }
 
 /**
  * Сохранить настройки роутинга моделей
  */
 export async function saveModelRouting(config: ModelRoutingConfig): Promise<void> {
-  console.log('[API] Saving model routing:', config);
+  await apiFetch('/admin/model-routing', {
+    method: 'POST',
+    body: JSON.stringify(config),
+  });
+}
+
+/**
+ * Получить текущие промпты
+ */
+export async function fetchPrompts(): Promise<PromptConfig> {
+  return apiFetch<PromptConfig>('/admin/prompts');
+}
+
+/**
+ * Сохранить промпты
+ */
+export async function savePrompts(prompts: PromptConfig): Promise<void> {
+  await apiFetch('/admin/prompts', {
+    method: 'POST',
+    body: JSON.stringify(prompts),
+  });
 }
 
 /**
@@ -54,6 +101,14 @@ export async function saveModelRouting(config: ModelRoutingConfig): Promise<void
  */
 export async function fetchAdminUsers(): Promise<AdminUser[]> {
   const response = await apiFetch<{ items: AdminUser[] }>('/admin/users');
+  return response.items;
+}
+
+/**
+ * Получить историю генераций (админ)
+ */
+export async function fetchAdminGenerations(): Promise<AdminGenerationHistoryItem[]> {
+  const response = await apiFetch<{ items: AdminGenerationHistoryItem[] }>('/admin/generations');
   return response.items;
 }
 
@@ -71,21 +126,7 @@ export async function updateUserRole(userId: string, role: 'admin' | 'user'): Pr
  * Получить аналитику (админ)
  */
 export async function fetchAdminAnalytics(): Promise<AdminAnalytics> {
-  return {
-    revenueRub: 149700,
-    apiCostsUsd: 124.50,
-    marginPercent: 82,
-    totalJobs: 1240,
-    dailyStats: [
-      { date: '2026-01-01', tokens: 120000, jobs: 45 },
-      { date: '2026-01-02', tokens: 150000, jobs: 52 },
-      { date: '2026-01-03', tokens: 110000, jobs: 38 },
-      { date: '2026-01-04', tokens: 180000, jobs: 61 },
-      { date: '2026-01-05', tokens: 210000, jobs: 75 },
-      { date: '2026-01-06', tokens: 195000, jobs: 68 },
-      { date: '2026-01-07', tokens: 230000, jobs: 82 },
-    ]
-  };
+  return apiFetch<AdminAnalytics>('/admin/analytics');
 }
 
 /**
@@ -121,7 +162,7 @@ export async function suggestStructure(data: {
 export async function suggestSources(data: { 
   topic: string; 
   workType: string; 
-  volume: number;
+  volume: number; 
   complexity: string;
 }): Promise<{ sources: { title: string; url: string; description: string; isAiSelected: boolean }[] }> {
   return apiFetch<{ sources: { title: string; url: string; description: string; isAiSelected: boolean }[] }>('/admin/suggest-sources', {

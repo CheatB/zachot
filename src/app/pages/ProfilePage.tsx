@@ -7,7 +7,7 @@
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { useAuth } from '@/app/auth/useAuth'
-import { Container, Stack, Button, EmptyState, Badge, Progress } from '@/ui'
+import { Container, Stack, Button, EmptyState, Badge } from '@/ui'
 import { fetchMe, type MeResponse } from '@/shared/api/me'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -85,9 +85,17 @@ function ProfilePage() {
     }
   }
 
-  const generationsUsed = usage?.generationsUsed ?? 0
-  const generationsLimit = usage?.generationsLimit ?? 5
-  const generationsPercent = Math.min((generationsUsed / generationsLimit) * 100, 100)
+  const getModeLabel = (mode?: string) => {
+    switch (mode) {
+      case 'normal': return 'Обычный'
+      case 'degraded': return 'Щадящий'
+      case 'strict': return 'Ограниченный'
+      default: return 'Обычный'
+    }
+  }
+
+  const creditsBalance = usage?.creditsBalance ?? 5
+  const creditsUsed = usage?.creditsUsed ?? 0
 
   return (
     <Container size="md">
@@ -112,21 +120,15 @@ function ProfilePage() {
           <h2 className="profile-section__title">Личные данные</h2>
           <div className="profile-fields">
             <div className="profile-field">
+              <span className="profile-field__label">Аккаунт</span>
+              <span className="profile-field__value" style={{ fontWeight: 'bold' }}>
+                {user?.telegram_username ? `@${user.telegram_username}` : (user?.email || '—')}
+              </span>
+            </div>
+            <div className="profile-field">
               <span className="profile-field__label">ID пользователя</span>
               <span className="profile-field__value profile-field__value--mono">{user?.id}</span>
             </div>
-            {user?.email && (
-              <div className="profile-field">
-                <span className="profile-field__label">Email</span>
-                <span className="profile-field__value">{user.email}</span>
-              </div>
-            )}
-            {user?.telegram_username && (
-              <div className="profile-field">
-                <span className="profile-field__label">Telegram</span>
-                <span className="profile-field__value">@{user.telegram_username}</span>
-              </div>
-            )}
             <div className="profile-field">
               <span className="profile-field__label">Роль</span>
               <span className="profile-field__value">{user?.role === 'admin' ? 'Администратор' : 'Пользователь'}</span>
@@ -171,28 +173,50 @@ function ProfilePage() {
           </div>
         </motion.section>
 
-        {/* Использование */}
+        {/* Баланс кредитов */}
         <motion.section 
           className="profile-section"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.15 }}
         >
-          <h2 className="profile-section__title">Использование</h2>
+          <h2 className="profile-section__title">Баланс кредитов</h2>
           <div className="profile-fields">
-            <div className="profile-field profile-field--column">
-              <div className="profile-field__row">
-                <span className="profile-field__label">Генерации</span>
-                <span className="profile-field__value">{generationsUsed} / {generationsLimit}</span>
+            <div className="profile-field">
+              <span className="profile-field__label">Доступно кредитов</span>
+              <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--color-accent-base)' }}>
+                {creditsBalance}
+              </span>
               </div>
-              <Progress value={generationsPercent} />
+            <div className="profile-field">
+              <span className="profile-field__label">Использовано за период</span>
+              <span className="profile-field__value">{creditsUsed}</span>
             </div>
+            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+              Реферат/эссе = 1 кредит • Курсовая = 3 кредита
+            </p>
+          </div>
+        </motion.section>
+
+        {/* Использование */}
+        <motion.section 
+          className="profile-section"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
+          <h2 className="profile-section__title">Технические лимиты</h2>
+          <div className="profile-fields">
             {usage && (
               <div className="profile-field">
                 <span className="profile-field__label">Токены использовано</span>
                 <span className="profile-field__value">{formatNumber(usage.tokensUsed)} / {formatNumber(usage.tokensLimit)}</span>
               </div>
             )}
+            <div className="profile-field">
+              <span className="profile-field__label">Режим работы</span>
+              <span className="profile-field__value">{getModeLabel(meData?.fairUseMode)}</span>
+            </div>
           </div>
         </motion.section>
 

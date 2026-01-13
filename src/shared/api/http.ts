@@ -11,15 +11,15 @@ export class ApiError extends Error {
 }
 
 function getAuthToken(): string | null {
-  return sessionStorage.getItem('zachot_auth_token')
+  return localStorage.getItem('zachot_auth_token')
 }
 
 let refreshPromise: Promise<void> | null = null
 
 function performLogout() {
-  sessionStorage.removeItem('zachot_auth_token')
-  sessionStorage.removeItem('zachot_auth_user_id')
-  sessionStorage.removeItem('zachot_refresh_token')
+  localStorage.removeItem('zachot_auth_token')
+  localStorage.removeItem('zachot_auth_user_id')
+  localStorage.removeItem('zachot_refresh_token')
   window.dispatchEvent(new CustomEvent('auth:logout'))
   window.location.href = '/login'
 }
@@ -54,9 +54,9 @@ async function performFetch<T>(
         refreshPromise = (async () => {
           try {
             const tokens = await refreshSession()
-            sessionStorage.setItem('zachot_auth_token', tokens.accessToken)
+            localStorage.setItem('zachot_auth_token', tokens.accessToken)
             if (tokens.refreshToken) {
-              sessionStorage.setItem('zachot_refresh_token', tokens.refreshToken)
+              localStorage.setItem('zachot_refresh_token', tokens.refreshToken)
             }
           } catch (error) {
             performLogout()
@@ -73,6 +73,16 @@ async function performFetch<T>(
 
     if (res.status === 401) {
       performLogout()
+    }
+
+    // Centralized error notification
+    if (res.status !== 401) {
+      window.dispatchEvent(new CustomEvent('ui:toast', {
+        detail: {
+          text: message,
+          type: 'error'
+        }
+      }))
     }
 
     throw new ApiError(res.status, message)

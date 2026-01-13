@@ -99,7 +99,7 @@ function GenerationGoalStep({ form, onChange, isLoading }: GenerationGoalStepPro
                 📊 Примерный объём работы
               </label>
               <Tooltip content={
-                <div style={{ padding: '8px', width: '260px', color: 'white' }}>
+                <div style={{ padding: '8px', width: '400px', color: 'white' }}>
                   <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Распределение страниц:</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
@@ -152,18 +152,31 @@ function GenerationGoalStep({ form, onChange, isLoading }: GenerationGoalStepPro
                   }}
                 />
               </div>
-              <div style={{ 
-                minWidth: '100px',
-                padding: 'var(--spacing-12) var(--spacing-20)',
-                backgroundColor: 'var(--color-accent-base)',
-                color: 'white',
-                borderRadius: 'var(--radius-md)',
-                textAlign: 'center',
-                fontWeight: 'bold',
-                fontSize: 'var(--font-size-base)',
-                boxShadow: '0 4px 12px rgba(22, 163, 74, 0.2)'
-              }}>
-                {form.volume} стр.
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '140px' }}>
+                <div style={{ 
+                  padding: 'var(--spacing-12) var(--spacing-20)',
+                  backgroundColor: 'var(--color-accent-base)',
+                  color: 'white',
+                  borderRadius: 'var(--radius-md)',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  fontSize: 'var(--font-size-base)',
+                  boxShadow: '0 4px 12px rgba(22, 163, 74, 0.2)'
+                }}>
+                  {form.volume} стр.
+                </div>
+                <div style={{
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: 'var(--color-accent-dark)',
+                  textAlign: 'center',
+                  backgroundColor: 'var(--color-accent-light)',
+                  padding: '4px 8px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--color-accent-base)'
+                }}>
+                  💎 Стоимость: {Math.ceil(form.volume / 10)} кр.
+                </div>
               </div>
             </div>
             <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 'var(--spacing-16)' }}>

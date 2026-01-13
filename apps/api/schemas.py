@@ -3,7 +3,7 @@ Pydantic схемы для API запросов и ответов.
 """
 
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal, Optional, List, Dict, Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -19,6 +19,26 @@ class JobQueuedResponse(BaseModel):
     status: Literal["queued"] = Field("queued", description="Статус задачи")
 
 
+class GenerationInputPayload(BaseModel):
+    topic: Optional[str] = None
+    input: Optional[str] = None
+    goal: Optional[str] = None
+    idea: Optional[str] = None
+    volume: Optional[int] = None
+    current_step: Optional[float] = None
+    presentation_style: Optional[str] = None
+    task_mode: Optional[str] = None
+    use_ai_images: Optional[bool] = None
+    use_smart_processing: Optional[bool] = None
+    has_files: Optional[bool] = None
+
+
+class GenerationSettingsPayload(BaseModel):
+    structure: Optional[List[Dict[str, Any]]] = None
+    sources: Optional[List[Dict[str, Any]]] = None
+    formatting: Optional[Dict[str, Any]] = None
+
+
 class GenerationCreateRequest(BaseModel):
     """
     Запрос на создание Generation.
@@ -27,16 +47,16 @@ class GenerationCreateRequest(BaseModel):
     work_type: Optional[str] = Field(None, description="Тип академической работы")
     complexity_level: str = Field("student", description="Уровень сложности")
     humanity_level: int = Field(50, description="Уровень очеловечивания (0-100)")
-    input_payload: dict = Field(default_factory=dict, description="Входные данные для генерации")
-    settings_payload: Optional[dict] = Field(None, description="Настройки генерации")
+    input_payload: GenerationInputPayload = Field(..., description="Входные данные для генерации")
+    settings_payload: Optional[GenerationSettingsPayload] = Field(None, description="Настройки генерации")
 
 
 class GenerationUpdateRequest(BaseModel):
     """
     Запрос на обновление Generation.
     """
-    input_payload: Optional[dict] = Field(None, description="Входные данные для генерации")
-    settings_payload: Optional[dict] = Field(None, description="Настройки генерации")
+    input_payload: Optional[GenerationInputPayload] = None
+    settings_payload: Optional[GenerationSettingsPayload] = None
 
 
 class ActionRequest(BaseModel):
@@ -62,8 +82,9 @@ class GenerationResponse(BaseModel):
     humanity_level: int = Field(50, description="Уровень очеловечивания")
     created_at: datetime = Field(..., description="Время создания генерации")
     updated_at: datetime = Field(..., description="Время последнего обновления")
-    input_payload: dict = Field(..., description="Входные данные для генерации")
-    settings_payload: dict = Field(default_factory=dict, description="Настройки генерации")
+    input_payload: GenerationInputPayload = Field(..., description="Входные данные для генерации")
+    settings_payload: GenerationSettingsPayload = Field(default_factory=GenerationSettingsPayload, description="Настройки генерации")
+    result_content: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -88,9 +109,8 @@ class UserUsageInfo(BaseModel):
     generationsLimit: int
     tokensUsed: int = 0
     tokensLimit: int
-    # Система кредитов
-    creditsBalance: int = 5  # Текущий баланс кредитов
-    creditsUsed: int = 0     # Использовано за период
+    creditsBalance: int = 5
+    creditsUsed: int = 0
 
 
 class UserCapabilities(BaseModel):
@@ -115,7 +135,7 @@ class UserAdminResponse(BaseModel):
     id: UUID
     email: str
     role: str
-    created_at: datetime
+    created_at: Optional[datetime] = None
     generations_used: int
     generations_limit: int
     tokens_used: int
@@ -193,3 +213,27 @@ class TBankWebhook(BaseModel):
     Pan: Optional[str] = None
     ExpDate: Optional[str] = None
     Token: str
+
+
+class SuggestDetailsRequest(BaseModel):
+    topic: str
+
+
+class SuggestStructureRequest(BaseModel):
+    topic: str
+    goal: str
+    idea: str
+    workType: Optional[str] = None
+    volume: int = 10
+    complexity: str = "student"
+
+
+class SuggestSourcesRequest(BaseModel):
+    topic: str
+    workType: Optional[str] = None
+    volume: int = 10
+    complexity: str = "student"
+
+
+class SuggestTitleInfoRequest(BaseModel):
+    university: str

@@ -1,344 +1,345 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Stack } from '@/ui';
-import { fetchModelRouting, saveModelRouting, type ModelRoutingConfig } from '@/shared/api/admin';
-
-const modelOptions = [
-  { value: 'openai/o3', label: 'o3 (Reasoning High)' },
-  { value: 'openai/o1', label: 'o1 (Reasoning Mid)' },
-  { value: 'openai/gpt-5.2', label: 'gpt-5.2 (Ultra High)' },
-  { value: 'openai/gpt-4o', label: 'gpt-4o (Standard)' },
-  { value: 'openai/gpt-4o-mini', label: 'gpt-4o-mini (Economy)' },
-  { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet (Best for Refine)' },
-  { value: 'deepseek/deepseek-chat', label: 'DeepSeek V3 (Ultra Economy)' },
-  { value: 'perplexity/sonar-pro', label: 'Perplexity Sonar Pro (Search)' },
-  { value: 'perplexity/sonar-deep-research', label: 'Perplexity Deep Research' },
-];
+import { Card, Stack, Button, Badge } from '@/ui';
+import { fetchModelRouting, saveModelRouting, fetchPrompts, savePrompts, type ModelRoutingConfig, type PromptConfig } from '@/shared/api/admin';
+import styles from './ModelRoutingPage.module.css';
 
 const ModelRoutingPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'routing' | 'prompts'>('routing');
   const [config, setConfig] = useState<ModelRoutingConfig | null>(null);
-  const [isSaving, setIsSubmitting] = useState(false);
-  const [showToast, setShowToast] = useState(false);
+  const [prompts, setPrompts] = useState<PromptConfig | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
-    const defaultConfig: ModelRoutingConfig = {
-      // Текстовые работы
-      referat: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      kursach: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      essay: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
-      doklad: { structure: 'openai/gpt-4o-mini', suggest_details: 'openai/o1', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'openai/gpt-4o-mini' },
-      article: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'perplexity/sonar-deep-research', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      composition: { structure: 'openai/gpt-4o-mini', suggest_details: 'openai/o1', sources: 'openai/gpt-4o-mini', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
-      other: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o', refine: 'anthropic/claude-3.5-sonnet' },
-      
-      // Презентации
-      presentation: { structure: 'openai/o1', suggest_details: 'openai/o1', sources: 'perplexity/sonar-pro', generation: 'openai/gpt-4o-mini', refine: 'anthropic/claude-3.5-sonnet' },
-      
-      // Задачи
-      task: { task_solve: 'deepseek/deepseek-r1' },
-    };
-    fetchModelRouting().then(data => setConfig({ ...defaultConfig, ...data }));
+    loadData();
   }, []);
 
-  const handleModelChange = (workType: string, stage: string, model: string) => {
-    if (!config) return;
-    setConfig(prev => ({
-      ...prev!,
-      [workType]: {
-        ...prev![workType],
-        [stage]: model
-      }
-    }));
-  };
-
-  const handleSave = async () => {
-    if (!config) return;
-    setIsSubmitting(true);
+  const loadData = async () => {
     try {
-      await saveModelRouting(config);
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
+      const [routingData, promptsData] = await Promise.all([
+        fetchModelRouting(),
+        fetchPrompts()
+      ]);
+      setConfig(routingData);
+      setPrompts(promptsData);
     } catch (error) {
-      alert('Ошибка при сохранении');
-    } finally {
-      setIsSubmitting(false);
+      console.error('Failed to load admin data:', error);
     }
   };
 
-  if (!config) return <div>Загрузка настроек...</div>;
+  const handleRoutingChange = (type: 'main' | 'fallback', key: string, stage: string, value: string) => {
+    if (!config) return;
+    const newConfig = { ...config };
+    if (type === 'main') {
+      newConfig.main[key] = { ...newConfig.main[key], [stage]: value };
+    } else {
+      newConfig.fallback[key] = { ...newConfig.fallback[key], [stage]: value };
+    }
+    setConfig(newConfig);
+    setHasChanges(true);
+  };
 
-  const ModelSelect = ({ workType, stage }: { workType: string, stage: string }) => (
-    <div className="admin-select-wrapper">
-      <select 
-        className="admin-select-minimal"
-        value={config[workType]?.[stage] || ''}
-        onChange={(e) => handleModelChange(workType, stage, e.target.value)}
-      >
-        {modelOptions.map(opt => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
-      </select>
-      <span className="admin-select-arrow">▾</span>
-    </div>
-  );
+  const handlePromptChange = (name: string, value: string) => {
+    if (!prompts) return;
+    setPrompts({ ...prompts, [name]: value });
+    setHasChanges(true);
+  };
+
+  const handleSave = async () => {
+    if (!config || !prompts) return;
+    setIsSaving(true);
+    try {
+      await Promise.all([
+        saveModelRouting(config),
+        savePrompts(prompts)
+      ]);
+      setHasChanges(false);
+      alert('Настройки успешно сохранены');
+    } catch (error) {
+      alert('Ошибка при сохранении');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const modelOptions = [
+    { value: 'openai/gpt-4o', label: 'GPT-4o (Умная, Дорогая)' },
+    { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini (Быстрая, Дешевая)' },
+    { value: 'anthropic/claude-3-5-sonnet', label: 'Claude 3.5 Sonnet' },
+    { value: 'google/gemini-pro-1.5', label: 'Gemini 1.5 Pro' },
+    { value: 'deepseek/deepseek-chat', label: 'DeepSeek Chat (Дешевая)' },
+    { value: 'free/gpt-3.5-turbo', label: 'Free GPT-3.5' },
+    { value: 'free/llama-3-70b', label: 'Free Llama 3 70B' }
+  ];
+
+  if (!config || !prompts) return <div>Загрузка...</div>;
 
   return (
-    <Stack gap="xl" style={{ maxWidth: '100%' }}>
-      <header>
-        <h1 style={{ color: 'var(--color-neutral-100)', marginBottom: 'var(--spacing-8)' }}>Модели и роутинг</h1>
-        <p style={{ color: 'var(--color-text-secondary)' }}>
-          Персональные настройки AI-движка для каждого типа работ.
-        </p>
+    <div className={styles.adminPage}>
+      <header style={{ marginBottom: 'var(--spacing-32)' }}>
+        <h1 style={{ color: 'var(--color-neutral-100)' }}>Панель управления AI</h1>
+        <p style={{ color: 'var(--color-text-secondary)' }}>Настройка моделей и промптов системы «Зачёт»</p>
       </header>
 
-      <section className="routing-section">
-        <h2 className="routing-section__title">Текстовые работы</h2>
-        <div className="admin-table-container">
-          <table className="admin-table-v2">
-            <thead>
-              <tr>
-                <th style={{ width: '20%' }}>Вид работы</th>
-                <th>Цель и Идея</th>
-                <th>План работы</th>
-                <th>Источники</th>
-                <th>Написание текста</th>
-                <th className="refine-col-header">Очеловечивание</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Реферат</td>
-                <td><ModelSelect workType="referat" stage="suggest_details" /></td>
-                <td><ModelSelect workType="referat" stage="structure" /></td>
-                <td><ModelSelect workType="referat" stage="sources" /></td>
-                <td><ModelSelect workType="referat" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="referat" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Курсовая работа</td>
-                <td><ModelSelect workType="kursach" stage="suggest_details" /></td>
-                <td><ModelSelect workType="kursach" stage="structure" /></td>
-                <td><ModelSelect workType="kursach" stage="sources" /></td>
-                <td><ModelSelect workType="kursach" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="kursach" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Эссе</td>
-                <td><ModelSelect workType="essay" stage="suggest_details" /></td>
-                <td><ModelSelect workType="essay" stage="structure" /></td>
-                <td><ModelSelect workType="essay" stage="sources" /></td>
-                <td><ModelSelect workType="essay" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="essay" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Доклад</td>
-                <td><ModelSelect workType="doklad" stage="suggest_details" /></td>
-                <td><ModelSelect workType="doklad" stage="structure" /></td>
-                <td><ModelSelect workType="doklad" stage="sources" /></td>
-                <td><ModelSelect workType="doklad" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="doklad" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Научная статья</td>
-                <td><ModelSelect workType="article" stage="suggest_details" /></td>
-                <td><ModelSelect workType="article" stage="structure" /></td>
-                <td><ModelSelect workType="article" stage="sources" /></td>
-                <td><ModelSelect workType="article" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="article" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Сочинение</td>
-                <td><ModelSelect workType="composition" stage="suggest_details" /></td>
-                <td><ModelSelect workType="composition" stage="structure" /></td>
-                <td><ModelSelect workType="composition" stage="sources" /></td>
-                <td><ModelSelect workType="composition" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="composition" stage="refine" /></td>
-              </tr>
-              <tr>
-                <td>Другое</td>
-                <td><ModelSelect workType="other" stage="suggest_details" /></td>
-                <td><ModelSelect workType="other" stage="structure" /></td>
-                <td><ModelSelect workType="other" stage="sources" /></td>
-                <td><ModelSelect workType="other" stage="generation" /></td>
-                <td className="refine-cell-v2"><ModelSelect workType="other" stage="refine" /></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="routing-section">
-        <h2 className="routing-section__title">Презентации</h2>
-        <div className="admin-table-container">
-          <table className="admin-table-v2">
-            <thead>
-              <tr>
-                <th style={{ width: '20%' }}>Вид работы</th>
-                <th>Цель и Идея</th>
-                <th>План работы</th>
-                <th>Источники</th>
-                <th>Содержание слайдов</th>
-                <th>Визуальный стиль</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Презентация</td>
-                <td><ModelSelect workType="presentation" stage="suggest_details" /></td>
-                <td><ModelSelect workType="presentation" stage="structure" /></td>
-                <td><ModelSelect workType="presentation" stage="sources" /></td>
-                <td><ModelSelect workType="presentation" stage="generation" /></td>
-                <td><ModelSelect workType="presentation" stage="refine" /></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="routing-section">
-        <h2 className="routing-section__title">Решение задач</h2>
-        <div className="admin-table-container">
-          <table className="admin-table-v2">
-            <thead>
-              <tr>
-                <th style={{ width: '20%' }}>Вид работы</th>
-                <th>Решение задачи</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Задача</td>
-                <td><ModelSelect workType="task" stage="task_solve" /></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--spacing-64)' }}>
-        <Button 
-          variant="primary" 
-          size="lg" 
-          onClick={handleSave} 
-          loading={isSaving}
-          style={{ minWidth: '280px', height: '56px', fontSize: 'var(--font-size-base)' }}
+      <div className={styles.tabs}>
+        <button 
+          className={`${styles.tab} ${activeTab === 'routing' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('routing')}
         >
-          Сохранить
-        </Button>
+          Роутинг моделей
+        </button>
+        <button 
+          className={`${styles.tab} ${activeTab === 'prompts' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('prompts')}
+        >
+          Управление промптами
+        </button>
       </div>
 
-      {showToast && (
-        <div className="admin-alert-toast">
-          <div className="admin-alert-toast__icon">✅</div>
-          <div className="admin-alert-toast__text">Настройки успешно обновлены</div>
-        </div>
+      {activeTab === 'routing' && (
+        <Stack gap="xl">
+          <section className={styles.modelCategory}>
+            <h3>
+              Основные модели (Main)
+              <Badge status="success">Active</Badge>
+            </h3>
+            <p className={styles.helpText}>Модели, используемые по умолчанию для каждого типа работы и этапа генерации.</p>
+            
+            <Card style={{ padding: 0 }}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Тип работы</th>
+                    <th>Структура</th>
+                    <th>Источники</th>
+                    <th>Контент</th>
+                    <th>Оформление</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(config.main).map(([workType, stages]) => (
+                    <tr key={workType}>
+                      <td style={{ fontWeight: 'bold' }}>{workType}</td>
+                      <td>
+                        <select 
+                          className={styles.select}
+                          value={stages.structure}
+                          onChange={(e) => handleRoutingChange('main', workType, 'structure', e.target.value)}
+                        >
+                          {modelOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select>
+                      </td>
+                      <td>
+                        <select 
+                          className={styles.select}
+                          value={stages.sources}
+                          onChange={(e) => handleRoutingChange('main', workType, 'sources', e.target.value)}
+                        >
+                          {modelOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select>
+                      </td>
+                      <td>
+                        <select 
+                          className={styles.select}
+                          value={stages.content}
+                          onChange={(e) => handleRoutingChange('main', workType, 'content', e.target.value)}
+                        >
+                          {modelOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select>
+                      </td>
+                      <td>
+                        <select 
+                          className={styles.select}
+                          value={stages.formatting || 'openai/gpt-4o-mini'}
+                          onChange={(e) => handleRoutingChange('main', workType, 'formatting', e.target.value)}
+                        >
+                          {modelOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+          </section>
+
+          <section className={styles.modelCategory}>
+            <h3>
+              Резервные модели (Fallback)
+              <Badge status="warn">Backup</Badge>
+            </h3>
+            <p className={styles.helpText}>Эти модели будут использованы автоматически, если основная модель вернет ошибку или будет недоступна.</p>
+            
+            <Card style={{ padding: 0 }}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Категория</th>
+                    <th>Структура</th>
+                    <th>Источники</th>
+                    <th>Контент</th>
+                    <th>Оформление</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(config.fallback).map(([category, stages]) => (
+                    <tr key={category}>
+                      <td style={{ fontWeight: 'bold' }}>{category}</td>
+                      <td>
+                        <select 
+                          className={styles.select}
+                          value={stages.structure}
+                          onChange={(e) => handleRoutingChange('fallback', category, 'structure', e.target.value)}
+                        >
+                          {modelOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select>
+                      </td>
+                      <td>
+                        <select 
+                          className={styles.select}
+                          value={stages.sources}
+                          onChange={(e) => handleRoutingChange('fallback', category, 'sources', e.target.value)}
+                        >
+                          {modelOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select>
+                      </td>
+                      <td>
+                        <select 
+                          className={styles.select}
+                          value={stages.content}
+                          onChange={(e) => handleRoutingChange('fallback', category, 'content', e.target.value)}
+                        >
+                          {modelOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select>
+                      </td>
+                      <td>
+                        <select 
+                          className={styles.select}
+                          value={stages.formatting || 'deepseek/deepseek-chat'}
+                          onChange={(e) => handleRoutingChange('fallback', category, 'formatting', e.target.value)}
+                        >
+                          {modelOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+          </section>
+        </Stack>
       )}
 
-      <style>{`
-        .routing-section {
-          margin-bottom: var(--spacing-48);
-        }
-        .routing-section__title {
-          font-size: var(--font-size-xl);
-          color: var(--color-neutral-100);
-          margin-bottom: var(--spacing-24);
-          padding-left: var(--spacing-8);
-          border-left: 4px solid var(--color-accent-base);
-        }
-        .admin-table-container {
-          background: transparent;
-          width: 100%;
-        }
-        .admin-table-v2 {
-          width: 100%;
-          border-collapse: separate;
-          border-spacing: 0;
-          text-align: left;
-        }
-        .admin-table-v2 th {
-          padding: var(--spacing-16) var(--spacing-24);
-          color: var(--color-text-secondary);
-          font-size: var(--font-size-xs);
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          border-bottom: 2px solid var(--color-border-light);
-        }
-        .admin-table-v2 td {
-          padding: var(--spacing-20) var(--spacing-24);
-          border-bottom: 1px solid var(--color-border-light);
-          background-color: transparent;
-        }
-        .admin-table-v2 tr:last-child td {
-          border-bottom: none;
-        }
-        
-        .refine-col-header {
-          color: var(--color-accent-base) !important;
-        }
-        .refine-cell-v2 {
-          background-color: rgba(22, 163, 74, 0.03);
-          position: relative;
-        }
-        
-        .admin-select-wrapper {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          width: 100%;
-        }
-        .admin-select-minimal {
-          appearance: none;
-          background: transparent;
-          border: none;
-          color: var(--color-neutral-100);
-          font-size: var(--font-size-sm);
-          font-family: inherit;
-          font-weight: var(--font-weight-medium);
-          cursor: pointer;
-          width: 100%;
-          padding-right: 20px;
-          outline: none;
-          transition: color 0.2s ease;
-        }
-        .admin-select-minimal:hover {
-          color: var(--color-accent-base);
-        }
-        .admin-select-arrow {
-          position: absolute;
-          right: 0;
-          pointer-events: none;
-          font-size: 10px;
-          color: var(--color-text-muted);
-        }
+      {activeTab === 'prompts' && (
+        <Stack gap="xl">
+          <div className={styles.promptGroup}>
+            <h3>Анализ и подготовка</h3>
+            <div className={styles.promptCard}>
+              <label style={{ fontWeight: 'bold', display: 'block' }}>Suggest Details (Цель и Идея)</label>
+              <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '8px' }}>
+                Используется на шаге «Уточним детали работы» для генерации цели и идеи по теме.
+              </p>
+              <textarea 
+                className={styles.textarea}
+                value={prompts.suggest_details}
+                onChange={(e) => handlePromptChange('suggest_details', e.target.value)}
+              />
+            </div>
+            
+            <div className={styles.promptCard}>
+              <label style={{ fontWeight: 'bold', display: 'block' }}>Suggest Structure (План работы)</label>
+              <textarea 
+                className={styles.textarea}
+                value={prompts.suggest_structure}
+                onChange={(e) => handlePromptChange('suggest_structure', e.target.value)}
+              />
+            </div>
 
-        .admin-alert-toast {
-          position: fixed;
-          bottom: var(--spacing-48);
-          left: 50%;
-          transform: translateX(-50%);
-          background-color: var(--color-neutral-100);
-          color: white;
-          padding: var(--spacing-16) var(--spacing-32);
-          border-radius: var(--radius-full);
-          display: flex;
-          align-items: center;
-          gap: var(--spacing-16);
-          box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-          z-index: 10000;
-          animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        @keyframes slide-up {
-          from { transform: translate(-50%, 100%); opacity: 0; }
-          to { transform: translate(-50%, 0); opacity: 1; }
-        }
-        .admin-alert-toast__icon {
-          font-size: 20px;
-        }
-        .admin-alert-toast__text {
-          font-weight: var(--font-weight-medium);
-          font-size: var(--font-size-base);
-        }
-      `}</style>
-    </Stack>
+            <div className={styles.promptCard}>
+              <label style={{ fontWeight: 'bold', display: 'block' }}>Suggest Sources (Литература)</label>
+              <textarea 
+                className={styles.textarea}
+                value={prompts.suggest_sources}
+                onChange={(e) => handlePromptChange('suggest_sources', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className={styles.promptGroup}>
+            <h3>Планирование</h3>
+            <div className={styles.promptCard}>
+              <label style={{ fontWeight: 'bold', display: 'block' }}>Structure Analysis (Внутренний)</label>
+              <textarea 
+                className={styles.textarea}
+                value={prompts.structure}
+                onChange={(e) => handlePromptChange('structure', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className={styles.promptGroup}>
+            <h3>Написание и обработка</h3>
+            <div className={styles.promptCard}>
+              <label style={{ fontWeight: 'bold', display: 'block' }}>Content Generation (Главы)</label>
+              <textarea 
+                className={styles.textarea}
+                value={prompts.content}
+                onChange={(e) => handlePromptChange('content', e.target.value)}
+              />
+            </div>
+            <div className={styles.promptCard}>
+              <label style={{ fontWeight: 'bold', display: 'block' }}>Humanization (Очеловечивание)</label>
+              <textarea 
+                className={styles.textarea}
+                value={prompts.humanize}
+                onChange={(e) => handlePromptChange('humanize', e.target.value)}
+              />
+            </div>
+            <div className={styles.promptCard}>
+              <label style={{ fontWeight: 'bold', display: 'block' }}>Formatting (Оформление)</label>
+              <textarea 
+                className={styles.textarea}
+                value={prompts.formatting}
+                onChange={(e) => handlePromptChange('formatting', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className={styles.promptGroup}>
+            <h3>Служебные</h3>
+            <div className={styles.promptCard}>
+              <label style={{ fontWeight: 'bold', display: 'block' }}>Quality Control</label>
+              <textarea 
+                className={styles.textarea}
+                value={prompts.qc}
+                onChange={(e) => handlePromptChange('qc', e.target.value)}
+              />
+            </div>
+            <div className={styles.promptCard}>
+              <label style={{ fontWeight: 'bold', display: 'block' }}>Title Info (ВУЗы и Города)</label>
+              <textarea 
+                className={styles.textarea}
+                value={prompts.suggest_title_info}
+                onChange={(e) => handlePromptChange('suggest_title_info', e.target.value)}
+              />
+            </div>
+          </div>
+        </Stack>
+      )}
+
+      {hasChanges && (
+        <div className={styles.saveBar}>
+          <Button 
+            variant="primary" 
+            size="lg" 
+            loading={isSaving}
+            onClick={handleSave}
+          >
+            Сохранить все изменения
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };
 

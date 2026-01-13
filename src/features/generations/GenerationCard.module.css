@@ -1,0 +1,92 @@
+.generationCard {
+  width: 100%;
+  padding: var(--spacing-20);
+  background-color: var(--color-surface-base);
+  border: 1px solid var(--color-border-base);
+  border-radius: var(--radius-lg);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--motion-duration-base) ease;
+  box-shadow: var(--elevation-1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .generationCard:hover {
+    box-shadow: var(--elevation-2);
+    border-color: var(--color-border-dark);
+  }
+}
+
+.generationCard:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring-offset);
+}
+
+.generationCardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  margin-bottom: var(--spacing-16);
+}
+
+.generationCardTitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+}
+
+.generationCardBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-8);
+}
+
+.generationCardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--spacing-16);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.generationCardTime {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.generationCardAction {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent-base);
+}
+
+.generationCardDraft {
+  border-style: dashed;
+  background-color: var(--color-neutral-10);
+  border-color: var(--color-accent-base);
+}
+
+.generationCardDraft:hover {
+  background-color: var(--color-accent-light);
+}
+
+.generationCardDraft .generationCardAction {
+  color: var(--color-accent-base);
+  font-weight: bold;
+}
+
+.generationCardRunning .generationCardAction {
+  color: var(--color-warn-base);
+}
+
+.generationCardFailed .generationCardAction {
+  color: var(--color-danger-base);
+}
+
+@media (max-width: 768px) {
+  .generationCard {
+    padding: var(--spacing-24);
+    min-height: 120px;
+  }
+}
