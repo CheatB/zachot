@@ -2,11 +2,11 @@ import pytest
 from uuid import uuid4
 from unittest.mock import patch, MagicMock
 
-@pytest.mark.asyncio
-async def test_initiate_payment(client):
+
+def test_initiate_payment(client):
     # 1. Login
     login_data = {"email": f"pay_{uuid4().hex[:6]}@test.com", "password": "pass"}
-    login_resp = await client.post("/auth/email/login", json=login_data)
+    login_resp = client.post("/auth/email/login", json=login_data)
     token = login_resp.json()["token"]
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -20,7 +20,7 @@ async def test_initiate_payment(client):
         }
         
         payment_data = {"period": "month"}
-        response = await client.post("/payments/initiate", json=payment_data, headers=headers)
+        response = client.post("/payments/initiate", json=payment_data, headers=headers)
         assert response.status_code == 200
         data = response.json()
         assert data["payment_url"] == "https://test.tinkoff.ru/pay"
@@ -29,13 +29,13 @@ async def test_initiate_payment(client):
         # Actually, in the router it might be returning the generated order_id.
         assert "order_id" in data
 
-@pytest.mark.asyncio
-async def test_usage_limit_enforcement(client, db_session):
+
+def test_usage_limit_enforcement(client, db_session):
     from packages.database.src.models import User
     
     # 1. Login
     login_data = {"email": f"limit_{uuid4().hex[:6]}@test.com", "password": "pass"}
-    login_resp = await client.post("/auth/email/login", json=login_data)
+    login_resp = client.post("/auth/email/login", json=login_data)
     token = login_resp.json()["token"]
     user_id = login_resp.json()["user_id"]
     headers = {"Authorization": f"Bearer {token}"}
@@ -51,6 +51,6 @@ async def test_usage_limit_enforcement(client, db_session):
         "module": "TEXT",
         "input_payload": {"topic": "Should fail"}
     }
-    response = await client.post("/generations", json=gen_data, headers=headers)
+    response = client.post("/generations", json=gen_data, headers=headers)
     assert response.status_code == 403
     assert "Лимит генераций" in response.json()["detail"]

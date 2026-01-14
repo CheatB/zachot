@@ -150,13 +150,22 @@ class SQLGenerationStore:
         
         Удаляет все записи из таблиц в правильном порядке (с учётом foreign keys).
         """
-        from packages.database.src.models import Payment
+        from packages.database.src.models import Payment, AuthToken, CreditTransaction, Subscription
         
         with SessionLocal() as session:
             # Удаляем в порядке зависимостей: сначала дочерние таблицы, потом родительские
+            # 1. Таблицы, зависящие от generations и payments
+            session.query(CreditTransaction).delete()
+            session.query(Subscription).delete()
+            
+            # 2. Таблицы, зависящие от users
             session.query(GenerationDB).delete()
             session.query(Payment).delete()
+            session.query(AuthToken).delete()
+            
+            # 3. Родительская таблица
             session.query(UserDB).delete()
+            
             session.commit()
         self._subscribers.clear()
 

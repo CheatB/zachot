@@ -1,20 +1,20 @@
 import pytest
 from uuid import uuid4
 
-@pytest.mark.asyncio
-async def test_admin_model_routing(client):
+
+def test_admin_model_routing(client):
     # 1. Login as normal user (should fail admin access)
     email = f"user_{uuid4().hex[:6]}@test.com"
     login_data = {"email": email, "password": "pass"}
-    login_resp = await client.post("/auth/email/login", json=login_data)
+    login_resp = client.post("/auth/email/login", json=login_data)
     token = login_resp.json()["token"]
     headers = {"Authorization": f"Bearer {token}"}
 
-    routing_resp = await client.get("/admin/model-routing", headers=headers)
+    routing_resp = client.get("/admin/model-routing", headers=headers)
     assert routing_resp.status_code == 403
 
-@pytest.mark.asyncio
-async def test_admin_user_role_update(client, db_session):
+
+def test_admin_user_role_update(client, db_session):
     from packages.database.src.models import User
     
     # 1. Create an admin user manually
@@ -33,7 +33,7 @@ async def test_admin_user_role_update(client, db_session):
 
     # 3. Update role
     update_data = {"role": "admin"}
-    response = await client.patch(f"/admin/users/{user_id}/role", json=update_data, headers=headers)
+    response = client.patch(f"/admin/users/{user_id}/role", json=update_data, headers=headers)
     assert response.status_code == 200
     assert response.json()["role"] == "admin"
 
@@ -41,16 +41,16 @@ async def test_admin_user_role_update(client, db_session):
     db_session.refresh(user)
     assert user.role == "admin"
 
-@pytest.mark.asyncio
-async def test_suggest_details_logic(client):
+
+def test_suggest_details_logic(client):
     login_data = {"email": f"user_{uuid4().hex[:6]}@test.com", "password": "pass"}
-    login_resp = await client.post("/auth/email/login", json=login_data)
+    login_resp = client.post("/auth/email/login", json=login_data)
     token = login_resp.json()["token"]
     headers = {"Authorization": f"Bearer {token}"}
 
     # Test suggest details (this will trigger our Mistral fallback if GPT-4o fails)
     data = {"topic": "Photosynthesis"}
-    resp = await client.post("/admin/suggest-details", json=data, headers=headers)
+    resp = client.post("/admin/suggest-details", json=data, headers=headers)
     assert resp.status_code == 200
     json_data = resp.json()
     assert "goal" in json_data
