@@ -159,18 +159,49 @@ function GenerationSourcesStep({ sources, onChange, generationId }: GenerationSo
                           </svg>
                         </div>
                         <div className="source-details">
-                          {item.url ? (
-                            <a 
-                              href={item.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="source-title-link"
-                            >
-                              {item.title}
-                            </a>
-                          ) : (
-                            <h4 className="source-title">{item.title}</h4>
-                          )}
+                          <div className="source-title-row">
+                            {item.url ? (
+                              <a 
+                                href={item.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="source-title-link"
+                              >
+                                {item.title}
+                              </a>
+                            ) : (
+                              <h4 className="source-title">{item.title}</h4>
+                            )}
+                            {/* Индикаторы валидности */}
+                            {item.isVerified && (
+                              <Tooltip content="Источник проверен и доступен">
+                                <span className="source-badge source-badge--verified">
+                                  ✓ Проверен
+                                </span>
+                              </Tooltip>
+                            )}
+                            {item.isTrustedDomain && (
+                              <Tooltip content="Источник из надёжной научной базы">
+                                <span className="source-badge source-badge--trusted">
+                                  🛡️ Надёжный
+                                </span>
+                              </Tooltip>
+                            )}
+                            {item.isFallback && (
+                              <Tooltip content="Резервный проверенный источник">
+                                <span className="source-badge source-badge--fallback">
+                                  📚 Классика
+                                </span>
+                              </Tooltip>
+                            )}
+                            {!item.isVerified && !item.isFallback && item.url && (
+                              <Tooltip content="Источник не прошёл автоматическую проверку">
+                                <span className="source-badge source-badge--unverified">
+                                  ⚠️ Не проверен
+                                </span>
+                              </Tooltip>
+                            )}
+                          </div>
                           <p className="source-meta">
                             {item.isAiSelected ? 'Проверенный академический источник' : 'Пользовательский файл'}
                           </p>
@@ -329,6 +360,14 @@ const stepStyles = `
   gap: var(--spacing-8);
   position: relative;
   z-index: 10;
+  flex: 1;
+}
+
+.source-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  flex-wrap: wrap;
 }
 
 .source-title {
@@ -360,6 +399,43 @@ const stepStyles = `
 
 .source-title-link:active {
   color: var(--color-accent-darker);
+}
+
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.source-badge--verified {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.source-badge--trusted {
+  background: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #90caf9;
+}
+
+.source-badge--fallback {
+  background: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ffcc80;
+}
+
+.source-badge--unverified {
+  background: #fff8e1;
+  color: #f57c00;
+  border: 1px solid #ffd54f;
 }
 
 .source-meta {

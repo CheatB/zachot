@@ -130,6 +130,17 @@ export interface SourceItem {
   url?: string
   description: string
   isAiSelected: boolean
+  isVerified?: boolean // Источник прошёл проверку доступности
+  isTrustedDomain?: boolean // Источник из надёжной научной базы
+  isFallback?: boolean // Резервный проверенный источник
+  validation?: {
+    is_valid: boolean
+    status_code: number | null
+    title: string | null
+    error: string | null
+    is_trusted_domain: boolean
+    redirect_url: string | null
+  }
 }
 
 export type ComplexityLevel = 'school' | 'student' | 'research'

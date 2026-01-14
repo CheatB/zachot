@@ -13,3 +13,6 @@ python-dotenv
 email-validator
 openai
 requests
+aiohttp
+chardet
+PyPDF2

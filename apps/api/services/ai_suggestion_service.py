@@ -9,6 +9,8 @@ from packages.core_domain.enums import GenerationStatus, GenerationModule
 from ..services.openai_service import openai_service
 from ..services.model_router import model_router
 from ..services.prompt_service import prompt_service
+from ..services.url_validator_service import url_validator_service
+from ..services.fallback_sources_service import fallback_sources_service
 from packages.ai_services.src.prompt_manager import prompt_manager
 
 logger = logging.getLogger(__name__)
@@ -90,11 +92,82 @@ class AISuggestionService:
                 raise ValueError("Failed to get response from AI")
                 
             data = json.loads(raw_response)
-            for source in data.get("sources", []):
+            sources = data.get("sources", [])
+            
+            if not sources:
+                logger.warning("AI returned no sources")
+                return {"sources": []}
+            
+            logger.info(f"AI suggested {len(sources)} sources, starting validation...")
+            
+            # Валидация источников
+            validated_sources = await url_validator_service.validate_sources(sources)
+            
+            # Фильтруем и сортируем по валидности
+            filtered_sources = url_validator_service.filter_valid_sources(
+                validated_sources,
+                min_valid=5,
+                prefer_trusted=True
+            )
+            
+            # Статистика валидации
+            valid_count = sum(
+                1 for s in filtered_sources 
+                if s.get('validation', {}).get('is_valid', False)
+            )
+            trusted_count = sum(
+                1 for s in filtered_sources 
+                if s.get('validation', {}).get('is_trusted_domain', False)
+            )
+            
+            logger.info(
+                f"Validation complete: {valid_count}/{len(sources)} valid, "
+                f"{trusted_count} from trusted domains, "
+                f"returning {len(filtered_sources)} sources"
+            )
+            
+            # Помечаем источники
+            for source in filtered_sources:
                 source["isAiSelected"] = True
-            return data
+                # Добавляем индикатор валидности для фронтенда
+                validation = source.get('validation', {})
+                source["isVerified"] = validation.get('is_valid', False)
+                source["isTrustedDomain"] = validation.get('is_trusted_domain', False)
+                
+                # Логируем невалидные источники для отладки
+                if not source["isVerified"]:
+                    logger.warning(
+                        f"Invalid source: {source.get('title', 'Unknown')[:50]}... "
+                        f"URL: {source.get('url', 'No URL')} "
+                        f"Error: {validation.get('error', 'Unknown error')}"
+                    )
+            
+            # Если валидных источников мало, добавляем fallback
+            valid_sources_count = sum(1 for s in filtered_sources if s.get('isVerified', False))
+            if valid_sources_count < 5:
+                logger.warning(
+                    f"Only {valid_sources_count} valid sources, adding fallback sources..."
+                )
+                enriched_sources = fallback_sources_service.enrich_sources_with_fallback(
+                    filtered_sources,
+                    topic=topic or "",
+                    min_sources=5
+                )
+                
+                # Помечаем fallback источники
+                for source in enriched_sources:
+                    if source.get('isFallback'):
+                        source["isAiSelected"] = False  # Fallback источники не от AI
+                
+                logger.info(
+                    f"Added {len(enriched_sources) - len(filtered_sources)} fallback sources"
+                )
+                return {"sources": enriched_sources}
+            
+            return {"sources": filtered_sources}
+            
         except Exception as e:
-            logger.error(f"Error suggesting sources: {e}")
+            logger.error(f"Error suggesting sources: {e}", exc_info=True)
             return {"sources": []}
 
     @staticmethod
