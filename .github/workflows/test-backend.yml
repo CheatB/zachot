@@ -24,5 +24,7 @@ jobs:
           pip install -r requirements-ci.txt
 
       - name: Run pytest
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |
-          pytest -q
+          pytest -v

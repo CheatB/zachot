@@ -1,5 +1,6 @@
 pydantic>=2.0
 pytest
+pytest-asyncio
 fastapi
 httpx
 dramatiq
@@ -9,5 +10,6 @@ python-pptx
 sqlalchemy
 psycopg2-binary
 python-dotenv
-pytest-asyncio
 email-validator
+openai
+requests
