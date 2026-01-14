@@ -6,7 +6,7 @@ import threading
 import time
 
 
-def test_events_endpoint_content_type_and_initial_event(client):
+def test_events_endpoint_content_type_and_initial_event(client, test_user):
     """
     Smoke тест SSE endpoint: проверка Content-Type и начального события.
     

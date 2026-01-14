@@ -7,7 +7,7 @@ from uuid import uuid4
 from fastapi import status
 
 
-def test_actions_next_transitions_to_running(client):
+def test_actions_next_transitions_to_running(client, test_user):
     """
     Тест действия next: проверка перехода из DRAFT в RUNNING.
     """
@@ -34,7 +34,7 @@ def test_actions_next_transitions_to_running(client):
     assert data["id"] == generation_id
 
 
-def test_actions_invalid_transition_returns_409(client):
+def test_actions_invalid_transition_returns_409(client, test_user):
     """
     Тест недопустимого перехода: проверка статуса 409.
     
@@ -70,7 +70,7 @@ def test_actions_invalid_transition_returns_409(client):
     assert "draft" in detail or "status" in detail or "cannot" in detail
 
 
-def test_actions_cancel_transitions_to_canceled(client):
+def test_actions_cancel_transitions_to_canceled(client, test_user):
     """
     Тест действия cancel: проверка перехода в CANCELED из любого статуса.
     """
