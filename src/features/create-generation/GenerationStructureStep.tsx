@@ -124,8 +124,13 @@ function GenerationStructureStep({ structure, onChange }: GenerationStructureSte
   }
 
   const moveSubSection = (subId: string, chapterId: string, direction: 'up' | 'down') => {
+    console.log('moveSubSection called:', { subId, chapterId, direction })
+    
     const chapterIndex = items.findIndex(i => i.id === chapterId)
-    if (chapterIndex === -1) return
+    if (chapterIndex === -1) {
+      console.log('Chapter not found')
+      return
+    }
 
     // Find all sub-sections of this chapter
     const subSections: StructureItem[] = []
@@ -135,11 +140,24 @@ function GenerationStructureStep({ structure, onChange }: GenerationStructureSte
       i++
     }
 
-    const subIndex = subSections.findIndex(s => s.id === subId)
-    if (subIndex === -1) return
+    console.log('Found subSections:', subSections.length, subSections.map(s => s.id))
 
-    if (direction === 'up' && subIndex === 0) return // Already at top
-    if (direction === 'down' && subIndex === subSections.length - 1) return // Already at bottom
+    const subIndex = subSections.findIndex(s => s.id === subId)
+    console.log('subIndex:', subIndex)
+    
+    if (subIndex === -1) {
+      console.log('Subsection not found in chapter')
+      return
+    }
+
+    if (direction === 'up' && subIndex === 0) {
+      console.log('Already at top')
+      return // Already at top
+    }
+    if (direction === 'down' && subIndex === subSections.length - 1) {
+      console.log('Already at bottom')
+      return // Already at bottom
+    }
 
     // Swap with adjacent sub-section
     const newSubSections = [...subSections]
@@ -148,6 +166,8 @@ function GenerationStructureStep({ structure, onChange }: GenerationStructureSte
     } else {
       [newSubSections[subIndex], newSubSections[subIndex + 1]] = [newSubSections[subIndex + 1], newSubSections[subIndex]]
     }
+
+    console.log('Swapped, updating items')
 
     // Reconstruct items array
     const newItems = [...items]
