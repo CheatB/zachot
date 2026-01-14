@@ -1,5 +1,5 @@
 // Service Worker для автоматического обновления приложения
-const CACHE_NAME = 'zachot-v1';
+const CACHE_NAME = 'zachot-v2'; // Изменена версия для форсированного обновления
 const VERSION_CHECK_INTERVAL = 60000; // Проверять каждую минуту
 
 // При установке Service Worker

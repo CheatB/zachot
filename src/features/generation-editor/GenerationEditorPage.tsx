@@ -32,10 +32,9 @@ function GenerationEditorPage() {
       })
       .catch((error) => {
         console.error('Failed to load generation:', error)
-        showToast('Не удалось загрузить работу', 'error')
+        // НЕ вызываем showToast здесь - это может вызвать перерисовку
         setLoading(false)
       })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   // Автосохранение каждые 5 секунд
