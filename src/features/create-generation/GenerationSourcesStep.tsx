@@ -243,6 +243,8 @@ const stepStyles = `
   display: flex;
   flex-direction: column;
   gap: var(--spacing-8);
+  position: relative;
+  z-index: 10;
 }
 
 .source-title {
@@ -286,6 +288,8 @@ const stepStyles = `
 .source-row__actions {
   display: flex;
   gap: var(--spacing-12);
+  position: relative;
+  z-index: 5;
 }
 
 .source-btn {

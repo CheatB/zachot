@@ -43,7 +43,8 @@ function ResultContent({ content, onUpdate }: ResultContentProps) {
     }, 2000)
 
     return () => clearTimeout(timer)
-  }, [localContent, content, id, showToast])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localContent, content, id])
 
   const handleSmartEdit = async (action: string) => {
     if (!id) return
