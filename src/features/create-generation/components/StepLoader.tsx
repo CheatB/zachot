@@ -144,7 +144,7 @@ const StepLoader: React.FC<StepLoaderProps> = ({ title, tasks, onComplete, durat
         .step-loader__task {
           display: flex;
           align-items: center;
-          gap: var(--spacing-16);
+          gap: 36px;
         }
         .step-loader__task-dot {
           width: 24px;
