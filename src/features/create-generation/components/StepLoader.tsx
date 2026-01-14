@@ -85,7 +85,7 @@ const StepLoader: React.FC<StepLoaderProps> = ({ title, tasks, onComplete, durat
             />
           </div>
 
-          <ul className="step-loader__tasks">
+          <ul className="step-loader__tasks" style={{ marginTop: '20px' }}>
             {tasks.map((task, index) => {
               const isCompleted = index < currentTaskIndex || progress === 100;
               const isActive = index === currentTaskIndex;
