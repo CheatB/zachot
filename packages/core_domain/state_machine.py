@@ -5,7 +5,7 @@ State machine для управления переходами статусов 
 запрещая недопустимые переходы между статусами.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Set
 
 from .enums import GenerationStatus
@@ -150,16 +150,14 @@ class GenerationStateMachine:
         
         # Если переход в тот же статус, просто обновляем updated_at
         if from_status == to_status:
-            return generation.model_copy(update={"updated_at": datetime.now()})
+            return generation.model_copy(update={"updated_at": datetime.now(timezone.utc)})
         
         # Подготовка данных для обновления
+        now = datetime.now(timezone.utc)
         update_data: dict = {
             "status": to_status,
-            "updated_at": datetime.now(),
+            "updated_at": now,
         }
-        
-        # Логика обновления временных меток в зависимости от целевого статуса
-        now = datetime.now()
         
         # При переходе в RUNNING:
         # - устанавливаем started_at (если еще не установлен)
