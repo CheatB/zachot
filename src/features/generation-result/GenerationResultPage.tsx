@@ -3,7 +3,7 @@
  * Экран результата генерации (Completed / Failed)
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
@@ -39,6 +39,10 @@ function GenerationResultPage() {
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [id, isAuthenticated])
+
+  const handleUpdateGeneration = useCallback((updated: Generation) => {
+    setGeneration(updated)
+  }, [])
 
   const handleCopy = () => {
     if (generation?.result_content) {
@@ -201,7 +205,7 @@ function GenerationResultPage() {
                 <ResultContent 
                   content={generation.result_content} 
                   type={generation.module} 
-                  onUpdate={(updated) => setGeneration(updated)}
+                  onUpdate={handleUpdateGeneration}
                 />
               )}
 
