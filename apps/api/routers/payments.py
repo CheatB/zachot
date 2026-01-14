@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from apps.api.database import get_db
+from apps.api.dependencies import get_current_user
 from apps.api.services.payment_service import PaymentService
 from packages.database.src.models import Payment, User
 
@@ -44,42 +45,6 @@ class PaymentStatusResponse(BaseModel):
     amount: int
     description: str
     created_at: str
-
-
-# === Helpers ===
-
-async def get_current_user(
-    request: Request,
-    db: Session = Depends(get_db)
-) -> User:
-    """
-    Получает текущего пользователя из токена.
-    
-    TODO: Реализовать полноценную JWT аутентификацию.
-    Сейчас используется простая проверка Bearer токена.
-    """
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        logger.warning("[Payments] Missing or invalid Authorization header")
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    
-    token = auth_header.replace("Bearer ", "")
-    
-    # Ищем токен в БД
-    from packages.database.src.models import AuthToken
-    auth_token = db.query(AuthToken).filter(AuthToken.token == token).first()
-    
-    if not auth_token or not auth_token.user_id:
-        logger.warning(f"[Payments] Invalid token: {token[:8]}...")
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
-    user = db.query(User).filter(User.id == auth_token.user_id).first()
-    if not user:
-        logger.warning(f"[Payments] User not found for token")
-        raise HTTPException(status_code=401, detail="User not found")
-    
-    logger.info(f"[Payments] Authenticated user: {user.id}")
-    return user
 
 
 # === Endpoints ===

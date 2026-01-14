@@ -3,7 +3,7 @@ Unit-тесты для Artifact.
 """
 
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from packages.core_domain import Artifact, ArtifactType
@@ -19,7 +19,7 @@ class TestArtifactCreation:
             generation_id=uuid4(),
             artifact_type=ArtifactType.TEXT_DOC,
             content="Test content",
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
         )
         
         assert artifact.artifact_type == ArtifactType.TEXT_DOC
@@ -36,7 +36,7 @@ class TestArtifactCreation:
             version=2,
             content={"slides": [{"title": "Slide 1"}]},
             file_ref="/path/to/file.pdf",
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
         )
         
         assert artifact.artifact_type == ArtifactType.SLIDES
@@ -56,7 +56,7 @@ class TestArtifactCreation:
             generation_id=uuid4(),
             artifact_type=ArtifactType.TEXT_DOC,
             content=content,
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
         )
         
         assert isinstance(artifact.content, dict)
@@ -71,7 +71,7 @@ class TestArtifactCreation:
             generation_id=uuid4(),
             artifact_type=ArtifactType.TEXT_DOC,
             content=content,
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
         )
         
         assert isinstance(artifact.content, str)
@@ -85,7 +85,7 @@ class TestArtifactCreation:
                 generation_id=uuid4(),
                 artifact_type=artifact_type,
                 content="test",
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             )
             
             assert artifact.artifact_type == artifact_type
@@ -105,7 +105,7 @@ class TestArtifactValidation:
                 artifact_type=ArtifactType.TEXT_DOC,
                 version=0,
                 content="test",
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             )
         
         # Pydantic выбрасывает ValidationError с информацией о поле
@@ -124,7 +124,7 @@ class TestArtifactValidation:
                 artifact_type=ArtifactType.TEXT_DOC,
                 version=-1,
                 content="test",
-                created_at=datetime.now(),
+                created_at=datetime.now(timezone.utc),
             )
         
         # Pydantic выбрасывает ValidationError с информацией о поле
@@ -140,7 +140,7 @@ class TestArtifactValidation:
             artifact_type=ArtifactType.TEXT_DOC,
             version=1,
             content="test",
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
         )
         
         assert artifact.version == 1
@@ -153,7 +153,7 @@ class TestArtifactValidation:
             artifact_type=ArtifactType.TEXT_DOC,
             version=5,
             content="test",
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
         )
         
         assert artifact.version == 5
@@ -166,7 +166,7 @@ class TestArtifactValidation:
             generation_id=uuid4(),
             artifact_type="TEXT_DOC",  # строка
             content="test",
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
         )
         
         assert artifact.artifact_type == ArtifactType.TEXT_DOC
@@ -183,7 +183,7 @@ class TestArtifactRepr:
             artifact_type=ArtifactType.TEXT_DOC,
             version=1,
             content="Test content",
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
         )
         
         repr_str = repr(artifact)
@@ -200,7 +200,7 @@ class TestArtifactRepr:
             artifact_type=ArtifactType.SLIDES,
             version=2,
             content="test",
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
         )
         
         str_repr = str(artifact)

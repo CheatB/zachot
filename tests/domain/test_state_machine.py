@@ -3,7 +3,7 @@ from packages.core_domain.state_machine import GenerationStateMachine
 from packages.core_domain.enums import GenerationStatus
 from packages.core_domain import Generation
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 
 def test_generation_status_transitions():
     gen_id = uuid4()
@@ -14,8 +14,8 @@ def test_generation_status_transitions():
         module="TEXT",
         status=GenerationStatus.DRAFT,
         title="Test",
-        created_at=datetime.now(),
-        updated_at=datetime.now(),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
         input_payload={},
         settings_payload={}
     )

@@ -3,7 +3,7 @@ Unit-тесты для StepLifecycle.
 """
 
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from packages.core_domain import (
@@ -48,8 +48,8 @@ class TestStepLifecycleStart:
             status=StepStatus.SUCCEEDED,
             input_payload={},
             input_hash="test",
-            started_at=datetime.now(),
-            finished_at=datetime.now(),
+            started_at=datetime.now(timezone.utc),
+            finished_at=datetime.now(timezone.utc),
             output_payload={"result": "done"},
             progress=100,
         )
@@ -93,8 +93,8 @@ class TestStepLifecycleComplete:
             status=StepStatus.FAILED,
             input_payload={},
             input_hash="test",
-            started_at=datetime.now(),
-            finished_at=datetime.now(),
+            started_at=datetime.now(timezone.utc),
+            finished_at=datetime.now(timezone.utc),
             error={"code": "error"},
         )
         
@@ -136,8 +136,8 @@ class TestStepLifecycleFail:
             status=StepStatus.SUCCEEDED,
             input_payload={},
             input_hash="test",
-            started_at=datetime.now(),
-            finished_at=datetime.now(),
+            started_at=datetime.now(timezone.utc),
+            finished_at=datetime.now(timezone.utc),
             output_payload={"result": "done"},
             progress=100,
         )
@@ -186,7 +186,7 @@ class TestStepLifecycleMarkNeedUser:
             status=StepStatus.SKIPPED,
             input_payload={},
             input_hash="test",
-            finished_at=datetime.now(),
+            finished_at=datetime.now(timezone.utc),
         )
         
         with pytest.raises(StepAlreadyFinishedError) as exc_info:
@@ -253,8 +253,8 @@ class TestStepLifecycleSkip:
             status=StepStatus.SUCCEEDED,
             input_payload={},
             input_hash="test",
-            started_at=datetime.now(),
-            finished_at=datetime.now(),
+            started_at=datetime.now(timezone.utc),
+            finished_at=datetime.now(timezone.utc),
             output_payload={"result": "done"},
             progress=100,
         )
@@ -312,8 +312,8 @@ class TestStepLifecycleFullFlow:
                     status=status,
                     input_payload={},
                     input_hash="test",
-                    started_at=datetime.now(),
-                    finished_at=datetime.now(),
+                    started_at=datetime.now(timezone.utc),
+                    finished_at=datetime.now(timezone.utc),
                     output_payload={"result": "done"},
                     progress=100,
                 )
@@ -325,8 +325,8 @@ class TestStepLifecycleFullFlow:
                     status=status,
                     input_payload={},
                     input_hash="test",
-                    started_at=datetime.now(),
-                    finished_at=datetime.now(),
+                    started_at=datetime.now(timezone.utc),
+                    finished_at=datetime.now(timezone.utc),
                     error={"code": "error"},
                 )
             else:  # SKIPPED
@@ -337,7 +337,7 @@ class TestStepLifecycleFullFlow:
                     status=status,
                     input_payload={},
                     input_hash="test",
-                    finished_at=datetime.now(),
+                    finished_at=datetime.now(timezone.utc),
                 )
             
             # Все операции должны выбросить StepAlreadyFinishedError
