@@ -125,3 +125,46 @@ export async function createJob(id: string): Promise<{ job_id: string; status: s
     method: 'POST',
   });
 }
+
+export async function searchMoreSources(generationId: string, currentSourcesCount: number): Promise<{
+  success: boolean;
+  message: string;
+  sources: SourceItem[];
+  new_sources?: SourceItem[];
+}> {
+  return apiFetch<{
+    success: boolean;
+    message: string;
+    sources: SourceItem[];
+    new_sources?: SourceItem[];
+  }>('/sources/search-more', {
+    method: 'POST',
+    body: JSON.stringify({
+      generation_id: generationId,
+      current_sources_count: currentSourcesCount,
+    }),
+  });
+}
+
+export async function uploadFileSource(generationId: string, file: File): Promise<{
+  success: boolean;
+  message: string;
+  source: SourceItem;
+  sources: SourceItem[];
+}> {
+  const formData = new FormData();
+  formData.append('generation_id', generationId);
+  formData.append('file', file);
+
+  return apiFetch<{
+    success: boolean;
+    message: string;
+    source: SourceItem;
+    sources: SourceItem[];
+  }>('/sources/upload-file', {
+    method: 'POST',
+    body: formData,
+    // Don't set Content-Type header for FormData, browser will set it automatically with boundary
+    headers: {},
+  });
+}

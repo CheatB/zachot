@@ -245,3 +245,13 @@ class SuggestSourcesRequest(BaseModel):
 
 class SuggestTitleInfoRequest(BaseModel):
     university: str
+
+class SearchMoreSourcesRequest(BaseModel):
+    generation_id: UUID
+    current_sources_count: int = 0
+
+class UploadFileSourceRequest(BaseModel):
+    generation_id: UUID
+    file_name: str
+    file_content: str  # Base64 encoded content
+    file_type: str  # pdf, docx, txt

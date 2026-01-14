@@ -8,15 +8,22 @@ import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { Button, Tooltip } from '@/ui'
 import type { SourceItem } from './types'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { searchMoreSources, uploadFileSource } from '@/shared/api/generations'
+import { useToast } from '@/ui/primitives/Toast'
 
 interface GenerationSourcesStepProps {
   sources: SourceItem[]
   onChange: (sources: SourceItem[]) => void
+  generationId?: string | null
 }
 
-function GenerationSourcesStep({ sources, onChange }: GenerationSourcesStepProps) {
+function GenerationSourcesStep({ sources, onChange, generationId }: GenerationSourcesStepProps) {
   const [items, setItems] = useState<SourceItem[]>(sources)
+  const [isSearching, setIsSearching] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { showToast } = useToast()
 
   useEffect(() => {
     if (sources.length > 0) {
@@ -28,6 +35,78 @@ function GenerationSourcesStep({ sources, onChange }: GenerationSourcesStepProps
     const newItems = items.filter(item => item.id !== id)
     setItems(newItems)
     onChange(newItems)
+  }
+
+  const handleSearchMore = async () => {
+    if (!generationId) {
+      showToast('Сначала сохраните черновик работы', 'error')
+      return
+    }
+
+    setIsSearching(true)
+    try {
+      const result = await searchMoreSources(generationId, items.length)
+      if (result.success) {
+        setItems(result.sources)
+        onChange(result.sources)
+        showToast(`Добавлено ${result.new_sources?.length || 0} новых источников! 🎉`, 'success')
+      } else {
+        showToast(result.message || 'Не удалось найти новые источники', 'info')
+      }
+    } catch (error) {
+      console.error('Error searching more sources:', error)
+      showToast('Ошибка при поиске источников', 'error')
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!generationId) {
+      showToast('Сначала сохраните черновик работы', 'error')
+      return
+    }
+
+    // Проверка типа файла
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain']
+    if (!allowedTypes.includes(file.type)) {
+      showToast('Поддерживаются только файлы PDF, DOCX и TXT', 'error')
+      return
+    }
+
+    // Проверка размера (макс 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Размер файла не должен превышать 10 МБ', 'error')
+      return
+    }
+
+    setIsUploading(true)
+    try {
+      const result = await uploadFileSource(generationId, file)
+      if (result.success) {
+        setItems(result.sources)
+        onChange(result.sources)
+        showToast(`Файл "${file.name}" успешно добавлен как источник! 📄`, 'success')
+      } else {
+        showToast(result.message || 'Не удалось загрузить файл', 'error')
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error)
+      showToast('Ошибка при загрузке файла', 'error')
+    } finally {
+      setIsUploading(false)
+      // Сбрасываем input чтобы можно было загрузить тот же файл снова
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
   }
 
   // Inject styles
@@ -127,25 +206,30 @@ function GenerationSourcesStep({ sources, onChange }: GenerationSourcesStepProps
         </div>
 
         <div className="sources-actions">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.docx,.doc,.txt"
+            style={{ display: 'none' }}
+            onChange={handleFileUpload}
+          />
           <Button 
             variant="secondary" 
             size="lg" 
             style={{ borderStyle: 'dashed', flex: 1 }}
-            onClick={() => {
-              alert('📁 Загрузка файлов\n\nДанная функция находится в разработке и будет доступна в ближайшее время.\n\nВы сможете загружать PDF, DOCX и другие форматы для использования в качестве источников.')
-            }}
+            onClick={handleUploadClick}
+            disabled={isUploading || !generationId}
           >
-            + Загрузить свой файл
+            {isUploading ? '⏳ Загрузка...' : '+ Загрузить свой файл'}
           </Button>
           <Button 
             variant="secondary" 
             size="lg" 
             style={{ borderStyle: 'dashed', flex: 1 }}
-            onClick={() => {
-              alert('🔍 Поиск источников\n\nДанная функция находится в разработке и будет доступна в ближайшее время.\n\nВы сможете искать дополнительные источники по ключевым словам в научных базах данных.')
-            }}
+            onClick={handleSearchMore}
+            disabled={isSearching || !generationId}
           >
-            🔍 Поискать еще
+            {isSearching ? '⏳ Поиск...' : '🔍 Поискать еще'}
           </Button>
         </div>
       </div>
