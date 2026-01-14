@@ -3,12 +3,13 @@ Pytest fixtures для API тестов.
 """
 
 import os
-import pytest
-from uuid import uuid4
+import sys
 
-# Устанавливаем окружение для тестов ПЕРЕД импортом приложения
+# КРИТИЧНО: Устанавливаем ENV=test ДО любых импортов
 os.environ["ENV"] = "test"
 
+import pytest
+from uuid import uuid4
 from fastapi.testclient import TestClient
 from apps.api.main import app
 from apps.api.storage import generation_store

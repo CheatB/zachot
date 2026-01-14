@@ -23,8 +23,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-ci.txt
 
+      - name: Setup test environment
+        run: |
+          echo "Setting up test environment..."
+          export ENV=test
+          echo "ENV=test" >> $GITHUB_ENV
+
       - name: Run pytest
         env:
           PYTHONPATH: ${{ github.workspace }}
+          ENV: test
         run: |
           pytest -v
