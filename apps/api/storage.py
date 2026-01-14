@@ -148,10 +148,14 @@ class SQLGenerationStore:
         """
         Очищает хранилище (для тестирования).
         
-        Удаляет все записи из таблиц generations и users.
+        Удаляет все записи из таблиц в правильном порядке (с учётом foreign keys).
         """
+        from packages.database.src.models import PaymentDB
+        
         with SessionLocal() as session:
+            # Удаляем в порядке зависимостей: сначала дочерние таблицы, потом родительские
             session.query(GenerationDB).delete()
+            session.query(PaymentDB).delete()
             session.query(UserDB).delete()
             session.commit()
         self._subscribers.clear()
