@@ -15,21 +15,19 @@ logger = logging.getLogger(__name__)
 
 class AISuggestionService:
     @staticmethod
-    async def suggest_structure(topic: str, goal: str, idea: str, work_type: str, volume: int, complexity: str, user_id: UUID) -> Dict:
-        """
-        Предлагает структуру работы на основе темы, цели и идеи.
-        """
+    async def suggest_structure(topic: str, goal: str, idea: str, module: str, work_type: str, volume: int, complexity: str, humanity: str, user_id: UUID) -> Dict:
+        """Предлагает структуру работы на основе темы, цели и идеи."""
         model_name = model_router.get_model_for_step("structure", work_type or "other")
 
-        # Создаем фиктивный объект Generation для PromptService
         dummy_gen = Generation(
             id=UUID("00000000-0000-0000-0000-000000000000"),
             user_id=user_id,
-            module=GenerationModule.TEXT,
+            module=GenerationModule((module or "TEXT").upper()),
             status=GenerationStatus.DRAFT,
             work_type=work_type,
-            complexity_level=complexity,
-            input_payload={"topic": topic, "goal": goal, "idea": idea, "volume": volume},
+            complexity_level=complexity or "student",
+            humanity_level=humanity or "medium",
+            input_payload={"topic": topic or "", "goal": goal or "", "idea": idea or "", "volume": volume or 10},
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
@@ -60,20 +58,19 @@ class AISuggestionService:
             ]}
 
     @staticmethod
-    async def suggest_sources(topic: str, work_type: str, complexity: str, user_id: UUID) -> Dict:
-        """
-        Предлагает источники литературы на основе темы.
-        """
+    async def suggest_sources(topic: str, goal: str, idea: str, module: str, work_type: str, complexity: str, humanity: str, user_id: UUID) -> Dict:
+        """Предлагает источники литературы."""
         model_name = model_router.get_model_for_step("sources", work_type or "other")
 
         dummy_gen = Generation(
             id=UUID("00000000-0000-0000-0000-000000000000"),
             user_id=user_id,
-            module=GenerationModule.TEXT,
+            module=GenerationModule((module or "TEXT").upper()),
             status=GenerationStatus.DRAFT,
             work_type=work_type,
-            complexity_level=complexity,
-            input_payload={"topic": topic},
+            complexity_level=complexity or "student",
+            humanity_level=humanity or "medium",
+            input_payload={"topic": topic or "", "goal": goal or "", "idea": idea or ""},
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
@@ -98,18 +95,29 @@ class AISuggestionService:
             return data
         except Exception as e:
             logger.error(f"Error suggesting sources: {e}")
-            return {"sources": [
-                {"title": "КиберЛенинке: Роль ИИ в образовании", "url": "https://cyberleninka.ru", "description": "Научная статья о влиянии нейросетей на учебный процесс.", "isAiSelected": True}
-            ]}
+            return {"sources": []}
 
     @staticmethod
-    async def suggest_details(topic: str) -> Dict:
-        """
-        Предлагает цель и идею работы на основе темы.
-        """
+    async def suggest_details(topic: str, module: str, complexity: str, humanity: str) -> Dict:
+        """Предлагает цель и идею работы."""
         model_name = model_router.get_model_for_step("suggest_details")
         prompt_template = prompt_manager.get_prompt("suggest_details")
-        prompt = prompt_template.format(topic=topic)
+        
+        safe_module = (module or "TEXT").upper()
+        dummy_gen = Generation(
+            id=UUID("00000000-0000-0000-0000-000000000000"),
+            user_id=UUID("00000000-0000-0000-0000-000000000000"),
+            module=GenerationModule(safe_module),
+            status=GenerationStatus.DRAFT,
+            complexity_level=complexity or "student",
+            humanity_level=humanity or "medium",
+            input_payload={"topic": topic or ""},
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        
+        ctx = prompt_service._get_context_vars(dummy_gen)
+        prompt = prompt_service._safe_format(prompt_template, **ctx)
 
         try:
             raw_response = await openai_service.chat_completion(
@@ -129,11 +137,9 @@ class AISuggestionService:
 
     @staticmethod
     async def suggest_title_info(university_short: str) -> Dict:
-        """
-        Дополняет информацию для титульного листа.
-        """
+        """Дополняет информацию для титульного листа."""
         prompt_template = prompt_manager.get_prompt("suggest_title_info")
-        prompt = prompt_template.format(university_short=university_short)
+        prompt = prompt_service._safe_format(prompt_template, university_short=university_short or "")
 
         try:
             raw_response = await openai_service.chat_completion(
@@ -141,11 +147,39 @@ class AISuggestionService:
                 messages=[{"role": "user", "content": prompt}],
                 json_mode=True
             )
-            return json.loads(raw_response or '{"university_full": "' + university_short + '", "city": "Москва"}')
+            return json.loads(raw_response or '{"university_full": "' + (university_short or "") + '", "city": "Москва"}')
         except Exception as e:
             logger.error(f"Error suggesting title info: {e}")
-            return {"university_full": university_short, "city": "Москва"}
+            return {"university_full": university_short or "", "city": "Москва"}
 
 ai_suggestion_service = AISuggestionService()
 
 
+
+
+
+ai_suggestion_service = AISuggestionService()
+
+ai_suggestion_service = AISuggestionService()
+
+
+
+
+
+ai_suggestion_service = AISuggestionService()
+
+ai_suggestion_service = AISuggestionService()
+
+
+
+
+
+ai_suggestion_service = AISuggestionService()
+
+ai_suggestion_service = AISuggestionService()
+
+
+
+
+
+ai_suggestion_service = AISuggestionService()

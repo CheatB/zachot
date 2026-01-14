@@ -14,14 +14,14 @@ class AIModelProvider(str, Enum):
 
 DEFAULT_CONFIG = {
     "main": {
-        "referat": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o", "refine": "anthropic/claude-3.5-sonnet" },
-        "kursach": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o", "refine": "anthropic/claude-3.5-sonnet" },
-        "essay": { "structure": "openai/gpt-4o-mini", "suggest_details": "openai/gpt-4o-mini", "sources": "openai/gpt-4o-mini", "generation": "openai/gpt-4o-mini", "refine": "anthropic/claude-3.5-sonnet" },
-        "doklad": { "structure": "openai/gpt-4o-mini", "suggest_details": "openai/gpt-4o-mini", "sources": "openai/gpt-4o-mini", "generation": "openai/gpt-4o-mini", "refine": "openai/gpt-4o-mini" },
-        "article": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-deep-research", "generation": "openai/gpt-4o", "refine": "anthropic/claude-3.5-sonnet" },
-        "composition": { "structure": "openai/gpt-4o-mini", "suggest_details": "openai/gpt-4o-mini", "sources": "openai/gpt-4o-mini", "generation": "openai/gpt-4o-mini", "refine": "anthropic/claude-3.5-sonnet" },
-        "other": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o", "refine": "anthropic/claude-3.5-sonnet" },
-        "presentation": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o-mini", "refine": "anthropic/claude-3.5-sonnet" },
+        "referat": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o", "refine": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
+        "kursach": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o", "refine": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
+        "essay": { "structure": "openai/gpt-4o-mini", "suggest_details": "openai/gpt-4o-mini", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o-mini", "refine": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
+        "doklad": { "structure": "openai/gpt-4o-mini", "suggest_details": "openai/gpt-4o-mini", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o-mini", "refine": "openai/gpt-4o-mini", "editor": "openai/gpt-4o-mini" },
+        "article": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-deep-research", "generation": "openai/gpt-4o", "refine": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o" },
+        "composition": { "structure": "openai/gpt-4o-mini", "suggest_details": "openai/gpt-4o-mini", "sources": "openai/gpt-4o-mini", "generation": "openai/gpt-4o-mini", "refine": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
+        "other": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o", "refine": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
+        "presentation": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o-mini", "refine": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
         "task": { "task_solve": "deepseek/deepseek-r1" }
     },
     "fallback": {
@@ -84,3 +84,7 @@ class ModelRouter:
         return model
 
 model_router = ModelRouter()
+
+def get_model_for_step(step_type: str, work_type: str = "other", is_fallback: bool = False) -> str:
+    """Wrapper function for getting model"""
+    return model_router.get_model_for_step(step_type, work_type, is_fallback)

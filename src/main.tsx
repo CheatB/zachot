@@ -28,3 +28,38 @@ root.render(
 )
 
 console.log('[main.tsx] Render called')
+
+// Регистрация Service Worker для автоматического обновления
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((registration) => {
+        console.log('[SW] Registered successfully:', registration.scope)
+        
+        // Проверяем обновления каждую минуту
+        setInterval(() => {
+          registration.update()
+        }, 60000)
+      })
+      .catch((error) => {
+        console.error('[SW] Registration failed:', error)
+      })
+    
+    // Слушаем сообщения от Service Worker
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data.type === 'UPDATE_AVAILABLE') {
+        console.log('[SW] Update available, version:', event.data.version)
+        
+        // Показываем уведомление пользователю
+        const shouldReload = confirm(
+          'Доступна новая версия приложения! Обновить страницу для применения изменений?'
+        )
+        
+        if (shouldReload) {
+          window.location.reload()
+        }
+      }
+    })
+  })
+}

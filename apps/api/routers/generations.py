@@ -1,73 +1,45 @@
-"""
-Роутер для работы с Generation.
-"""
-
-import asyncio
-import json
-import logging
-from datetime import datetime
-from uuid import UUID, uuid4
-
-from fastapi import APIRouter, HTTPException, status, Header, Depends
-from fastapi.responses import StreamingResponse, Response
-from ..services.export_service import export_service
+from uuid import UUID
+from fastapi import APIRouter, HTTPException, Depends
+from ..schemas import (
+    GenerationCreateRequest,
+    GenerationUpdateRequest,
+    GenerationResponse,
+    GenerationsResponse,
+    ActionRequest,
+)
+from ..database import User as UserDB
 from ..services.generation_service import generation_service
-
-from ..schemas import ActionRequest, GenerationCreateRequest, GenerationResponse, GenerationsResponse, GenerationUpdateRequest
 from ..storage import generation_store
-from ..database import SessionLocal, User as UserDB
-from packages.core_domain import Generation
-from packages.core_domain import GenerationStateMachine, InvalidGenerationTransitionError
-from packages.core_domain.enums import GenerationStatus
-from packages.billing.credits import get_credit_cost, format_credits_text
-
-logger = logging.getLogger(__name__)
+from ..dependencies import get_current_user
 
 router = APIRouter(prefix="/generations", tags=["generations"])
 
-# Dependency to get current user
-def get_current_user(authorization: str = Header(None)) -> UserDB:
-    user_id = UUID("00000000-0000-0000-0000-000000000001") # Default mock
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ")[1]
-        try:
-            user_id = UUID(token)
-        except ValueError:
-            pass
-            
-    with SessionLocal() as session:
-        user = session.query(UserDB).filter(UserDB.id == user_id).first()
-        if not user:
-            user = UserDB(id=user_id, email=f"user_{user_id.hex[:8]}@zachet.tech")
-            session.add(user)
-            session.commit()
-            session.refresh(user)
-        return user
 
 @router.get("", response_model=GenerationsResponse)
 async def list_generations(user: UserDB = Depends(get_current_user)) -> GenerationsResponse:
-    try:
-        generations = generation_store.get_all_for_user(user.id)
-        generations.sort(key=lambda x: x.created_at, reverse=True)
-        return GenerationsResponse(items=generations)
-    except Exception as e:
-        logger.error(f"Unexpected error listing generations: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+    generations = generation_store.get_all_for_user(user.id)
+    return GenerationsResponse(items=[GenerationResponse.model_validate(g) for g in generations])
 
 
-@router.post("", response_model=GenerationResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=GenerationResponse, status_code=201)
 async def create_generation(
     request: GenerationCreateRequest,
     user: UserDB = Depends(get_current_user)
 ) -> GenerationResponse:
+    # Since we changed schemas to use dict for payloads, we use them directly
+    input_payload = request.input_payload if isinstance(request.input_payload, dict) else request.input_payload.model_dump()
+    settings_payload = {}
+    if request.settings_payload:
+        settings_payload = request.settings_payload if isinstance(request.settings_payload, dict) else request.settings_payload.model_dump()
+
     saved_generation = await generation_service.create_draft(
         user=user,
         module=request.module,
-        input_payload=request.input_payload.model_dump(),
+        input_payload=input_payload,
         work_type=request.work_type,
         complexity=request.complexity_level,
         humanity=request.humanity_level,
-        settings=request.settings_payload.model_dump() if request.settings_payload else {}
+        settings=settings_payload
     )
     return GenerationResponse.model_validate(saved_generation)
 
@@ -86,11 +58,19 @@ async def update_generation(
     request: GenerationUpdateRequest,
     user: UserDB = Depends(get_current_user),
 ) -> GenerationResponse:
+    input_payload = None
+    if request.input_payload is not None:
+        input_payload = request.input_payload if isinstance(request.input_payload, dict) else request.input_payload.model_dump(exclude_unset=True)
+    
+    settings_payload = None
+    if request.settings_payload is not None:
+        settings_payload = request.settings_payload if isinstance(request.settings_payload, dict) else request.settings_payload.model_dump(exclude_unset=True)
+
     updated_gen = await generation_service.update_draft(
         generation_id=generation_id,
         user_id=user.id,
-        input_payload=request.input_payload.model_dump(exclude_unset=True) if request.input_payload else None,
-        settings_payload=request.settings_payload.model_dump(exclude_unset=True) if request.settings_payload else None
+        input_payload=input_payload,
+        settings_payload=settings_payload
     )
     return GenerationResponse.model_validate(updated_gen)
 
@@ -109,48 +89,10 @@ async def execute_action(
     return GenerationResponse.model_validate(saved_generation)
 
 
-@router.get("/{generation_id}/export/{format}")
-async def export_generation(generation_id: UUID, format: str, user: UserDB = Depends(get_current_user)):
-    generation = generation_store.get(generation_id)
-    if not generation or generation.user_id != user.id:
-        raise HTTPException(status_code=404, detail="Generation not found")
-    
-    content = generation.result_content or "Содержимое отсутствует."
-    
-    if format.lower() == "docx":
-        file_stream = export_service.generate_docx(generation, content)
-        media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    elif format.lower() == "pdf":
-        file_stream = export_service.generate_pdf(generation, content)
-        media_type = "application/pdf"
-    elif format.lower() == "pptx":
-        file_stream = export_service.generate_pptx(generation, content)
-        media_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-    else:
-        raise HTTPException(status_code=400, detail="Unsupported format")
-    
-    return StreamingResponse(
-        file_stream,
-        media_type=media_type,
-        headers={"Content-Disposition": f"attachment; filename=zachet_{generation_id}.{format}"}
-    )
-
-
-@router.get("/{generation_id}/events")
-async def stream_generation_events(generation_id: UUID, user: UserDB = Depends(get_current_user)) -> StreamingResponse:
+@router.delete("/{generation_id}", status_code=204)
+async def delete_generation(generation_id: UUID, user: UserDB = Depends(get_current_user)):
     generation = generation_store.get(generation_id)
     if generation is None or generation.user_id != user.id:
         raise HTTPException(status_code=404, detail="Generation not found")
-    
-    async def event_generator():
-        queue = generation_store.subscribe(generation_id)
-        try:
-            initial_event = {"id": str(generation.id), "status": generation.status.value, "updated_at": generation.updated_at.isoformat()}
-            yield f"event: generation\ndata: {json.dumps(initial_event)}\n\n"
-            while True:
-                event_data = await queue.get()
-                yield f"event: generation\ndata: {json.dumps(event_data)}\n\n"
-        finally:
-            generation_store.unsubscribe(generation_id, queue)
-    
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    generation_store.delete(generation_id)
+    return None

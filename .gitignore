@@ -12,3 +12,9 @@ __pycache__/
 .idea
 .env
 test.db
+
+# Frontend build
+dist/
+node_modules/
+.vite/
+*.log

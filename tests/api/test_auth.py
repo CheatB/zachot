@@ -29,4 +29,3 @@ async def test_me_unauthorized(client):
     assert response.status_code == 401
 
 
-

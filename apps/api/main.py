@@ -16,7 +16,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from apps.api.database import init_db
-from apps.api.routers import payments, auth, generations, admin, me, health, jobs
+from apps.api.routers import payments, auth, generations, admin, me, health, jobs, ai_editing
 
 # Настройка логирования
 logging.basicConfig(
@@ -55,6 +55,7 @@ app.include_router(health.router)
 app.include_router(payments.router)
 app.include_router(auth.router)
 app.include_router(generations.router)
+app.include_router(ai_editing.router)
 app.include_router(admin.router)
 app.include_router(me.router)
 app.include_router(jobs.router)

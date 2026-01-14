@@ -27,7 +27,7 @@ class Generation(BaseModel):
     title: Optional[str] = Field(None, description="Заголовок/тема генерации")
     work_type: Optional[str] = Field(None, description="Тип академической работы")
     complexity_level: str = Field("student", description="Уровень сложности")
-    humanity_level: int = Field(50, description="Уровень очеловечивания")
+    humanity_level: str = Field("medium", description="Уровень очеловечивания")
     
     created_at: datetime = Field(..., description="Время создания генерации")
     updated_at: datetime = Field(..., description="Время последнего обновления")

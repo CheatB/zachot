@@ -13,14 +13,22 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\""
   },
   "dependencies": {
+    "@lexical/code": "^0.39.0",
+    "@lexical/link": "^0.39.0",
+    "@lexical/list": "^0.39.0",
+    "@lexical/react": "^0.39.0",
+    "@lexical/rich-text": "^0.39.0",
+    "@lexical/selection": "^0.39.0",
+    "@lexical/utils": "^0.39.0",
     "clsx": "^2.1.0",
     "framer-motion": "^11.0.0",
     "katex": "^0.16.27",
+    "lexical": "^0.39.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-dropzone": "^14.3.8",
     "react-router-dom": "^7.11.0",
-    "zustand": "^5.0.10"
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@types/katex": "^0.16.7",

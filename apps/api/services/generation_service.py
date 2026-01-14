@@ -15,7 +15,7 @@ class GenerationService:
     @staticmethod
     async def create_draft(user: UserDB, module: str, input_payload: dict, 
                            work_type: str = None, complexity: str = "student", 
-                           humanity: int = 50, settings: dict = None) -> Generation:
+                           humanity: str = "medium", settings: dict = None) -> Generation:
         # 1. Проверяем баланс кредитов
         work_type_val = work_type or "other"
         required_credits = get_credit_cost(work_type_val)
@@ -106,5 +106,6 @@ class GenerationService:
         return generation_store.save(updated_generation)
 
 generation_service = GenerationService()
+
 
 

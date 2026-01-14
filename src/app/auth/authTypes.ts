@@ -18,6 +18,8 @@ export interface Usage {
   generationsLimit: number
   tokensUsed: number
   tokensLimit: number
+  creditsBalance?: number
+  creditsUsed?: number
 }
 
 export interface User {

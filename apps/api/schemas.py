@@ -46,7 +46,7 @@ class GenerationCreateRequest(BaseModel):
     module: GenerationModule = Field(..., description="Тип модуля генерации")
     work_type: Optional[str] = Field(None, description="Тип академической работы")
     complexity_level: str = Field("student", description="Уровень сложности")
-    humanity_level: int = Field(50, description="Уровень очеловечивания (0-100)")
+    humanity_level: str = Field("medium", description="Уровень очеловечивания")
     input_payload: GenerationInputPayload = Field(..., description="Входные данные для генерации")
     settings_payload: Optional[GenerationSettingsPayload] = Field(None, description="Настройки генерации")
 
@@ -79,11 +79,12 @@ class GenerationResponse(BaseModel):
     title: Optional[str] = Field(None, description="Заголовок/тема генерации")
     work_type: Optional[str] = Field(None, description="Тип академической работы")
     complexity_level: str = Field("student", description="Уровень сложности")
-    humanity_level: int = Field(50, description="Уровень очеловечивания")
+    humanity_level: str = Field("medium", description="Уровень очеловечивания")
     created_at: datetime = Field(..., description="Время создания генерации")
     updated_at: datetime = Field(..., description="Время последнего обновления")
     input_payload: GenerationInputPayload = Field(..., description="Входные данные для генерации")
     settings_payload: GenerationSettingsPayload = Field(default_factory=GenerationSettingsPayload, description="Настройки генерации")
+    usage_metadata: list = Field(default_factory=list, description="Данные о расходе токенов и стоимости")
     result_content: Optional[str] = None
     
     class Config:
@@ -217,23 +218,30 @@ class TBankWebhook(BaseModel):
 
 class SuggestDetailsRequest(BaseModel):
     topic: str
+    module: Optional[str] = None
+    complexity: str = "student"
+    humanity: str = "medium"
 
 
 class SuggestStructureRequest(BaseModel):
     topic: str
     goal: str
     idea: str
+    module: Optional[str] = None
     workType: Optional[str] = None
     volume: int = 10
     complexity: str = "student"
-
+    humanity: str = "medium"
 
 class SuggestSourcesRequest(BaseModel):
     topic: str
+    goal: str
+    idea: str
+    module: Optional[str] = None
     workType: Optional[str] = None
     volume: int = 10
     complexity: str = "student"
-
+    humanity: str = "medium"
 
 class SuggestTitleInfoRequest(BaseModel):
     university: str

@@ -71,23 +71,44 @@ function GenerationSourcesStep({ sources, onChange }: GenerationSourcesStepProps
                 items.map((item) => (
                   <div key={item.id} className="source-row">
                     <div className="source-row__left">
-                      <div className="source-row__content">
-                        <div className="source-icon">
-                          <svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect width="24" height="32" rx="4" fill="#F43F5E"/>
-                            <path d="M12 8V24M12 24L8 20M12 24L16 20" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <text x="4" y="28" fill="white" fontSize="6" fontWeight="bold" fontFamily="sans-serif">PDF</text>
-                          </svg>
+                      {item.url ? (
+                        <a 
+                          href={item.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="source-row__content source-row__content--link"
+                        >
+                          <div className="source-icon">
+                            <svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <rect width="24" height="32" rx="4" fill="#F43F5E"/>
+                              <path d="M6 10H18M6 16H18M6 22H14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <text x="4" y="28" fill="white" fontSize="6" fontWeight="bold" fontFamily="sans-serif">PDF</text>
+                            </svg>
+                          </div>
+                          <div className="source-details">
+                            <h4 className="source-title source-title-link">{item.title}</h4>
+                            <p className="source-meta">
+                              {item.isAiSelected ? 'Проверенный академический источник' : 'Пользовательский файл'}
+                            </p>
+                          </div>
+                        </a>
+                      ) : (
+                        <div className="source-row__content">
+                          <div className="source-icon">
+                            <svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <rect width="24" height="32" rx="4" fill="#F43F5E"/>
+                              <path d="M6 10H18M6 16H18M6 22H14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <text x="4" y="28" fill="white" fontSize="6" fontWeight="bold" fontFamily="sans-serif">PDF</text>
+                            </svg>
+                          </div>
+                          <div className="source-details">
+                            <h4 className="source-title">{item.title}</h4>
+                            <p className="source-meta">
+                              {item.isAiSelected ? 'Проверенный академический источник' : 'Пользовательский файл'}
+                            </p>
+                          </div>
                         </div>
-                        <div className="source-details">
-                          <h4 className="source-title">{item.title}</h4>
-                          <p className="source-meta">
-                            {item.id.includes('1') ? 'Хубулава Г.Г., Марченко С.П., Наумов А.Б., Невмержицкая О.В. • 2019 год' : 
-                             item.id.includes('2') ? 'Беляева Л.М. • 2011 год' : 
-                             'Научное исследование • 2025 год'}
-                          </p>
-                        </div>
-                      </div>
+                      )}
                       <div className="source-row__actions">
                         <Tooltip content="Открыть оригинал">
                           <button className="source-btn" onClick={() => item.url && window.open(item.url, '_blank')}>
@@ -114,8 +135,8 @@ function GenerationSourcesStep({ sources, onChange }: GenerationSourcesStepProps
         </div>
 
         <div className="sources-actions">
-          <Button variant="secondary" size="lg" style={{ borderStyle: 'dashed', flex: 1 }}>+ Загрузить свой файл</Button>
-          <Button variant="secondary" size="lg" style={{ borderStyle: 'dashed', flex: 1 }}>🔍 Поискать еще</Button>
+          <Button variant="secondary" size="lg" style={{ borderStyle: 'dashed', flex: 1, opacity: 0.5, cursor: 'not-allowed' }} disabled>+ Загрузить свой файл</Button>
+          <Button variant="secondary" size="lg" style={{ borderStyle: 'dashed', flex: 1, opacity: 0.5, cursor: 'not-allowed' }} disabled>🔍 Поискать еще</Button>
         </div>
       </div>
     </motion.div>
@@ -158,6 +179,7 @@ const stepStyles = `
 
 .header-cell {
   padding: var(--spacing-20) var(--spacing-32);
+  padding-left: 52px; /* 32px standard + 20px extra */
   font-weight: 700;
   font-size: 18px;
   color: var(--color-neutral-100);
@@ -185,6 +207,7 @@ const stepStyles = `
   flex: 0 0 45%;
   border-right: 1px solid var(--color-border-light);
   padding: var(--spacing-32);
+  padding-left: 52px; /* 32px standard + 20px extra */
   display: flex;
   flex-direction: column;
   gap: var(--spacing-24);
@@ -199,6 +222,20 @@ const stepStyles = `
   display: flex;
   gap: var(--spacing-16);
   align-items: flex-start;
+}
+
+.source-row__content--link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.source-row__content--link:hover {
+  opacity: 0.9;
+}
+
+.source-row__content--link:hover .source-title-link {
+  text-decoration: underline;
 }
 
 .source-icon {
@@ -218,6 +255,25 @@ const stepStyles = `
   font-weight: 700;
   line-height: 1.3;
   color: var(--color-neutral-100);
+}
+
+.source-title-link {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--color-accent-base) !important;
+  transition: all 0.2s ease;
+}
+
+.source-title-link:hover {
+  color: var(--color-accent-dark) !important;
+  text-decoration: underline;
+  transform: translateX(2px);
+}
+
+.source-title-link:active {
+  color: var(--color-accent-darker) !important;
 }
 
 .source-meta {
@@ -244,12 +300,18 @@ const stepStyles = `
   cursor: pointer;
   color: var(--color-neutral-80);
   transition: all 0.2s ease;
+  outline: none;
 }
 
 .source-btn:hover {
   border-color: var(--color-accent-base);
   color: var(--color-accent-base);
   background-color: var(--color-accent-light);
+  transform: scale(1.05);
+}
+
+.source-btn:active {
+  transform: scale(0.95);
 }
 
 .source-description {

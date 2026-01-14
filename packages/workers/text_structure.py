@@ -156,34 +156,19 @@ class TextStructureWorker(BaseWorker):
             else:
                 full_text = raw_text
             
-            # 4. Очеловечивание
-            logger.info(f"Step 4: Humanizing text (level: {generation.humanity_level}%)...")
-            refine_model = model_router.get_model_for_step("refine", work_type)
-            humanize_prompt = prompt_service.construct_humanize_prompt(full_text, generation.humanity_level)
-            
-            refined_text = loop.run_until_complete(
-                openai_service.chat_completion(
-                    model=refine_model, 
-                    messages=[{"role": "user", "content": humanize_prompt}],
-                    step_type="refine",
-                    work_type=work_type
-                )
-            )
-            
-            # 5. Контроль качества (Layer 5: Quality Control)
-            logger.info("Step 5: Quality Control check...")
-            qc_text = refined_text or full_text
-            qc_prompt = prompt_service.construct_qc_prompt(qc_text)
+            # 4. Контроль качества (Quality Control)
+            logger.info("Step 4: Quality Control check...")
+            qc_prompt = prompt_service.construct_qc_prompt(full_text)
             
             final_content = loop.run_until_complete(
                 openai_service.chat_completion(
                     model="openai/gpt-4o-mini",
                     messages=[{"role": "user", "content": qc_prompt}]
                 )
-            ) or qc_text
+            ) or full_text
             
             # Финальное сохранение
-            generation_store.update(job.generation_id, result_content=final_content, status="COMPLETED")
+            generation_store.update(job.generation_id, result_content=final_content, status="GENERATED")
             logger.info("Pipeline completed successfully")
 
             return JobResult(

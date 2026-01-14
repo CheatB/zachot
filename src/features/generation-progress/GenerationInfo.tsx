@@ -1,11 +1,5 @@
-/**
- * GenerationInfo component
- * Explanation section с успокаивающей информацией
- */
-
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
-import { Card } from '@/ui'
 
 interface GenerationInfoProps {
   isReturning?: boolean
@@ -22,84 +16,62 @@ function GenerationInfo({ isReturning = false }: GenerationInfoProps) {
         delay: 0.3,
       }}
     >
-      <Card className="generation-info">
-        <div className="generation-info__content">
-          {isReturning ? (
-            <>
-              <h3
-                className="generation-info__title"
-                style={{
-                  fontSize: 'var(--font-size-lg)',
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-text-primary)',
-                  marginBottom: 'var(--spacing-12)',
-                }}
-              >
-                Мы продолжаем работу с вашим запросом
-              </h3>
-              <p
-                style={{
-                  fontSize: 'var(--font-size-base)',
-                  color: 'var(--color-text-secondary)',
-                  lineHeight: 'var(--line-height-relaxed)',
-                  marginBottom: 'var(--spacing-16)',
-                }}
-              >
-                Генерация выполняется в фоновом режиме. Вы можете закрыть эту страницу — результат сохранится и будет доступен позже.
-              </p>
-            </>
-          ) : (
-            <>
-              <h3
-                className="generation-info__title"
-                style={{
-                  fontSize: 'var(--font-size-lg)',
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-text-primary)',
-                  marginBottom: 'var(--spacing-12)',
-                }}
-              >
-                Что происходит сейчас?
-              </h3>
-              <ul className="generation-info__list">
-                <li className="generation-info__item">
-                  <span
-                    style={{
-                      fontSize: 'var(--font-size-base)',
-                      color: 'var(--color-text-secondary)',
-                      lineHeight: 'var(--line-height-relaxed)',
-                    }}
-                  >
-                    Генерация может занять несколько минут
-                  </span>
-                </li>
-                <li className="generation-info__item">
-                  <span
-                    style={{
-                      fontSize: 'var(--font-size-base)',
-                      color: 'var(--color-text-secondary)',
-                      lineHeight: 'var(--line-height-relaxed)',
-                    }}
-                  >
-                    Вы можете закрыть страницу — результат сохранится
-                  </span>
-                </li>
-                <li className="generation-info__item">
-                  <span
-                    style={{
-                      fontSize: 'var(--font-size-base)',
-                      color: 'var(--color-text-secondary)',
-                      lineHeight: 'var(--line-height-relaxed)',
-                    }}
-                  >
-                    Когда всё будет готово, статус обновится автоматически
-                  </span>
-                </li>
-              </ul>
-            </>
-          )}
-        </div>
-      </Card>
+      <div className="generation-info-no-container">
+        {isReturning ? (
+          <>
+            <h3
+              style={{
+                fontSize: 'var(--font-size-lg)',
+                fontWeight: 'var(--font-weight-semibold)',
+                color: 'var(--color-text-primary)',
+                marginBottom: 'var(--spacing-12)',
+              }}
+            >
+              Мы продолжаем работу с вашим запросом
+            </h3>
+            <p
+              style={{
+                fontSize: 'var(--font-size-base)',
+                color: 'var(--color-text-secondary)',
+                lineHeight: 'var(--line-height-relaxed)',
+                marginBottom: 'var(--spacing-16)',
+              }}
+            >
+              Генерация выполняется в фоновом режиме. Вы можете закрыть эту страницу — результат сохранится и будет доступен позже.
+            </p>
+          </>
+        ) : (
+          <>
+            <h3
+              style={{
+                fontSize: 'var(--font-size-lg)',
+                fontWeight: 'var(--font-weight-semibold)',
+                color: 'var(--color-text-primary)',
+                marginBottom: 'var(--spacing-12)',
+              }}
+            >
+              Что происходит сейчас?
+            </h3>
+            <ul className="generation-info__list">
+              <li className="generation-info__item">
+                <span style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
+                  Генерация может занять несколько минут
+                </span>
+              </li>
+              <li className="generation-info__item">
+                <span style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
+                  Вы можете закрыть страницу — результат сохранится
+                </span>
+              </li>
+              <li className="generation-info__item">
+                <span style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
+                  Когда всё будет готово, статус обновится автоматически
+                </span>
+              </li>
+            </ul>
+          </>
+        )}
+      </div>
     </motion.div>
   )
 }
@@ -107,37 +79,10 @@ function GenerationInfo({ isReturning = false }: GenerationInfoProps) {
 export default GenerationInfo
 
 const infoStyles = `
-.generation-info {
-  background-color: var(--color-neutral-20);
-  border: 1px solid var(--color-border-light);
-}
-
-.generation-info__content {
-  padding: var(--spacing-20);
-}
-
-.generation-info__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-12);
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.generation-info__item {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-12);
-}
-
-.generation-info__item::before {
-  content: '•';
-  color: var(--color-accent-base);
-  font-size: var(--font-size-xl);
-  line-height: var(--line-height-normal);
-  flex-shrink: 0;
-}
+.generation-info-no-container { padding: 0; }
+.generation-info__list { display: flex; flex-direction: column; gap: var(--spacing-16); list-style: none; padding: 0; margin: 0; }
+.generation-info__item { display: flex; align-items: flex-start; gap: var(--spacing-12); margin-bottom: var(--spacing-8); }
+.generation-info__item::before { content: '•'; color: var(--color-accent-base); font-size: var(--font-size-xl); line-height: var(--line-height-normal); flex-shrink: 0; }
 `
 
 if (typeof document !== 'undefined') {
@@ -149,4 +94,3 @@ if (typeof document !== 'undefined') {
     document.head.appendChild(style)
   }
 }
-

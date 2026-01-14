@@ -31,14 +31,21 @@ const StepLoader: React.FC<StepLoaderProps> = ({ title, tasks, onComplete, durat
       });
     }, taskInterval);
 
+    // Быстрый рост до 90%, затем медленный до 95%
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
-        if (prev < 100) return prev + 1;
-        clearInterval(progressInterval);
-        if (onComplete && duration) onComplete();
-        return 100;
+        if (prev < 90) {
+          // Быстрый рост: +2% каждые 100ms = 90% за 4.5 сек
+          return Math.min(prev + 2, 90);
+        } else if (prev < 95) {
+          // Медленный рост: +0.5% каждые 100ms = 5% за 1 сек
+          return Math.min(prev + 0.5, 95);
+        } else {
+          // Остановка на 95%, ждём внешнего сигнала
+          return prev;
+        }
       });
-    }, duration ? duration / 100 : 50);
+    }, 100);
 
     return () => {
       clearInterval(interval);

@@ -135,6 +135,7 @@ export interface SourceItem {
 export type ComplexityLevel = 'school' | 'student' | 'research'
 
 export interface FormattingSettings {
+  // Основные параметры текста
   fontFamily: 'Times New Roman' | 'Arial' | 'Calibri'
   fontSize: number
   lineSpacing: number
@@ -146,28 +147,164 @@ export interface FormattingSettings {
   }
   alignment: 'justify' | 'left'
   paragraphIndent: number
-  bibliographyStyle: 'gost' | 'apa' | 'mla'
-  pageNumbering: 'bottom-center' | 'bottom-right' | 'top-right' | 'none'
+  
+  // Титульный лист
   hasTitlePage: boolean
+  titlePageAlignment: 'center' | 'left'
+  titlePageFontSize: number
+  
+  // Содержание
   hasTableOfContents: boolean
+  tocFontSize: number
+  tocShowPageNumbers: boolean
+  tocDotLeader: boolean
+  
+  // Заголовки
+  headings: {
+    h1: {
+      fontSize: number
+      bold: boolean
+      uppercase: boolean
+      alignment: 'center' | 'left'
+      spaceBefore: number
+      spaceAfter: number
+    }
+    h2: {
+      fontSize: number
+      bold: boolean
+      uppercase: boolean
+      alignment: 'center' | 'left'
+      spaceBefore: number
+      spaceAfter: number
+    }
+    h3: {
+      fontSize: number
+      bold: boolean
+      uppercase: boolean
+      alignment: 'center' | 'left'
+      spaceBefore: number
+      spaceAfter: number
+    }
+  }
+  
+  // Список литературы
+  bibliographyStyle: 'gost' | 'apa' | 'mla'
+  bibliographyFontSize: number
+  bibliographyHanging: boolean
+  bibliographySpacing: number
+  
+  // Нумерация страниц
+  pageNumbering: 'bottom-center' | 'bottom-right' | 'top-right' | 'none'
+  pageNumberingStartFrom: number
+  pageNumberingFontSize: number
+  
+  // Введение и заключение
+  introductionElements: {
+    hasActuality: boolean
+    hasGoal: boolean
+    hasTasks: boolean
+    hasMethodology: boolean
+  }
+  conclusionElements: {
+    hasResults: boolean
+    hasConclusions: boolean
+    hasRecommendations: boolean
+  }
 }
 
 export const DEFAULT_GOST_FORMATTING: FormattingSettings = {
+  // Основные параметры текста (ГОСТ 7.32-2017)
   fontFamily: 'Times New Roman',
   fontSize: 14,
   lineSpacing: 1.5,
   margins: {
-    top: 20,
-    bottom: 20,
-    left: 30,
-    right: 10,
+    top: 20,    // 2 см
+    bottom: 20, // 2 см
+    left: 30,   // 3 см
+    right: 10,  // 1 см
   },
   alignment: 'justify',
-  paragraphIndent: 1.25,
-  bibliographyStyle: 'gost',
-  pageNumbering: 'bottom-center',
+  paragraphIndent: 1.25, // 1.25 см
+  
+  // Титульный лист
   hasTitlePage: true,
+  titlePageAlignment: 'center',
+  titlePageFontSize: 14,
+  
+  // Содержание
   hasTableOfContents: true,
+  tocFontSize: 14,
+  tocShowPageNumbers: true,
+  tocDotLeader: true,
+  
+  // Заголовки (ГОСТ 7.32-2017)
+  headings: {
+    h1: {
+      fontSize: 14,
+      bold: true,
+      uppercase: true,
+      alignment: 'center',
+      spaceBefore: 12,
+      spaceAfter: 12,
+    },
+    h2: {
+      fontSize: 14,
+      bold: true,
+      uppercase: false,
+      alignment: 'left',
+      spaceBefore: 12,
+      spaceAfter: 6,
+    },
+    h3: {
+      fontSize: 14,
+      bold: true,
+      uppercase: false,
+      alignment: 'left',
+      spaceBefore: 6,
+      spaceAfter: 6,
+    },
+  },
+  
+  // Список литературы (ГОСТ Р 7.0.5-2008)
+  bibliographyStyle: 'gost',
+  bibliographyFontSize: 14,
+  bibliographyHanging: true,
+  bibliographySpacing: 1,
+  
+  // Нумерация страниц
+  pageNumbering: 'bottom-center',
+  pageNumberingStartFrom: 3, // Титульник и содержание не нумеруются
+  pageNumberingFontSize: 12,
+  
+  // Введение (обязательные элементы по ГОСТ)
+  introductionElements: {
+    hasActuality: true,
+    hasGoal: true,
+    hasTasks: true,
+    hasMethodology: true,
+  },
+  
+  // Заключение (обязательные элементы по ГОСТ)
+  conclusionElements: {
+    hasResults: true,
+    hasConclusions: true,
+    hasRecommendations: true,
+  },
+}
+
+export interface TitlePageData {
+  universityName: string
+  facultyName: string
+  departmentName: string
+  workType: string
+  discipline: string
+  theme: string
+  studentName: string
+  studentGroup: string
+  supervisorName: string
+  supervisorTitle: string
+  city: string
+  year: number
 }
 
 export interface CreateGenerationForm {
@@ -185,6 +322,7 @@ export interface CreateGenerationForm {
   structure: StructureItem[]
   sources: SourceItem[]
   formatting: FormattingSettings
+  titlePage: TitlePageData | null
   useAiImages: boolean
   useSmartProcessing: boolean
 }

@@ -88,7 +88,7 @@ function GenerationFormattingStep({ formatting, onChange }: GenerationFormatting
                 <select 
                   className="form-input-select"
                   value={localFormatting.fontFamily} 
-                  onChange={(e) => handleChange('fontFamily', e.target.value as any)}
+                  onChange={(e) => handleChange('fontFamily', e.target.value as FormattingSettings['fontFamily'])}
                 >
                   <option value="Times New Roman">Times New Roman</option>
                   <option value="Arial">Arial</option>
@@ -155,7 +155,7 @@ function GenerationFormattingStep({ formatting, onChange }: GenerationFormatting
                 <select 
                   className="form-input-select"
                   value={localFormatting.pageNumbering} 
-                  onChange={(e) => handleChange('pageNumbering', e.target.value as any)}
+                  onChange={(e) => handleChange('pageNumbering', e.target.value as FormattingSettings['pageNumbering'])}
                 >
                   <option value="bottom-center">Снизу по центру</option>
                   <option value="bottom-right">Снизу справа</option>
@@ -187,13 +187,14 @@ function GenerationFormattingStep({ formatting, onChange }: GenerationFormatting
           </div>
         </div>
 
-        {/* AI Agent Banner */}
-        <div className="ai-formatting-banner">
-          <div className="ai-branding">
-            <span className="ai-tag">🤖 AI-Оформитель</span>
-            <span className="ai-model">GPT-4o-mini</span>
-          </div>
-          <p className="ai-text">Система автоматически проверит соответствие текста всем заданным параметрам и исправит ошибки форматирования.</p>
+        {/* Action Button */}
+        <div className="formatting-actions">
+          <Button variant="primary" size="lg" onClick={resetToGoST} style={{ width: '100%' }}>
+            📄 Оформить по ГОСТ
+          </Button>
+          <p className="formatting-actions__hint">
+            Система автоматически применит все параметры ГОСТ при экспорте документа
+          </p>
         </div>
       </div>
     </motion.div>
@@ -303,9 +304,19 @@ const stepStyles = `
   background: var(--color-neutral-10);
   border: 1px solid var(--color-border-base);
   font-size: 10px;
+  font-weight: 600;
   color: var(--color-text-muted);
   cursor: help;
   padding: 0;
+  flex-shrink: 0;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.info-trigger:hover {
+  background: var(--color-accent-light);
+  border-color: var(--color-accent-base);
+  color: var(--color-accent-base);
 }
 
 .label-lite {
@@ -349,40 +360,20 @@ const stepStyles = `
   margin: var(--spacing-24) 0;
 }
 
-.ai-formatting-banner {
+.formatting-actions {
   margin-top: var(--spacing-32);
-  background-color: var(--color-neutral-5);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-20);
-}
-
-.ai-branding {
   display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
 }
 
-.ai-tag {
-  font-weight: 800;
-  font-size: 12px;
-  color: var(--color-neutral-100);
-}
-
-.ai-model {
-  font-size: 10px;
-  color: var(--color-text-muted);
-  background: white;
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid var(--color-border-light);
-}
-
-.ai-text {
-  font-size: 12px;
+.formatting-actions__hint {
+  font-size: 13px;
   color: var(--color-text-secondary);
-  line-height: 1.5;
+  text-align: center;
   margin: 0;
+  max-width: 500px;
 }
 
 @media (max-width: 600px) {

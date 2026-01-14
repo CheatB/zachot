@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable react-refresh/only-export-components */
-import { useState, createContext, useContext, useCallback, ReactNode, useEffect } from 'react'
+import { useState, createContext, useContext, useCallback, ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 type ToastType = 'success' | 'error' | 'info'
@@ -35,18 +35,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => [...prev, { id, text, type }])
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id))
-    }, 5000) // Increased to 5s for better readability
+    }, 3000)
   }, [])
-
-  useEffect(() => {
-    const handleToastEvent = (e: any) => {
-      if (e.detail && e.detail.text) {
-        showToast(e.detail.text, e.detail.type || 'info')
-      }
-    }
-    window.addEventListener('ui:toast', handleToastEvent)
-    return () => window.removeEventListener('ui:toast', handleToastEvent)
-  }, [showToast])
 
   return (
     <ToastContext.Provider value={{ showToast }}>

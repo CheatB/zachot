@@ -59,14 +59,38 @@ function GenerationResultPage() {
     navigate('/')
   }
 
-  const handleExport = (format: 'docx' | 'pdf' | 'pptx') => {
+  const handleExport = async (format: 'docx' | 'pdf' | 'pptx') => {
     if (!id) return;
-    const url = `${API_BASE_URL}/generations/${id}/export/${format}`;
-    const link = document.body.appendChild(document.createElement('a'));
-    link.href = url;
-    link.setAttribute('download', `zachet_${id}.${format}`);
-    link.click();
-    link.parentNode?.removeChild(link);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const url = `${API_BASE_URL}/generations/${id}/export/${format}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.statusText}`);
+      }
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `zachet_${generation?.title || id}.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      showToast('Файл успешно скачан', 'success');
+    } catch (error) {
+      console.error('Export error:', error);
+      showToast('Не удалось скачать файл. Попробуйте снова.', 'error');
+    }
   }
 
   if (loading) {

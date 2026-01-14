@@ -17,6 +17,8 @@ import CreateGenerationPage from '@/features/create-generation/CreateGenerationP
 import GenerationProgressPage from '@/features/generation-progress/GenerationProgressPage'
 import GenerationResultPage from '@/features/generation-result/GenerationResultPage'
 import GenerationRecoveryPage from '@/features/generation-recovery/GenerationRecoveryPage'
+import GenerationFormattingPage from '@/features/generation-formatting/GenerationFormattingPage'
+import GenerationEditorPage from '@/features/generation-editor/GenerationEditorPage'
 import { ToastProvider } from '@/ui/primitives/Toast'
 import { AuthProvider, useAuthContext } from './auth/authContext'
 import AppBoundary from './AppBoundary'
@@ -63,6 +65,8 @@ function AppRoutes() {
         <Route path="/generations" element={<GenerationsPage />} />
         <Route path="/generations/new" element={<CreateGenerationPage />} />
         <Route path="/generations/:id/recovery" element={<GenerationRecoveryPage />} />
+        <Route path="/generations/:id/editor" element={<GenerationEditorPage />} />
+        <Route path="/generations/:id/formatting" element={<GenerationFormattingPage />} />
         <Route path="/generations/:id/result" element={<GenerationResultPage />} />
         <Route path="/generations/:id" element={<GenerationProgressPage />} />
         <Route path="/profile" element={<ProfilePage />} />

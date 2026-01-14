@@ -76,12 +76,7 @@ class OpenAIService:
                 tokens = usage.get('total_tokens', 0)
                 logger.info(f"OpenAI Usage [{model}]: {tokens} tokens")
                 
-                # Возвращаем кортеж (контент, токены, модель)
-                return {
-                    "content": content,
-                    "tokens": tokens,
-                    "model": model
-                }
+                return content
         except httpx.HTTPStatusError as e:
             logger.error(f"OpenAI API error {e.response.status_code}: {e.response.text}")
             

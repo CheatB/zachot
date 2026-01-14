@@ -33,6 +33,20 @@ export interface GenerationSettingsPayload {
   structure?: StructureItem[];
   sources?: SourceItem[];
   formatting?: FormattingSettings;
+  title_page?: {
+    universityName: string;
+    facultyName: string;
+    departmentName: string;
+    workType: string;
+    discipline: string;
+    theme: string;
+    studentName: string;
+    studentGroup: string;
+    supervisorName: string;
+    supervisorTitle: string;
+    city: string;
+    year: number;
+  } | null;
   visual_upsell_suggestions?: ImageSuggestion[];
 }
 
@@ -43,7 +57,7 @@ export interface Generation {
   module: 'TEXT' | 'PRESENTATION' | 'TASK' | 'GOST_FORMAT';
   work_type?: WorkType | null;
   complexity_level?: ComplexityLevel;
-  humanity_level?: number;
+  humanity_level?: string | number; // Backend uses string ('low', 'medium', 'high'), frontend uses number (0-100)
   created_at: string;
   updated_at: string;
   input_payload: GenerationInputPayload;
@@ -59,7 +73,7 @@ export interface CreateGenerationData {
   module: string;
   work_type?: string | null;
   complexity_level?: string;
-  humanity_level?: number;
+  humanity_level?: string; // Backend expects string ('low', 'medium', 'high')
   input_payload: GenerationInputPayload;
   settings_payload?: GenerationSettingsPayload;
 }

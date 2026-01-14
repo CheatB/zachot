@@ -34,12 +34,17 @@ function GenerationRecoveryPage() {
     
     setIsRecovering(true)
     try {
+      // Convert numeric humanity level to string if needed
+      const humanityLevel = typeof generation.humanity_level === 'number'
+        ? (generation.humanity_level < 20 ? 'low' : generation.humanity_level <= 70 ? 'medium' : 'high')
+        : (generation.humanity_level || 'medium')
+      
       // Создаем новую генерацию на основе старых данных (пересборка)
       const newGen = await createGeneration({
         module: generation.module,
         work_type: generation.work_type,
         complexity_level: generation.complexity_level,
-        humanity_level: generation.humanity_level,
+        humanity_level: humanityLevel,
         input_payload: generation.input_payload,
         settings_payload: generation.settings_payload,
       })

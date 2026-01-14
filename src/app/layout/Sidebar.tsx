@@ -1,11 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
-import { useState, useEffect } from 'react'
-import { fetchMe, type MeResponse } from '@/shared/api/me'
+import { useEffect } from 'react'
 import { Stack } from '@/ui'
 import clsx from 'clsx'
-import styles from './Sidebar.module.css'
+import { useAuth } from '../auth/useAuth'
 
 interface SidebarProps {
   isOpen: boolean
@@ -24,13 +23,20 @@ interface NavItem {
 function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const [userData, setUserData] = useState<MeResponse | null>(null)
+  const { user } = useAuth()
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchMe().then(setUserData).catch(console.error)
+    if (typeof document !== 'undefined') {
+      const styleId = 'app-sidebar-styles'
+      let style = document.getElementById(styleId) as HTMLStyleElement
+      if (!style) {
+        style = document.createElement('style')
+        style.id = styleId
+        document.head.appendChild(style)
+      }
+      style.textContent = sidebarStyles
     }
-  }, [isAuthenticated])
+  }, [])
 
   const isAdminRoute = location.pathname.startsWith('/admin')
 
@@ -53,10 +59,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
   const handleNavClick = (item: NavItem) => {
     if (item.disabled) return
     navigate(item.path)
-    
-    if (window.innerWidth < 1024) {
-      onClose()
-    }
+    if (window.innerWidth < 1024) onClose()
   }
 
   return (
@@ -64,7 +67,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className={styles.sidebarOverlay}
+            className="app-sidebar__overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -78,7 +81,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
       <AnimatePresence>
         {isOpen && (
           <motion.aside
-            className={styles.sidebar}
+            className="app-sidebar"
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
@@ -87,10 +90,10 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
               ease: motionTokens.easing.out,
             }}
           >
-            <div className={styles.sidebarContent}>
+            <div className="app-sidebar__content">
               <Link 
                 to="/"
-                className={styles.sidebarLogo} 
+                className="app-sidebar__logo" 
                 onClick={() => {
                   if (window.innerWidth < 1024) onClose()
                 }}
@@ -99,7 +102,8 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                   display: 'flex',
                   alignItems: 'center',
                   gap: 'var(--spacing-12)',
-                  padding: 'var(--spacing-32) var(--spacing-24) var(--spacing-16)'
+                  padding: 'var(--spacing-32) var(--spacing-24) var(--spacing-16)',
+                  cursor: 'pointer'
                 }}
               >
                 <div style={{
@@ -129,35 +133,35 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                 </div>
               </Link>
 
-              {userData?.telegram_username && (
+              {user?.telegram_username && (
                 <div style={{ padding: '0 var(--spacing-24) var(--spacing-16)', fontSize: 'var(--font-size-sm)', color: 'var(--color-accent-base)', fontWeight: 600 }}>
-                  @{userData.telegram_username}
+                  @{user.telegram_username}
                 </div>
               )}
 
-              <nav className={styles.sidebarNav} aria-label="Основная навигация">
-                <ul className={styles.sidebarList}>
+              <nav className="app-sidebar__nav" aria-label="Основная навигация">
+                <ul className="app-sidebar__list">
                   {navItems.map((item) => {
                     const isActive = currentPath === item.path || (item.path !== '/' && currentPath.startsWith(item.path))
                     return (
                       <li key={item.path}>
                         <button
                           className={clsx(
-                            styles.sidebarItem,
-                            item.disabled && styles.sidebarItemDisabled,
-                            isActive && styles.sidebarItemActive
+                            'app-sidebar__item',
+                            item.disabled && 'app-sidebar__item--disabled',
+                            isActive && 'app-sidebar__item--active'
                           )}
                           disabled={item.disabled}
                           onClick={() => handleNavClick(item)}
                           aria-label={item.disabled ? `${item.label} (скоро будет доступно)` : item.label}
                           aria-current={isActive ? 'page' : undefined}
                         >
-                          <span className={styles.sidebarItemLabel}>
+                          <span className="app-sidebar__item-label">
                             {item.icon && <span style={{ marginRight: '12px' }}>{item.icon}</span>}
                             {item.label}
                           </span>
                           {item.disabled && (
-                            <span className={styles.sidebarItemHint} aria-hidden="true">
+                            <span className="app-sidebar__item-hint" aria-hidden="true">
                               Скоро
                             </span>
                           )}
@@ -165,15 +169,15 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                       </li>
                     )
                   })}
-                  {!isAdminRoute && userData?.role === 'admin' && (
+                  {!isAdminRoute && user?.role === 'admin' && (
                     <li>
                       <button
-                        className={styles.sidebarItem}
+                        className="app-sidebar__item"
                         onClick={() => navigate('/admin')}
                       >
-                        <span className={styles.sidebarItemLabel}>
-                          <span style={{ marginRight: '12px' }}>⚙️</span>
-                          Панель управления
+                        <span className="app-sidebar__item-label">
+                          <span style={{ marginRight: '12px' }}>🛡️</span>
+                          Админ-панель
                         </span>
                       </button>
                     </li>
@@ -181,35 +185,35 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                 </ul>
 
                 {!isAdminRoute && (
-                  <div className={styles.sidebarReferralTop}>
-                    <button className={styles.referralBlock} onClick={() => navigate('/referral')}>
-                      <span className={styles.referralIcon}>🎁</span>
-                      <div className={styles.referralContent}>
-                        <span className={styles.referralTitle}>Реферальная ссылка</span>
-                        <span className={styles.referralSubtitle}>Пригласи друга и получи бонус</span>
+                  <div className="app-sidebar__referral-top">
+                    <button className="referral-block" onClick={() => navigate('/referral')}>
+                      <span className="referral-icon">🎁</span>
+                      <div className="referral-content">
+                        <span className="referral-title">Реферальная ссылка</span>
+                        <span className="referral-subtitle">Пригласи друга и получи бонус</span>
                       </div>
                     </button>
                   </div>
                 )}
 
-                {isAuthenticated && userData && !isAdminRoute && (
-                  <div className={styles.sidebarCreditsTop}>
-                    <div className={styles.creditsDisplayBlock}>
-                      <div className={styles.creditsDisplayIcon}>💎</div>
-                      <div className={styles.creditsDisplayInfo}>
-                        <span className={styles.creditsDisplayLabel}>Баланс кредитов</span>
-                        <span className={styles.creditsDisplayValue}>{userData.usage.creditsBalance ?? 0} кр.</span>
+                {isAuthenticated && user && !isAdminRoute && (
+                  <div className="app-sidebar__credits-top">
+                    <div className="credits-display-block">
+                      <div className="credits-display-icon">💎</div>
+                      <div className="credits-display-info">
+                        <span className="credits-display-label">Баланс кредитов</span>
+                        <span className="credits-display-value">{user.usage?.creditsBalance ?? 0} кр.</span>
                       </div>
                     </div>
                   </div>
                 )}
               </nav>
 
-              <div className={styles.sidebarFooter}>
+              <div className="app-sidebar__footer">
                 <Stack gap="lg">
-                  <div className={styles.sidebarLegal}>
-                    <Link to="/terms" className={styles.legalLink}>Пользовательское соглашение сервиса Зачёт</Link>
-                    <Link to="/privacy" className={styles.legalLink}>Политика обработки персональных данных</Link>
+                  <div className="app-sidebar__legal">
+                    <Link to="/terms" className="legal-link">Пользовательское соглашение сервиса Зачёт</Link>
+                    <Link to="/privacy" className="legal-link">Политика обработки персональных данных</Link>
                   </div>
                 </Stack>
               </div>
@@ -222,3 +226,244 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
 }
 
 export default Sidebar
+
+const sidebarStyles = `
+.app-sidebar__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-surface-overlay);
+  z-index: var(--z-index-modal);
+}
+
+@media (min-width: 1024px) {
+  .app-sidebar__overlay {
+    display: none;
+  }
+}
+
+.app-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 280px;
+  background-color: var(--color-neutral-10);
+  border-right: 1px solid var(--color-border-base);
+  z-index: var(--z-index-modal);
+  overflow-y: auto;
+}
+
+@media (min-width: 1024px) {
+  .app-sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 280px;
+    flex-shrink: 0;
+    background-color: var(--color-surface-base);
+    border-right: 1px solid var(--color-border-base);
+    z-index: var(--z-index-sticky);
+  }
+}
+
+.app-sidebar__content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.app-sidebar__logo {
+  padding: var(--spacing-32) var(--spacing-24);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+  border-bottom: 1px solid var(--color-border-light);
+  flex-shrink: 0;
+}
+
+.app-sidebar__nav {
+  padding: var(--spacing-24);
+  flex: 1;
+  overflow-y: auto;
+}
+
+.app-sidebar__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  list-style: none;
+  margin-bottom: var(--spacing-32);
+}
+
+.app-sidebar__referral-top {
+  width: 100%;
+  margin-top: var(--spacing-24);
+}
+
+.app-sidebar__credits-top {
+  width: 100%;
+  margin-top: var(--spacing-12);
+}
+
+.credits-display-block {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-16);
+  background-color: var(--color-neutral-10);
+  border: 1px solid var(--color-border-base);
+  border-radius: var(--radius-md);
+  text-align: left;
+}
+
+.credits-display-icon {
+  font-size: 24px;
+  background: white;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  box-shadow: var(--elevation-1);
+}
+
+.credits-display-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.credits-display-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.credits-display-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-neutral-100);
+}
+
+.app-sidebar__item {
+  width: 100%;
+  padding: var(--spacing-12) var(--spacing-20);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-80);
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--motion-duration-base) var(--motion-easing-out);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-sidebar__item:hover:not(:disabled) {
+  background-color: var(--color-neutral-20);
+  color: var(--color-text-primary);
+  transform: translateX(4px);
+}
+
+.app-sidebar__item--active {
+  background-color: var(--color-accent-light);
+  color: var(--color-accent-base);
+  border-color: var(--color-accent-base);
+  font-weight: var(--font-weight-bold);
+}
+
+.app-sidebar__item--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.app-sidebar__item-label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.app-sidebar__item-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-normal);
+  background: var(--color-neutral-20);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.app-sidebar__footer {
+  padding: var(--spacing-24);
+  border-top: 1px solid var(--color-border-light);
+  background-color: var(--color-neutral-10);
+}
+
+.referral-block {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-16);
+  background-color: var(--color-accent-light);
+  border: 1px dashed var(--color-accent-base);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.referral-block:hover {
+  background-color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--elevation-1);
+}
+
+.referral-icon {
+  font-size: 24px;
+}
+
+.referral-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.referral-title {
+  font-size: var(--font-size-sm);
+  font-weight: bold;
+  color: var(--color-accent-base);
+}
+
+.referral-subtitle {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.app-sidebar__legal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.legal-link {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  line-height: 1.4;
+}
+
+.legal-link:hover {
+  color: var(--color-accent-base);
+  text-decoration: underline;
+}
+`

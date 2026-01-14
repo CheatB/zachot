@@ -62,7 +62,13 @@ function GenerationProgressPage() {
         setGeneration(data)
 
         if (data.status === 'COMPLETED' || data.status === 'GENERATED' || data.status === 'EXPORTED') {
-          navigate(`/generations/${id}/result`)
+          // Перенаправить на страницу редактора для текстовых работ
+          if (data.module === 'TEXT') {
+            navigate(`/generations/${id}/editor`)
+          } else {
+            // Для презентаций и задач - сразу на результат
+            navigate(`/generations/${id}/result`)
+          }
         }
       } catch (error) {
         console.error('Failed to poll generation status:', error)
@@ -117,7 +123,9 @@ function GenerationProgressPage() {
               <Badge status={generation?.status === 'FAILED' ? 'danger' : 'warn'} className="status-badge">
                 {generation?.status === 'FAILED' ? 'Ошибка генерации' : 'Выполняем работу'}
               </Badge>
-              <h1 className="status-header__title">{generation?.title || 'Новая генерация'}</h1>
+              <h1 className="status-header__title">
+                {generation?.title && generation.title !== 'Без названия' ? generation.title : 'Генерация глав'}
+              </h1>
             </div>
             <div className="status-header__right">
               <div className="timer">
@@ -138,28 +146,26 @@ function GenerationProgressPage() {
             </Card>
           </motion.div>
 
-          {/* Info & Actions Grid */}
-          <div className="progress-grid">
-            <div className="progress-grid__info">
-              <GenerationInfo isReturning={isReturning} />
-            </div>
+          {/* Info & Actions */}
+          <Stack gap="xl" style={{ marginTop: 'var(--spacing-12)' }}>
+            <GenerationInfo isReturning={isReturning} />
             
-            <div className="progress-grid__actions">
-              <Card variant="default" style={{ padding: 'var(--spacing-24)', backgroundColor: 'var(--color-neutral-5)', height: '100%', borderRadius: '20px' }}>
-                <Stack gap="lg" align="center" justify="center" style={{ height: '100%', textAlign: 'center' }}>
-                  <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.5 }}>
-                    Вы можете не ждать окончания и вернуться к работе позже — мы пришлем уведомление.
-                  </p>
-                  <Button variant="secondary" onClick={() => navigate('/generations')} style={{ width: '100%' }}>
+            <div className="progress-actions-no-container">
+              <Stack gap="xl" align="start">
+                <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.8, textAlign: 'left', marginTop: 'var(--spacing-16)' }}>
+                  Вы можете не ждать окончания и вернуться к работе позже — мы пришлем уведомление.
+                </p>
+                <div style={{ display: 'flex', gap: 'var(--spacing-16)', alignItems: 'center', width: '100%', marginTop: 'var(--spacing-8)' }}>
+                  <Button variant="secondary" onClick={() => navigate('/generations')} style={{ minWidth: '200px' }}>
                     Вернуться к списку
                   </Button>
                   <Tooltip content="Генерация происходит на удаленных серверах. Ваш компьютер не нагружается.">
                     <button className="help-link">Как это работает?</button>
                   </Tooltip>
-                </Stack>
-              </Card>
+                </div>
+              </Stack>
             </div>
-          </div>
+          </Stack>
 
         </Stack>
       </Container>

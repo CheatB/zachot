@@ -18,8 +18,8 @@ import GenerationStyleStep from './GenerationStyleStep'
 import GenerationGoalStep from './GenerationGoalStep'
 import GenerationStructureStep from './GenerationStructureStep'
 import GenerationSourcesStep from './GenerationSourcesStep'
+import GenerationTitlePageStep, { DEFAULT_TITLE_PAGE_DATA } from './GenerationTitlePageStep'
 import GenerationConfirmStep from './GenerationConfirmStep'
-import GenerationFormattingStep from './GenerationFormattingStep'
 import GenerationVisualsStep from './GenerationVisualsStep'
 import DocUploadStep from './DocUploadStep'
 import StepLoader, { StepLoaderTask } from './components/StepLoader'
@@ -30,7 +30,7 @@ import { createGeneration, updateGeneration, executeAction, createJob, getGenera
 import { suggestDetails, suggestStructure, suggestSources } from '@/shared/api/admin'
 import { ApiError } from '@/shared/api/http'
 
-type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 1.8 | 2 | 3 | 4 | 5 | 5.5 | 6
+type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 1.8 | 2 | 3 | 4 | 5 | 5.7 | 6
 
 const INITIAL_FORM_STATE: CreateGenerationForm = {
   type: null,
@@ -47,6 +47,7 @@ const INITIAL_FORM_STATE: CreateGenerationForm = {
   structure: [],
   sources: [],
   formatting: DEFAULT_GOST_FORMATTING,
+  titlePage: null,
   useAiImages: true,
   useSmartProcessing: true 
 }
@@ -97,6 +98,12 @@ function CreateGenerationPage() {
     if (draftId && activeGenerationRef.current !== draftId) {
       getGenerationById(draftId).then((gen) => {
         activeGenerationRef.current = gen.id
+        
+        // Convert string humanity level back to numeric for frontend
+        const humanityLevelNumeric = typeof gen.humanity_level === 'string' 
+          ? (gen.humanity_level === 'low' ? 0 : gen.humanity_level === 'high' ? 100 : 50)
+          : (gen.humanity_level || 50)
+        
         setForm({
           type: gen.module.toLowerCase() as GenerationType,
           workType: (gen.work_type as WorkType) || null,
@@ -104,7 +111,7 @@ function CreateGenerationPage() {
           taskMode: (gen.input_payload.task_mode as TaskMode) || null,
           taskFiles: [], 
           complexityLevel: (gen.complexity_level as ComplexityLevel) || 'student',
-          humanityLevel: gen.humanity_level || 50,
+          humanityLevel: humanityLevelNumeric,
           input: gen.input_payload.topic || gen.input_payload.input || '',
           goal: gen.input_payload.goal || '',
           idea: gen.input_payload.idea || '',
@@ -112,6 +119,7 @@ function CreateGenerationPage() {
           structure: gen.settings_payload.structure || [],
           sources: gen.settings_payload.sources || [],
           formatting: gen.settings_payload.formatting || DEFAULT_GOST_FORMATTING,
+          titlePage: gen.settings_payload.title_page || null,
           useAiImages: gen.input_payload.use_ai_images ?? true,
           useSmartProcessing: gen.input_payload.use_smart_processing ?? true
         })
@@ -177,10 +185,10 @@ function CreateGenerationPage() {
           title: 'Ознакомься с источниками',
           subtitle: 'Мы подобрали актуальные источники. Вы можете добавить свои или отредактировать предложенные.'
         }
-      case 5.5:
+      case 5.7:
         return {
-          title: 'Настройка оформления',
-          subtitle: 'Выберите параметры оформления документа. По умолчанию установлены требования ГОСТ 2026.'
+          title: 'Добавим титульник?',
+          subtitle: 'Внимательно заполни поля, чтобы создать идеальный титульник по ГОСТ'
         }
       case 6:
         return {
@@ -196,6 +204,13 @@ function CreateGenerationPage() {
 
   const isCreatingRef = useRef(false)
 
+  // Convert numeric humanity level to string format expected by backend
+  const convertHumanityLevel = (numericLevel: number): string => {
+    if (numericLevel < 20) return 'low'
+    if (numericLevel <= 70) return 'medium'
+    return 'high'
+  }
+
   const saveDraft = useCallback(async (currentForm: CreateGenerationForm, stepOverride?: number) => {
     if (!isMountedRef.current || !currentForm.type) return
 
@@ -203,7 +218,7 @@ function CreateGenerationPage() {
       module: currentForm.type.toUpperCase(),
       work_type: currentForm.workType,
       complexity_level: currentForm.complexityLevel,
-      humanity_level: currentForm.humanityLevel,
+      humanity_level: convertHumanityLevel(currentForm.humanityLevel),
       input_payload: {
         topic: currentForm.input,
         goal: currentForm.goal,
@@ -220,6 +235,7 @@ function CreateGenerationPage() {
         structure: currentForm.structure,
         sources: currentForm.sources,
         formatting: currentForm.formatting,
+        title_page: currentForm.titlePage,
       }
     }
 
@@ -273,20 +289,31 @@ function CreateGenerationPage() {
     return () => clearTimeout(timer)
   }, [form, currentStep, saveDraft])
 
-  const handleTypeSelect = (type: GenerationType) => {
-    setForm((prev) => {
-      const newForm = { ...prev, type }
-      // Only call if type actually changed to avoid redundant saves
-      if (prev.type !== type) {
-        saveDraft(newForm)
-      }
-      return newForm
-    })
+  const handleTypeSelect = async (type: GenerationType) => {
+    // Update form state
+    const newForm = { ...form, type }
+    setForm(newForm)
     
-    // Auto-advance to next step
-    setTimeout(() => {
-      handleNext()
-    }, 50)
+    // Save draft if type changed
+    if (form.type !== type) {
+      try {
+        await saveDraft(newForm)
+      } catch (error) {
+        console.error('Failed to save draft on type select:', error)
+        // Continue anyway - user can retry
+      }
+    }
+    
+    // Auto-advance to next step immediately - determine next step based on type
+    let nextStep: WizardStep | null = null
+    if (type === 'text') nextStep = 1.5
+    else if (type === 'presentation') nextStep = 1.6
+    else if (type === 'task') nextStep = 1.2
+    else if (type === 'gost_format') nextStep = 1.8
+    
+    if (nextStep) {
+      setCurrentStep(nextStep)
+    }
   }
 
   const handleWorkTypeSelect = (workType: WorkType) => {
@@ -369,7 +396,7 @@ function CreateGenerationPage() {
     } else if (currentStep === 1.2 && (form.taskFiles.length > 0 || form.input.trim())) {
       nextStep = 1.3
     } else if (currentStep === 1.8 && form.taskFiles.length > 0) {
-      nextStep = 5.5
+      nextStep = 6
     } else if (currentStep === 1.3 && form.taskMode) {
       nextStep = 6
     } else if (currentStep === 1.5 && form.workType && form.input.trim()) {
@@ -438,9 +465,12 @@ function CreateGenerationPage() {
       
       suggestSources({
         topic: form.input,
+        goal: form.goal,
+        idea: form.idea,
         workType: form.workType || 'other',
         volume: form.volume,
-        complexity: form.complexityLevel
+        complexity: form.complexityLevel,
+        humanity: convertHumanityLevel(form.humanityLevel)
       })
         .then(data => {
           setForm(prev => {
@@ -463,8 +493,8 @@ function CreateGenerationPage() {
         })
       return
     } else if (currentStep === 5) {
-      nextStep = 5.5
-    } else if (currentStep === 5.5) {
+      nextStep = 5.7
+    } else if (currentStep === 5.7) {
       nextStep = 6
     }
 
@@ -493,12 +523,12 @@ function CreateGenerationPage() {
       prevStep = 3
     } else if (currentStep === 5) {
       prevStep = 4
-    } else if (currentStep === 5.5) {
-      prevStep = form.type === 'gost_format' ? 1.8 : 5
+    } else if (currentStep === 5.7) {
+      prevStep = 5
     } else if (currentStep === 6) {
       if (form.type === 'task') prevStep = 1.3
       else if (form.type === 'presentation') prevStep = 4
-      else prevStep = 5.5
+      else prevStep = 5
     }
 
     if (prevStep) {
@@ -585,7 +615,7 @@ function CreateGenerationPage() {
         </motion.div>
 
           <div className="wizard-progress" style={{ marginBottom: 'var(--spacing-40)', width: '100%', justifyContent: 'flex-start' }}>
-            {[1, 1.2, 1.3, 1.5, 1.6, 1.7, 1.8, 2, 3, 4, 5, 5.5, 6].map((step) => {
+            {[1, 1.2, 1.3, 1.5, 1.6, 1.7, 1.8, 2, 3, 4, 5, 5.7, 6].map((step) => {
               const shouldShow = (s: number) => {
                 if (s === 1.5) return form.type === 'text'
                 if (s === 1.6) return form.type === 'presentation'
@@ -595,13 +625,13 @@ function CreateGenerationPage() {
                 if (s === 1.2 || s === 1.3) return form.type === 'task'
                 if (s === 3 || s === 4) return form.type === 'text' || form.type === 'presentation'
                 if (s === 5) return form.type === 'text'
-                if (s === 5.5) return form.type === 'text' || form.type === 'gost_format'
+                if (s === 5.7) return form.type === 'text'
                 return true
               }
               if (!shouldShow(step)) return null
               
               const isActive = step === currentStep
-              const isCompleted = step < currentStep || (step === 1 && currentStep > 1) || (step === 1.2 && currentStep > 1.2) || (step === 1.3 && currentStep > 1.3) || (step === 1.5 && currentStep > 1.5) || (step === 1.6 && currentStep > 1.6) || (step === 1.7 && currentStep > 1.7) || (step === 2 && currentStep > 2) || (step === 3 && currentStep > 3) || (step === 4 && currentStep > 4) || (step === 5 && currentStep > 5) || (step === 5.5 && currentStep > 5.5)
+              const isCompleted = step < currentStep || (step === 1 && currentStep > 1) || (step === 1.2 && currentStep > 1.2) || (step === 1.3 && currentStep > 1.3) || (step === 1.5 && currentStep > 1.5) || (step === 1.6 && currentStep > 1.6) || (step === 1.7 && currentStep > 1.7) || (step === 2 && currentStep > 2) || (step === 3 && currentStep > 3) || (step === 4 && currentStep > 4) || (step === 5 && currentStep > 5)
 
               return (
                 <div key={step} className="wizard-progress__item">
@@ -644,7 +674,14 @@ function CreateGenerationPage() {
                 {currentStep === 3 && <GenerationGoalStep key="step-3" form={form} isLoading={isSuggesting} onChange={(updates) => setForm(prev => ({ ...prev, ...updates }))} />}
                 {currentStep === 4 && <GenerationStructureStep key="step-4" structure={form.structure} onChange={(structure) => setForm(prev => ({ ...prev, structure }))} />}
                 {currentStep === 5 && <GenerationSourcesStep key="step-5" sources={form.sources} onChange={(sources) => setForm(prev => ({ ...prev, sources }))} />}
-                {currentStep === 5.5 && <GenerationFormattingStep key="step-5-5" formatting={form.formatting} onChange={(formatting) => setForm(prev => ({ ...prev, formatting }))} />}
+                {currentStep === 5.7 && (
+                  <GenerationTitlePageStep 
+                    key="step-5-7" 
+                    data={form.titlePage || { ...DEFAULT_TITLE_PAGE_DATA, theme: form.input }}
+                    workType={form.workType}
+                    onChange={(titlePage) => setForm(prev => ({ ...prev, titlePage }))} 
+                  />
+                )}
                 {currentStep === 6 && form.type && (
                   <GenerationConfirmStep 
                     key="step-6" 

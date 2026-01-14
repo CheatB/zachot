@@ -8,7 +8,7 @@ import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 import { Container, Stack, Button, Card, Input } from '@/ui'
 import { useEffect, useState, useRef } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../auth/authContext'
 import { getTelegramLink, checkTelegramAuth, emailLogin } from '@/shared/api/auth'
 
@@ -108,8 +108,8 @@ function LoginPage() {
       <Stack align="center" gap="3xl" style={{ paddingTop: '5vh', paddingBottom: 'var(--spacing-80)' }}>
         
         {/* Logo at the top */}
-        <Link 
-          to="/" 
+        <a 
+          href="https://zachet.tech" 
           style={{ 
             textDecoration: 'none', 
             display: 'flex', 
@@ -140,7 +140,7 @@ function LoginPage() {
           }}>
             Зачёт
           </span>
-        </Link>
+        </a>
 
         {/* Hero Section */}
         <motion.div

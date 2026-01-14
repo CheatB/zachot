@@ -1,3 +1,5 @@
+import logging
+logger = logging.getLogger(__name__)
 from uuid import UUID
 from fastapi import APIRouter, HTTPException, Depends
 from ..schemas import (
@@ -56,9 +58,11 @@ async def suggest_structure(request: SuggestStructureRequest, user: UserDB = Dep
         topic=request.topic,
         goal=request.goal,
         idea=request.idea,
+        module=request.module,
         work_type=request.workType,
         volume=request.volume,
         complexity=request.complexity,
+        humanity=request.humanity,
         user_id=user.id
     )
 
@@ -66,14 +70,24 @@ async def suggest_structure(request: SuggestStructureRequest, user: UserDB = Dep
 async def suggest_sources(request: SuggestSourcesRequest, user: UserDB = Depends(get_current_user)):
     return await ai_suggestion_service.suggest_sources(
         topic=request.topic,
+        goal=request.goal,
+        idea=request.idea,
+        module=request.module,
         work_type=request.workType,
         complexity=request.complexity,
+        humanity=request.humanity,
         user_id=user.id
     )
 
 @router.post("/suggest-details")
 async def suggest_details(request: SuggestDetailsRequest, user: UserDB = Depends(get_current_user)):
-    return await ai_suggestion_service.suggest_details(topic=request.topic)
+    logger.info(f"Suggest details request: {request.dict()}")
+    return await ai_suggestion_service.suggest_details(
+        topic=request.topic,
+        module=request.module,
+        complexity=request.complexity,
+        humanity=request.humanity
+    )
 
 @router.post("/suggest-title-info")
 async def suggest_title_info(request: SuggestTitleInfoRequest, user: UserDB = Depends(get_current_user)):
@@ -98,6 +112,160 @@ async def list_users(admin: UserDB = Depends(require_admin)):
         ])
 
 @router.patch("/users/{user_id}/role")
+async def update_user_role(
+    user_id: UUID, 
+    request: UserRoleUpdateRequest, 
+    admin: UserDB = Depends(require_admin)
+):
+    with SessionLocal() as session:
+        user = session.query(UserDB).filter(UserDB.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user.role = request.role
+        session.commit()
+        return {"status": "success", "role": user.role}
+
+async def update_user_role(
+    user_id: UUID, 
+    request: UserRoleUpdateRequest, 
+    admin: UserDB = Depends(require_admin)
+):
+    with SessionLocal() as session:
+        user = session.query(UserDB).filter(UserDB.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user.role = request.role
+        session.commit()
+        return {"status": "success", "role": user.role}
+
+async def update_user_role(
+    user_id: UUID, 
+    request: UserRoleUpdateRequest, 
+    admin: UserDB = Depends(require_admin)
+):
+    with SessionLocal() as session:
+        user = session.query(UserDB).filter(UserDB.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user.role = request.role
+        session.commit()
+        return {"status": "success", "role": user.role}
+
+async def update_user_role(
+    user_id: UUID, 
+    request: UserRoleUpdateRequest, 
+    admin: UserDB = Depends(require_admin)
+):
+    with SessionLocal() as session:
+        user = session.query(UserDB).filter(UserDB.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user.role = request.role
+        session.commit()
+        return {"status": "success", "role": user.role}
+
+async def update_user_role(
+    user_id: UUID, 
+    request: UserRoleUpdateRequest, 
+    admin: UserDB = Depends(require_admin)
+):
+    with SessionLocal() as session:
+        user = session.query(UserDB).filter(UserDB.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user.role = request.role
+        session.commit()
+        return {"status": "success", "role": user.role}
+
+async def update_user_role(
+    user_id: UUID, 
+    request: UserRoleUpdateRequest, 
+    admin: UserDB = Depends(require_admin)
+):
+    with SessionLocal() as session:
+        user = session.query(UserDB).filter(UserDB.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user.role = request.role
+        session.commit()
+        return {"status": "success", "role": user.role}
+
+async def update_user_role(
+    user_id: UUID, 
+    request: UserRoleUpdateRequest, 
+    admin: UserDB = Depends(require_admin)
+):
+    with SessionLocal() as session:
+        user = session.query(UserDB).filter(UserDB.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user.role = request.role
+        session.commit()
+        return {"status": "success", "role": user.role}
+
+async def update_user_role(
+    user_id: UUID, 
+    request: UserRoleUpdateRequest, 
+    admin: UserDB = Depends(require_admin)
+):
+    with SessionLocal() as session:
+        user = session.query(UserDB).filter(UserDB.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user.role = request.role
+        session.commit()
+        return {"status": "success", "role": user.role}
+
+async def update_user_role(
+    user_id: UUID, 
+    request: UserRoleUpdateRequest, 
+    admin: UserDB = Depends(require_admin)
+):
+    with SessionLocal() as session:
+        user = session.query(UserDB).filter(UserDB.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user.role = request.role
+        session.commit()
+        return {"status": "success", "role": user.role}
+
+async def update_user_role(
+    user_id: UUID, 
+    request: UserRoleUpdateRequest, 
+    admin: UserDB = Depends(require_admin)
+):
+    with SessionLocal() as session:
+        user = session.query(UserDB).filter(UserDB.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user.role = request.role
+        session.commit()
+        return {"status": "success", "role": user.role}
+
+async def update_user_role(
+    user_id: UUID, 
+    request: UserRoleUpdateRequest, 
+    admin: UserDB = Depends(require_admin)
+):
+    with SessionLocal() as session:
+        user = session.query(UserDB).filter(UserDB.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        user.role = request.role
+        session.commit()
+        return {"status": "success", "role": user.role}
+
 async def update_user_role(
     user_id: UUID, 
     request: UserRoleUpdateRequest, 
