@@ -6,7 +6,7 @@
 
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
-import { Input, Textarea, Stack, Tooltip } from '@/ui'
+import { Textarea, Stack, Tooltip } from '@/ui'
 import type { CreateGenerationForm } from './types'
 
 interface GenerationGoalStepProps {
