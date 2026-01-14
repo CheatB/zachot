@@ -72,6 +72,7 @@ function CreateGenerationPage() {
   const [transitionState, setTransitionState] = useState<{ title: string; tasks: StepLoaderTask[] } | null>(null)
   const [form, setForm] = useState<CreateGenerationForm>(INITIAL_FORM_STATE)
   const isMountedRef = useRef(true)
+  const isSavingRef = useRef(false) // Флаг для предотвращения параллельных сохранений
 
   useEffect(() => {
     isMountedRef.current = true
@@ -212,7 +213,9 @@ function CreateGenerationPage() {
   }
 
   const saveDraft = useCallback(async (currentForm: CreateGenerationForm, stepOverride?: number) => {
-    if (!isMountedRef.current || !currentForm.type) return
+    if (!isMountedRef.current || !currentForm.type || isSavingRef.current) return
+    
+    isSavingRef.current = true // Устанавливаем флаг сохранения
 
     const draftData = {
       module: currentForm.type.toUpperCase(),
@@ -275,6 +278,8 @@ function CreateGenerationPage() {
       if (isMountedRef.current) {
         console.error('Failed to save draft:', error)
       }
+    } finally {
+      isSavingRef.current = false // Сбрасываем флаг в любом случае
     }
   }, [location.pathname, navigate])
 
@@ -287,7 +292,8 @@ function CreateGenerationPage() {
     }, 2000)
 
     return () => clearTimeout(timer)
-  }, [form, currentStep, saveDraft])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, currentStep]) // saveDraft стабилен благодаря useCallback и isSavingRef предотвращает параллельные вызовы
 
   const handleTypeSelect = async (type: GenerationType) => {
     // Update form state
