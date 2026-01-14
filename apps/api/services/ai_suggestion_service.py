@@ -10,7 +10,6 @@ from ..services.openai_service import openai_service
 from ..services.model_router import model_router
 from ..services.prompt_service import prompt_service
 from ..services.url_validator_service import url_validator_service
-from ..services.fallback_sources_service import fallback_sources_service
 from packages.ai_services.src.prompt_manager import prompt_manager
 
 logger = logging.getLogger(__name__)
@@ -80,6 +79,7 @@ class AISuggestionService:
         prompt = prompt_service.construct_sources_prompt(dummy_gen)
 
         try:
+            # Первая попытка
             raw_response = await openai_service.chat_completion(
                 model=model_name,
                 messages=[{"role": "user", "content": prompt}],
@@ -103,18 +103,14 @@ class AISuggestionService:
             # Валидация источников
             validated_sources = await url_validator_service.validate_sources(sources)
             
-            # Фильтруем и сортируем по валидности
+            # Фильтруем и сортируем по валидности (ТОЛЬКО валидные)
             filtered_sources = url_validator_service.filter_valid_sources(
                 validated_sources,
                 min_valid=5,
                 prefer_trusted=True
             )
             
-            # Статистика валидации
-            valid_count = sum(
-                1 for s in filtered_sources 
-                if s.get('validation', {}).get('is_valid', False)
-            )
+            valid_count = len(filtered_sources)
             trusted_count = sum(
                 1 for s in filtered_sources 
                 if s.get('validation', {}).get('is_trusted_domain', False)
@@ -122,48 +118,75 @@ class AISuggestionService:
             
             logger.info(
                 f"Validation complete: {valid_count}/{len(sources)} valid, "
-                f"{trusted_count} from trusted domains, "
-                f"returning {len(filtered_sources)} sources"
+                f"{trusted_count} from trusted domains"
             )
+            
+            # Если валидных источников мало, делаем повторный запрос
+            if valid_count < 3:
+                logger.warning(
+                    f"Only {valid_count} valid sources from first attempt. "
+                    f"Retrying with stricter prompt..."
+                )
+                
+                retry_prompt = prompt + (
+                    "\n\n⚠️ КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ: Предыдущая попытка вернула мало валидных источников! "
+                    "ОБЯЗАТЕЛЬНО проверяй каждый URL перед возвратом. Используй ТОЛЬКО прямые ссылки на статьи, "
+                    "НЕ поисковые страницы. Если не можешь найти рабочую ссылку - НЕ включай источник!"
+                )
+                
+                try:
+                    retry_response = await openai_service.chat_completion(
+                        model=model_name,
+                        messages=[{"role": "user", "content": retry_prompt}],
+                        json_mode=True,
+                        step_type="sources",
+                        work_type=work_type or "other"
+                    )
+                    
+                    if retry_response:
+                        retry_data = json.loads(retry_response)
+                        retry_sources = retry_data.get("sources", [])
+                        
+                        if retry_sources:
+                            logger.info(f"Retry: AI suggested {len(retry_sources)} sources")
+                            
+                            # Валидация повторных источников
+                            retry_validated = await url_validator_service.validate_sources(retry_sources)
+                            retry_filtered = url_validator_service.filter_valid_sources(
+                                retry_validated,
+                                min_valid=5,
+                                prefer_trusted=True
+                            )
+                            
+                            # Объединяем с первой попыткой, убираем дубликаты по URL
+                            existing_urls = {s.get('url') for s in filtered_sources if s.get('url')}
+                            new_sources = [
+                                s for s in retry_filtered 
+                                if s.get('url') not in existing_urls
+                            ]
+                            
+                            filtered_sources.extend(new_sources)
+                            valid_count = len(filtered_sources)
+                            
+                            logger.info(
+                                f"After retry: {valid_count} total valid sources "
+                                f"({len(new_sources)} new from retry)"
+                            )
+                except Exception as retry_error:
+                    logger.error(f"Retry failed: {retry_error}", exc_info=True)
             
             # Помечаем источники
             for source in filtered_sources:
                 source["isAiSelected"] = True
-                # Добавляем индикатор валидности для фронтенда
                 validation = source.get('validation', {})
                 source["isVerified"] = validation.get('is_valid', False)
                 source["isTrustedDomain"] = validation.get('is_trusted_domain', False)
-                
-                # Логируем невалидные источники для отладки
-                if not source["isVerified"]:
-                    logger.warning(
-                        f"Invalid source: {source.get('title', 'Unknown')[:50]}... "
-                        f"URL: {source.get('url', 'No URL')} "
-                        f"Error: {validation.get('error', 'Unknown error')}"
-                    )
             
-            # Если валидных источников мало, добавляем fallback
-            valid_sources_count = sum(1 for s in filtered_sources if s.get('isVerified', False))
-            if valid_sources_count < 5:
-                logger.warning(
-                    f"Only {valid_sources_count} valid sources, adding fallback sources..."
-                )
-                enriched_sources = fallback_sources_service.enrich_sources_with_fallback(
-                    filtered_sources,
-                    topic=topic or "",
-                    min_sources=5
-                )
-                
-                # Помечаем fallback источники
-                for source in enriched_sources:
-                    if source.get('isFallback'):
-                        source["isAiSelected"] = False  # Fallback источники не от AI
-                
-                logger.info(
-                    f"Added {len(enriched_sources) - len(filtered_sources)} fallback sources"
-                )
-                return {"sources": enriched_sources}
+            if valid_count == 0:
+                logger.error("No valid sources found even after retry!")
+                return {"sources": [], "error": "Не удалось найти валидные источники. Попробуйте изменить тему или сформулировать её более конкретно."}
             
+            logger.info(f"Returning {valid_count} valid sources to user")
             return {"sources": filtered_sources}
             
         except Exception as e:

@@ -183,21 +183,7 @@ function GenerationSourcesStep({ sources, onChange, generationId }: GenerationSo
                             {item.isTrustedDomain && (
                               <Tooltip content="Источник из надёжной научной базы">
                                 <span className="source-badge source-badge--trusted">
-                                  🛡️ Надёжный
-                                </span>
-                              </Tooltip>
-                            )}
-                            {item.isFallback && (
-                              <Tooltip content="Резервный проверенный источник">
-                                <span className="source-badge source-badge--fallback">
-                                  📚 Классика
-                                </span>
-                              </Tooltip>
-                            )}
-                            {!item.isVerified && !item.isFallback && item.url && (
-                              <Tooltip content="Источник не прошёл автоматическую проверку">
-                                <span className="source-badge source-badge--unverified">
-                                  ⚠️ Не проверен
+                                  🛡️ Надёжный домен
                                 </span>
                               </Tooltip>
                             )}
@@ -424,18 +410,6 @@ const stepStyles = `
   background: #e3f2fd;
   color: #1565c0;
   border: 1px solid #90caf9;
-}
-
-.source-badge--fallback {
-  background: #fff3e0;
-  color: #e65100;
-  border: 1px solid #ffcc80;
-}
-
-.source-badge--unverified {
-  background: #fff8e1;
-  color: #f57c00;
-  border: 1px solid #ffd54f;
 }
 
 .source-meta {

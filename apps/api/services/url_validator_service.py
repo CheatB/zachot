@@ -290,31 +290,27 @@ class URLValidatorService:
         prefer_trusted: bool = True
     ) -> List[Dict]:
         """
-        Фильтрует и сортирует источники по валидности.
+        Фильтрует источники, возвращая ТОЛЬКО валидные.
+        СТРОГО: невалидные источники полностью исключаются.
         
         Args:
             sources: Список источников с полем 'validation'
-            min_valid: Минимальное количество источников для возврата
+            min_valid: Минимальное количество источников (не используется, оставлено для совместимости)
             prefer_trusted: Предпочитать источники с доверенных доменов
             
         Returns:
-            Отфильтрованный и отсортированный список источников
+            Список ТОЛЬКО валидных источников
         """
         if not sources:
             return []
         
-        # Разделяем на валидные и невалидные
-        valid_sources = []
-        invalid_sources = []
+        # Берём ТОЛЬКО валидные источники
+        valid_sources = [
+            source for source in sources
+            if source.get('validation', {}).get('is_valid', False)
+        ]
         
-        for source in sources:
-            validation = source.get('validation', {})
-            if validation.get('is_valid', False):
-                valid_sources.append(source)
-            else:
-                invalid_sources.append(source)
-        
-        # Сортируем валидные: сначала доверенные домены
+        # Сортируем: сначала доверенные домены
         if prefer_trusted:
             valid_sources.sort(
                 key=lambda s: (
@@ -323,26 +319,8 @@ class URLValidatorService:
                 )
             )
         
-        # Если валидных достаточно, возвращаем только их
-        if len(valid_sources) >= min_valid:
-            logger.info(f"Returning {len(valid_sources)} valid sources")
-            return valid_sources
-        
-        # Если валидных мало, добавляем невалидные с доверенных доменов
-        trusted_invalid = [
-            s for s in invalid_sources 
-            if s.get('validation', {}).get('is_trusted_domain', False)
-        ]
-        
-        combined = valid_sources + trusted_invalid
-        
-        if len(combined) >= min_valid:
-            logger.warning(f"Only {len(valid_sources)} valid sources, adding {len(trusted_invalid)} from trusted domains")
-            return combined[:min_valid + 3]  # Возвращаем чуть больше минимума
-        
-        # Если и этого мало, возвращаем все
-        logger.warning(f"Only {len(valid_sources)} valid sources found, returning all {len(sources)}")
-        return valid_sources + invalid_sources
+        logger.info(f"Filtered to {len(valid_sources)} valid sources out of {len(sources)} total")
+        return valid_sources
 
 
 # Singleton instance
