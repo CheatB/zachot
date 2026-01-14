@@ -8,7 +8,7 @@ import { motion as motionTokens } from '@/design-tokens'
 import { Card, Button, Stack, Formula } from '@/ui'
 import { smartEdit, type Generation } from '@/shared/api/generations'
 import { useParams } from 'react-router-dom'
-import { useState, useEffect, Fragment } from 'react'
+import { useState, useEffect, useRef, Fragment } from 'react'
 import { useToast } from '@/ui/primitives/Toast'
 
 interface ResultContentProps {
@@ -23,10 +23,14 @@ function ResultContent({ content, onUpdate }: ResultContentProps) {
   const [localContent, setLocalContent] = useState(content)
   const [isSaving, setIsSaving] = useState(false)
   const shouldReduceMotion = false
+  const prevContentRef = useRef(content)
 
-  // Синхронизируем localContent с входящим content
+  // Синхронизируем localContent с входящим content (только если действительно изменился)
   useEffect(() => {
-    setLocalContent(content)
+    if (prevContentRef.current !== content) {
+      setLocalContent(content)
+      prevContentRef.current = content
+    }
   }, [content])
 
   // Автосохранение (Debounce)

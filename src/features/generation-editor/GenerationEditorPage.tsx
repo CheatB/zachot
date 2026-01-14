@@ -3,7 +3,7 @@
  * Страница редактирования сгенерированного текста с AI-ассистентом
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Container, Stack, Button } from '@/ui'
 import { getGenerationById, updateGeneration, type Generation } from '@/shared/api/generations'
@@ -20,6 +20,21 @@ function GenerationEditorPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const lastSavedContentRef = useRef('')
+
+  // Inject styles (должен быть перед любыми условными return)
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const styleId = 'editor-page-styles'
+      let style = document.getElementById(styleId) as HTMLStyleElement
+      if (!style) {
+        style = document.createElement('style')
+        style.id = styleId
+        document.head.appendChild(style)
+      }
+      style.textContent = pageStyles
+    }
+  }, [])
 
   useEffect(() => {
     if (!id) return
@@ -27,7 +42,9 @@ function GenerationEditorPage() {
     getGenerationById(id)
       .then((gen) => {
         setGeneration(gen)
-        setContent(gen.result_content || '')
+        const initialContent = gen.result_content || ''
+        setContent(initialContent)
+        lastSavedContentRef.current = initialContent
         setLoading(false)
       })
       .catch((error) => {
@@ -37,9 +54,10 @@ function GenerationEditorPage() {
       })
   }, [id])
 
-  // Автосохранение каждые 5 секунд
+  // Автосохранение каждые 5 секунд (только если контент изменился)
   useEffect(() => {
     if (!id || !content || loading) return
+    if (content === lastSavedContentRef.current) return // Пропускаем, если контент не изменился
     
     const timer = setTimeout(async () => {
       try {
@@ -47,6 +65,7 @@ function GenerationEditorPage() {
         await updateGeneration(id, {
           result_content: content,
         } as any)
+        lastSavedContentRef.current = content
         setLastSaved(new Date())
       } catch (error) {
         console.error('Autosave failed:', error)
@@ -90,20 +109,6 @@ function GenerationEditorPage() {
       </Container>
     )
   }
-
-  // Inject styles
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      const styleId = 'editor-page-styles'
-      let style = document.getElementById(styleId) as HTMLStyleElement
-      if (!style) {
-        style = document.createElement('style')
-        style.id = styleId
-        document.head.appendChild(style)
-      }
-      style.textContent = pageStyles
-    }
-  }, [])
 
   if (!generation) {
     return (
