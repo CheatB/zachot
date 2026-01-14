@@ -24,6 +24,11 @@ function ResultContent({ content, onUpdate }: ResultContentProps) {
   const [isSaving, setIsSaving] = useState(false)
   const shouldReduceMotion = false
 
+  // Синхронизируем localContent с входящим content
+  useEffect(() => {
+    setLocalContent(content)
+  }, [content])
+
   // Автосохранение (Debounce)
   useEffect(() => {
     if (localContent === content) return
@@ -38,12 +43,11 @@ function ResultContent({ content, onUpdate }: ResultContentProps) {
       } catch (error) {
         console.error('Autosave failed:', error)
         setIsSaving(false)
-        showToast('Ошибка при автосохранении', 'error')
+        // НЕ вызываем showToast здесь - это вызывает перерисовку!
       }
     }, 2000)
 
     return () => clearTimeout(timer)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localContent, content, id])
 
   const handleSmartEdit = async (action: string) => {
@@ -51,6 +55,9 @@ function ResultContent({ content, onUpdate }: ResultContentProps) {
     setIsSaving(true)
     try {
       const updated = await smartEdit(id, action, content)
+      // Сначала обновляем локальный контент
+      setLocalContent(updated.result_content || '')
+      // Потом уведомляем родителя
       onUpdate?.(updated)
       showToast(`Применено: ${action}`, 'success')
     } catch (error) {
