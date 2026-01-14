@@ -58,10 +58,11 @@ function GenerationGoalStep({ form, onChange, isLoading }: GenerationGoalStepPro
               }}>
                 Цель работы — поможет системе лучше структурировать материал
               </label>
-              <Input
+              <Textarea
                 value={form.goal}
                 onChange={(e) => onChange({ goal: e.target.value })}
-                placeholder="Например: Изучить влияние ИИ на современное образование..."
+                placeholder="Например: Изучить влияние ИИ на современное образование и разработать рекомендации по его внедрению в учебный процесс..."
+                rows={3}
                 style={{ fontSize: 'var(--font-size-base)' }}
               />
             </div>
