@@ -35,7 +35,8 @@ function GenerationEditorPage() {
         showToast('Не удалось загрузить работу', 'error')
         setLoading(false)
       })
-  }, [id, showToast])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   // Автосохранение каждые 5 секунд
   useEffect(() => {
