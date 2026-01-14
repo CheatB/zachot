@@ -122,7 +122,8 @@ class TextStructureWorker(BaseWorker):
             generation_prompt = prompt_service.construct_generation_prompt(
                 generation, 
                 section_title=f"Все разделы согласно плану:\n{structure_titles}",
-                previous_context=""
+                previous_context="",
+                sources=sources
             )
             
             raw_text = loop.run_until_complete(
