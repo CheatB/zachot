@@ -123,6 +123,40 @@ function GenerationStructureStep({ structure, onChange }: GenerationStructureSte
     onChange(newItems)
   }
 
+  const moveSubSection = (subId: string, chapterId: string, direction: 'up' | 'down') => {
+    const chapterIndex = items.findIndex(i => i.id === chapterId)
+    if (chapterIndex === -1) return
+
+    // Find all sub-sections of this chapter
+    const subSections: StructureItem[] = []
+    let i = chapterIndex + 1
+    while (i < items.length && items[i].level === 2) {
+      subSections.push(items[i])
+      i++
+    }
+
+    const subIndex = subSections.findIndex(s => s.id === subId)
+    if (subIndex === -1) return
+
+    if (direction === 'up' && subIndex === 0) return // Already at top
+    if (direction === 'down' && subIndex === subSections.length - 1) return // Already at bottom
+
+    // Swap with adjacent sub-section
+    const newSubSections = [...subSections]
+    if (direction === 'up') {
+      [newSubSections[subIndex - 1], newSubSections[subIndex]] = [newSubSections[subIndex], newSubSections[subIndex - 1]]
+    } else {
+      [newSubSections[subIndex], newSubSections[subIndex + 1]] = [newSubSections[subIndex + 1], newSubSections[subIndex]]
+    }
+
+    // Reconstruct items array
+    const newItems = [...items]
+    newItems.splice(chapterIndex + 1, subSections.length, ...newSubSections)
+    
+    setItems(newItems)
+    onChange(newItems)
+  }
+
   // Group items into chapters for easier rendering
   const chapters: { chapter: StructureItem; subSections: StructureItem[] }[] = []
   let currentChapter: { chapter: StructureItem; subSections: StructureItem[] } | null = null
@@ -258,14 +292,38 @@ function GenerationStructureStep({ structure, onChange }: GenerationStructureSte
                             }}
                           />
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleDelete(sub.id)}
-                          style={{ opacity: 0.4 }}
-                        >
-                          ✕
-                        </Button>
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                          <Tooltip content="Вверх">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => moveSubSection(sub.id, chapter.id, 'up')}
+                              disabled={subIdx === 0}
+                              style={{ opacity: subIdx === 0 ? 0.3 : 0.6, padding: '4px 8px' }}
+                            >
+                              ↑
+                            </Button>
+                          </Tooltip>
+                          <Tooltip content="Вниз">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => moveSubSection(sub.id, chapter.id, 'down')}
+                              disabled={subIdx === subSections.length - 1}
+                              style={{ opacity: subIdx === subSections.length - 1 ? 0.3 : 0.6, padding: '4px 8px' }}
+                            >
+                              ↓
+                            </Button>
+                          </Tooltip>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleDelete(sub.id)}
+                            style={{ opacity: 0.4, padding: '4px 8px' }}
+                          >
+                            ✕
+                          </Button>
+                        </div>
                       </div>
                     )) : (
                       <div style={{ padding: '12px 0', color: 'var(--color-text-muted)', fontSize: '13px', fontStyle: 'italic' }}>
