@@ -1,9 +1,14 @@
 import pytest
+import os
 from apps.api.services.model_router import model_router
 from apps.api.services.openai_service import openai_service
 from unittest.mock import patch, MagicMock
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(
+    not os.getenv("OPENROUTER_API_KEY") and not os.getenv("OPENAI_API_KEY"),
+    reason="Requires API key to test fallback mechanism"
+)
 async def test_model_fallback_on_402():
     # Мы имитируем первый ответ как 402 (ошибка оплаты)
     # и второй как успешный 200
