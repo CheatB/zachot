@@ -71,47 +71,39 @@ function GenerationSourcesStep({ sources, onChange }: GenerationSourcesStepProps
                 items.map((item) => (
                   <div key={item.id} className="source-row">
                     <div className="source-row__left">
-                      {item.url ? (
-                        <a 
-                          href={item.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="source-row__content source-row__content--link"
-                        >
-                          <div className="source-icon">
-                            <svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="24" height="32" rx="4" fill="#F43F5E"/>
-                              <path d="M6 10H18M6 16H18M6 22H14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <text x="4" y="28" fill="white" fontSize="6" fontWeight="bold" fontFamily="sans-serif">PDF</text>
-                            </svg>
-                          </div>
-                          <div className="source-details">
-                            <h4 className="source-title source-title-link">{item.title}</h4>
-                            <p className="source-meta">
-                              {item.isAiSelected ? 'Проверенный академический источник' : 'Пользовательский файл'}
-                            </p>
-                          </div>
-                        </a>
-                      ) : (
-                        <div className="source-row__content">
-                          <div className="source-icon">
-                            <svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect width="24" height="32" rx="4" fill="#F43F5E"/>
-                              <path d="M6 10H18M6 16H18M6 22H14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <text x="4" y="28" fill="white" fontSize="6" fontWeight="bold" fontFamily="sans-serif">PDF</text>
-                            </svg>
-                          </div>
-                          <div className="source-details">
-                            <h4 className="source-title">{item.title}</h4>
-                            <p className="source-meta">
-                              {item.isAiSelected ? 'Проверенный академический источник' : 'Пользовательский файл'}
-                            </p>
-                          </div>
+                      <div className="source-row__content">
+                        <div className="source-icon">
+                          <svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="24" height="32" rx="4" fill="#F43F5E"/>
+                            <path d="M6 10H18M6 16H18M6 22H14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <text x="4" y="28" fill="white" fontSize="6" fontWeight="bold" fontFamily="sans-serif">PDF</text>
+                          </svg>
                         </div>
-                      )}
+                        <div className="source-details">
+                          {item.url ? (
+                            <a 
+                              href={item.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="source-title-link"
+                            >
+                              {item.title}
+                            </a>
+                          ) : (
+                            <h4 className="source-title">{item.title}</h4>
+                          )}
+                          <p className="source-meta">
+                            {item.isAiSelected ? 'Проверенный академический источник' : 'Пользовательский файл'}
+                          </p>
+                        </div>
+                      </div>
                       <div className="source-row__actions">
                         <Tooltip content="Открыть оригинал">
-                          <button className="source-btn" onClick={() => item.url && window.open(item.url, '_blank')}>
+                          <button 
+                            className="source-btn" 
+                            onClick={() => item.url && window.open(item.url, '_blank')}
+                            disabled={!item.url}
+                          >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                           </button>
                         </Tooltip>
@@ -135,8 +127,28 @@ function GenerationSourcesStep({ sources, onChange }: GenerationSourcesStepProps
         </div>
 
         <div className="sources-actions">
-          <Button variant="secondary" size="lg" style={{ borderStyle: 'dashed', flex: 1, opacity: 0.5, cursor: 'not-allowed' }} disabled>+ Загрузить свой файл</Button>
-          <Button variant="secondary" size="lg" style={{ borderStyle: 'dashed', flex: 1, opacity: 0.5, cursor: 'not-allowed' }} disabled>🔍 Поискать еще</Button>
+          <Button 
+            variant="secondary" 
+            size="lg" 
+            style={{ borderStyle: 'dashed', flex: 1 }}
+            onClick={() => {
+              // TODO: Implement file upload functionality
+              alert('Функция загрузки файлов будет доступна в следующем обновлении')
+            }}
+          >
+            + Загрузить свой файл
+          </Button>
+          <Button 
+            variant="secondary" 
+            size="lg" 
+            style={{ borderStyle: 'dashed', flex: 1 }}
+            onClick={() => {
+              // TODO: Implement search more functionality
+              alert('Функция поиска дополнительных источников будет доступна в следующем обновлении')
+            }}
+          >
+            🔍 Поискать еще
+          </Button>
         </div>
       </div>
     </motion.div>
@@ -224,20 +236,6 @@ const stepStyles = `
   align-items: flex-start;
 }
 
-.source-row__content--link {
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.source-row__content--link:hover {
-  opacity: 0.9;
-}
-
-.source-row__content--link:hover .source-title-link {
-  text-decoration: underline;
-}
-
 .source-icon {
   flex-shrink: 0;
   padding-top: 4px;
@@ -262,18 +260,20 @@ const stepStyles = `
   font-size: 18px;
   font-weight: 700;
   line-height: 1.3;
-  color: var(--color-accent-base) !important;
+  color: var(--color-accent-base);
+  text-decoration: none;
+  cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-block;
 }
 
 .source-title-link:hover {
-  color: var(--color-accent-dark) !important;
+  color: var(--color-accent-dark);
   text-decoration: underline;
-  transform: translateX(2px);
 }
 
 .source-title-link:active {
-  color: var(--color-accent-darker) !important;
+  color: var(--color-accent-darker);
 }
 
 .source-meta {
@@ -312,6 +312,12 @@ const stepStyles = `
 
 .source-btn:active {
   transform: scale(0.95);
+}
+
+.source-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .source-description {

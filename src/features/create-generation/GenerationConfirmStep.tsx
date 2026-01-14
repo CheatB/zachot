@@ -116,7 +116,6 @@ function GenerationConfirmStep({
                   <SummaryItem label="Сложность:" value={complexityLevel === 'student' ? 'Студенческая' : 'Школьная'} step={1.7} />
                   <SummaryItem label="Очеловечивание:" value={`${humanityLevel}%`} step={1.7} />
                   <SummaryItem label="Объём:" value={`${volume} стр.`} step={3} />
-                  {type === 'text' && <SummaryItem label="Оформление:" value={getFormattingSummary()} step={5.5} />}
                   {type === 'presentation' && (
                     <SummaryItem 
                       label="Иллюстрации:" 

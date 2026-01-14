@@ -78,6 +78,11 @@ setInterval(checkForUpdates, VERSION_CHECK_INTERVAL);
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
+  // Игнорируем запросы с неподдерживаемыми схемами (chrome-extension, etc)
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+  
   // Для HTML файлов - всегда network first
   if (url.pathname.endsWith('.html') || url.pathname === '/') {
     event.respondWith(

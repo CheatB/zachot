@@ -35,25 +35,28 @@ function GenerationEditorPage() {
         showToast('Не удалось загрузить работу', 'error')
         setLoading(false)
       })
-  }, [id])
+  }, [id, showToast])
 
   // Автосохранение каждые 5 секунд
   useEffect(() => {
-    if (!id || !content) return
+    if (!id || !content || loading) return
     
     const timer = setTimeout(async () => {
       try {
+        setSaving(true)
         await updateGeneration(id, {
           result_content: content,
         } as any)
         setLastSaved(new Date())
       } catch (error) {
         console.error('Autosave failed:', error)
+      } finally {
+        setSaving(false)
       }
     }, 5000)
     
     return () => clearTimeout(timer)
-  }, [content, id])
+  }, [content, id, loading])
 
   const handleSave = async () => {
     if (!id) return
