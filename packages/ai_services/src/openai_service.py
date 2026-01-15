@@ -75,7 +75,8 @@ class OpenAIService:
                 # Логируем и возвращаем расход
                 usage = data.get("usage", {})
                 tokens = usage.get('total_tokens', 0)
-                logger.info(f"OpenAI Usage [{model}]: {tokens} tokens")
+                content_length = len(content) if content else 0
+                logger.info(f"OpenAI Usage [{model}]: {tokens} tokens, response length: {content_length} chars")
                 
                 return content
         except httpx.HTTPStatusError as e:

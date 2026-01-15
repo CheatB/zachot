@@ -136,6 +136,7 @@ class TextStructureWorker(BaseWorker):
                 )
             )
             
+            logger.info(f"Raw text generated, length: {len(raw_text or '')}")
             if not raw_text:
                 raise ValueError("Failed to generate content")
             
@@ -157,6 +158,8 @@ class TextStructureWorker(BaseWorker):
             else:
                 full_text = raw_text
             
+            logger.info(f"Full text prepared, length: {len(full_text or '')}")
+            
             # 4. Контроль качества (Quality Control)
             logger.info("Step 4: Quality Control check...")
             qc_prompt = prompt_service.construct_qc_prompt(full_text)
@@ -167,6 +170,8 @@ class TextStructureWorker(BaseWorker):
                     messages=[{"role": "user", "content": qc_prompt}]
                 )
             ) or full_text
+            
+            logger.info(f"Final content after QC, length: {len(final_content or '')}")
             
             # Финальное сохранение
             generation_store.update(job.generation_id, result_content=final_content, status="GENERATED")
