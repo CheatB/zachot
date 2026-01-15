@@ -94,8 +94,17 @@ class AISuggestionService:
             
             if not raw_response:
                 raise ValueError("Failed to get response from AI")
+            
+            # Логируем ответ для отладки
+            logger.info(f"Raw AI response (first 500 chars): {raw_response[:500]}")
+            
+            try:
+                data = json.loads(raw_response)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse JSON from AI response: {e}")
+                logger.error(f"Raw response: {raw_response[:1000]}")
+                raise ValueError(f"AI returned invalid JSON: {str(e)}")
                 
-            data = json.loads(raw_response)
             sources = data.get("sources", [])
             
             if not sources:
@@ -148,7 +157,12 @@ class AISuggestionService:
                     )
                     
                     if retry_response:
-                        retry_data = json.loads(retry_response)
+                        try:
+                            retry_data = json.loads(retry_response)
+                        except json.JSONDecodeError as e:
+                            logger.error(f"Retry: Failed to parse JSON: {e}")
+                            logger.error(f"Retry response: {retry_response[:1000]}")
+                            retry_data = {"sources": []}
                         retry_sources = retry_data.get("sources", [])
                         
                         if retry_sources:
