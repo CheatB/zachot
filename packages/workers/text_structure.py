@@ -159,6 +159,7 @@ class TextStructureWorker(BaseWorker):
             logger.info(f"Final content after QC, length: {len(final_content or '')}")
             
             # Финальное сохранение
+            logger.info(f"Saving result_content to generation_id: {job.generation_id}, content length: {len(final_content or '')}")
             generation_store.update(job.generation_id, result_content=final_content, status="GENERATED")
             logger.info("Pipeline completed successfully")
 

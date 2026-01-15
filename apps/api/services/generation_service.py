@@ -74,7 +74,11 @@ class GenerationService:
             raise HTTPException(status_code=409, detail="Only DRAFT generations can be updated.")
         
         update_data = {}
-        if input_payload is not None: update_data["input_payload"] = input_payload
+        if input_payload is not None: 
+            update_data["input_payload"] = input_payload
+            # Обновляем title, если в input_payload есть topic
+            if "topic" in input_payload and input_payload["topic"]:
+                update_data["title"] = input_payload["topic"]
         if settings_payload is not None: update_data["settings_payload"] = settings_payload
         
         if not update_data:
