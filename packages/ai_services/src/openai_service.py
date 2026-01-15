@@ -44,7 +44,8 @@ class OpenAIService:
             "temperature": temperature
         }
 
-        if json_mode:
+        # Perplexity не поддерживает response_format, отключаем JSON mode для них
+        if json_mode and not model.startswith("perplexity/"):
             payload["response_format"] = {"type": "json_object"}
 
         try:
