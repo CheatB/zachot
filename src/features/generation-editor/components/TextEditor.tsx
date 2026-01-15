@@ -29,14 +29,25 @@ interface TextEditorProps {
 // Плагин для загрузки начального контента
 function InitialContentPlugin({ content }: { content: string }) {
   const [editor] = useLexicalComposerContext()
-  const prevContentRef = useRef(content) // Track previous content
+  const prevContentRef = useRef<string>('') // Track previous content, start with empty
   
   useEffect(() => {
     console.log('[InitialContentPlugin] content:', content ? content.substring(0, 100) : 'EMPTY')
-    if (!content || content === prevContentRef.current) { // Only update if content is new
-      console.log('[InitialContentPlugin] No new content or empty, skipping')
+    console.log('[InitialContentPlugin] prevContent:', prevContentRef.current ? prevContentRef.current.substring(0, 100) : 'EMPTY')
+    
+    // Skip if no content
+    if (!content) {
+      console.log('[InitialContentPlugin] No content, skipping')
       return
     }
+    
+    // Skip if content hasn't changed
+    if (content === prevContentRef.current) {
+      console.log('[InitialContentPlugin] Content unchanged, skipping')
+      return
+    }
+    
+    console.log('[InitialContentPlugin] New content detected, inserting...')
     
     editor.update(() => {
       const root = $getRoot()
@@ -55,7 +66,9 @@ function InitialContentPlugin({ content }: { content: string }) {
         root.append(paragraph)
       })
     })
-    prevContentRef.current = content // Update ref after processing
+    
+    // Update ref AFTER successful insertion
+    prevContentRef.current = content
   }, [content, editor])
   
   return null

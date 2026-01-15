@@ -99,14 +99,13 @@ class SourcesQCService:
                 for i, s in enumerate(sources_to_check)
             ])
             
-            # Получаем промпт
+            # Получаем промпт и безопасно форматируем
             prompt_template = prompt_manager.get_prompt("sources_qc")
-            prompt = prompt_template.format(
-                topic=topic,
-                goal=goal,
-                idea=idea,
-                sources_list=sources_list
-            )
+            # Используем replace вместо format для избежания конфликтов с JSON в промпте
+            prompt = prompt_template.replace("{topic}", topic)
+            prompt = prompt.replace("{goal}", goal)
+            prompt = prompt.replace("{idea}", idea)
+            prompt = prompt.replace("{sources_list}", sources_list)
             
             logger.info(f"[QC] Starting validation of {len(sources_to_check)} sources")
             
