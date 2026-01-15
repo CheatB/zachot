@@ -187,6 +187,21 @@ function GenerationSourcesStep({ sources, onChange, generationId }: GenerationSo
                                 </span>
                               </Tooltip>
                             )}
+                            {/* QC индикатор релевантности */}
+                            {item.relevanceScore !== undefined && item.relevanceScore >= 7 && (
+                              <Tooltip content={`Высокая релевантность: ${item.relevanceScore}/10${item.qcReason ? ` - ${item.qcReason}` : ''}`}>
+                                <span className="source-badge source-badge--relevant">
+                                  ⭐ Релевантен ({item.relevanceScore}/10)
+                                </span>
+                              </Tooltip>
+                            )}
+                            {item.relevanceScore !== undefined && item.relevanceScore >= 4 && item.relevanceScore < 7 && (
+                              <Tooltip content={`Средняя релевантность: ${item.relevanceScore}/10${item.qcReason ? ` - ${item.qcReason}` : ''}`}>
+                                <span className="source-badge source-badge--moderate">
+                                  📊 Релевантен ({item.relevanceScore}/10)
+                                </span>
+                              </Tooltip>
+                            )}
                           </div>
                           <p className="source-meta">
                             {item.isAiSelected ? 'Проверенный академический источник' : 'Пользовательский файл'}
@@ -410,6 +425,18 @@ const stepStyles = `
   background: #e3f2fd;
   color: #1565c0;
   border: 1px solid #90caf9;
+}
+
+.source-badge--relevant {
+  background: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ffb74d;
+}
+
+.source-badge--moderate {
+  background: #f3e5f5;
+  color: #6a1b9a;
+  border: 1px solid #ce93d8;
 }
 
 .source-meta {

@@ -11,6 +11,7 @@ from ..services.openai_service import openai_service
 from ..services.model_router import model_router
 from ..services.prompt_service import prompt_service
 from ..services.url_validator_service import url_validator_service
+from ..services.sources_qc_service import sources_qc_service
 from packages.ai_services.src.prompt_manager import prompt_manager
 
 logger = logging.getLogger(__name__)
@@ -149,9 +150,42 @@ class AISuggestionService:
             )
             
             logger.info(
-                f"Validation complete: {valid_count}/{len(sources)} valid, "
+                f"URL validation complete: {valid_count}/{len(sources)} valid, "
                 f"{trusted_count} from trusted domains"
             )
+            
+            # === НОВЫЙ БЛОК: QC валидация релевантности ===
+            qc_result = None
+            if filtered_sources:
+                logger.info(f"[QC] Starting AI relevance validation of {len(filtered_sources)} sources...")
+                
+                qc_result = await sources_qc_service.validate_sources_relevance(
+                    sources=filtered_sources,
+                    topic=topic,
+                    goal=goal,
+                    idea=idea,
+                    work_type=work_type or "other"
+                )
+                
+                relevant_count = qc_result["relevant_count"]
+                qc_quality = qc_result["overall_quality"]
+                qc_should_retry = qc_result["should_retry"]
+                qc_failed = qc_result["qc_failed"]
+                
+                logger.info(
+                    f"[QC] Validation complete: {relevant_count}/{len(filtered_sources)} relevant, "
+                    f"quality: {qc_quality}, should_retry: {qc_should_retry}, failed: {qc_failed}"
+                )
+                
+                # Если QC рекомендует retry И валидных источников мало
+                if qc_should_retry and valid_count < 5:
+                    logger.warning(
+                        f"[QC] Recommending retry: only {relevant_count} relevant sources "
+                        f"(quality: {qc_quality})"
+                    )
+                    # Флаг для retry ниже
+                    valid_count = 0  # Форсируем retry
+            # === КОНЕЦ QC БЛОКА ===
             
             # Если валидных источников мало, делаем повторный запрос
             if valid_count < 3:
@@ -214,19 +248,58 @@ class AISuggestionService:
                 except Exception as retry_error:
                     logger.error(f"Retry failed: {retry_error}", exc_info=True)
             
+            # === ФИНАЛЬНАЯ ФИЛЬТРАЦИЯ: оставляем только релевантные источники ===
+            if qc_result and not qc_result.get("qc_failed", False):
+                # QC прошёл успешно - фильтруем по релевантности
+                final_sources = sources_qc_service.filter_relevant_sources(filtered_sources)
+                logger.info(
+                    f"[QC] Final filtering: {len(final_sources)}/{len(filtered_sources)} sources "
+                    f"passed relevance threshold"
+                )
+            else:
+                # QC не прошёл или упал - принимаем все URL-валидные источники
+                final_sources = filtered_sources
+                logger.info(f"[QC] Skipping relevance filtering (QC failed or not run)")
+            
             # Помечаем источники
-            for source in filtered_sources:
+            for source in final_sources:
                 source["isAiSelected"] = True
                 validation = source.get('validation', {})
                 source["isVerified"] = validation.get('is_valid', False)
                 source["isTrustedDomain"] = validation.get('is_trusted_domain', False)
+                
+                # Добавляем QC метки для фронтенда
+                qc_data = source.get('qc_validation', {})
+                if qc_data:
+                    source["relevanceScore"] = qc_data.get('relevance_score', None)
+                    source["qcReason"] = qc_data.get('reason', '')
             
-            if valid_count == 0:
-                logger.error("No valid sources found even after retry!")
-                return {"sources": [], "error": "Не удалось найти валидные источники. Попробуйте изменить тему или сформулировать её более конкретно."}
+            if len(final_sources) == 0:
+                logger.error("No valid sources found even after retry and QC!")
+                return {
+                    "sources": [], 
+                    "error": "Не удалось найти релевантные источники. Попробуйте изменить тему или сформулировать её более конкретно."
+                }
             
-            logger.info(f"Returning {valid_count} valid sources to user")
-            return {"sources": filtered_sources}
+            # Собираем метрики для мониторинга
+            metrics = {
+                "total_found": len(sources),
+                "url_valid": len(filtered_sources),
+                "qc_relevant": qc_result["relevant_count"] if qc_result else len(final_sources),
+                "final_count": len(final_sources),
+                "qc_quality": qc_result.get("overall_quality", "unknown") if qc_result else "not_run",
+                "qc_failed": qc_result.get("qc_failed", False) if qc_result else True
+            }
+            
+            logger.info(
+                f"Returning {len(final_sources)} sources to user. "
+                f"Metrics: {metrics}"
+            )
+            
+            return {
+                "sources": final_sources,
+                "metrics": metrics  # Для внутреннего мониторинга
+            }
             
         except Exception as e:
             logger.error(f"Error suggesting sources: {e}", exc_info=True)

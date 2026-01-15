@@ -133,6 +133,8 @@ export interface SourceItem {
   isVerified?: boolean // Источник прошёл проверку доступности
   isTrustedDomain?: boolean // Источник из надёжной научной базы
   isFallback?: boolean // Резервный проверенный источник
+  relevanceScore?: number // QC оценка релевантности (0-10)
+  qcReason?: string // Причина QC оценки
   validation?: {
     is_valid: boolean
     status_code: number | null
