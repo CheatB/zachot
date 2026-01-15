@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from uuid import UUID
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -13,6 +14,17 @@ from ..services.url_validator_service import url_validator_service
 from packages.ai_services.src.prompt_manager import prompt_manager
 
 logger = logging.getLogger(__name__)
+
+def extract_json_from_markdown(text: str) -> str:
+    """
+    Извлекает JSON из markdown блока ```json ... ```
+    Если markdown блока нет, возвращает исходный текст.
+    """
+    # Ищем JSON в markdown блоке
+    match = re.search(r'```(?:json)?\s*\n?(.*?)\n?```', text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    return text.strip()
 
 class AISuggestionService:
     @staticmethod
@@ -98,11 +110,14 @@ class AISuggestionService:
             # Логируем ответ для отладки
             logger.info(f"Raw AI response (first 500 chars): {raw_response[:500]}")
             
+            # Извлекаем JSON из markdown блока (если есть)
+            json_content = extract_json_from_markdown(raw_response)
+            
             try:
-                data = json.loads(raw_response)
+                data = json.loads(json_content)
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse JSON from AI response: {e}")
-                logger.error(f"Raw response: {raw_response[:1000]}")
+                logger.error(f"Extracted JSON content: {json_content[:1000]}")
                 raise ValueError(f"AI returned invalid JSON: {str(e)}")
                 
             sources = data.get("sources", [])
@@ -157,11 +172,13 @@ class AISuggestionService:
                     )
                     
                     if retry_response:
+                        # Извлекаем JSON из markdown блока
+                        retry_json = extract_json_from_markdown(retry_response)
                         try:
-                            retry_data = json.loads(retry_response)
+                            retry_data = json.loads(retry_json)
                         except json.JSONDecodeError as e:
                             logger.error(f"Retry: Failed to parse JSON: {e}")
-                            logger.error(f"Retry response: {retry_response[:1000]}")
+                            logger.error(f"Retry extracted JSON: {retry_json[:1000]}")
                             retry_data = {"sources": []}
                         retry_sources = retry_data.get("sources", [])
                         
