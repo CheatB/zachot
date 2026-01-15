@@ -46,9 +46,17 @@ async def create_generation(
 
 @router.get("/{generation_id}", response_model=GenerationResponse)
 async def get_generation(generation_id: UUID, user: UserDB = Depends(get_current_user)) -> GenerationResponse:
+    import logging
+    logger = logging.getLogger(__name__)
+    
     generation = generation_store.get(generation_id)
     if generation is None or generation.user_id != user.id:
         raise HTTPException(status_code=404, detail="Generation not found")
+    
+    # Логируем длину result_content перед отправкой
+    content_length = len(generation.result_content) if generation.result_content else 0
+    logger.info(f"GET /generations/{generation_id}: result_content length={content_length}")
+    
     return GenerationResponse.model_validate(generation)
 
 

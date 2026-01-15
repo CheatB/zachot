@@ -66,12 +66,21 @@ class SQLGenerationStore:
             return [self._map_to_domain(g) for g in db_gens]
     
     def update(self, generation_id: UUID, **updates) -> Generation:
+        import logging
+        logger = logging.getLogger(__name__)
+        
         with SessionLocal() as session:
             db_gen = session.query(GenerationDB).filter(GenerationDB.id == generation_id).first()
             if not db_gen:
                 raise ValueError(f"Generation with id {generation_id} not found")
             
             old_status = db_gen.status
+            
+            # Логируем обновление result_content
+            if 'result_content' in updates:
+                content_length = len(updates['result_content']) if updates['result_content'] else 0
+                logger.info(f"Updating generation {generation_id}: result_content length={content_length}")
+            
             for key, value in updates.items():
                 if hasattr(db_gen, key):
                     setattr(db_gen, key, value)
@@ -84,6 +93,11 @@ class SQLGenerationStore:
 
             db_gen.updated_at = datetime.utcnow()
             session.commit()
+            
+            # Проверяем, что сохранилось
+            if 'result_content' in updates:
+                saved_length = len(db_gen.result_content) if db_gen.result_content else 0
+                logger.info(f"After commit, generation {generation_id}: result_content length={saved_length}")
             
             updated_gen = self._map_to_domain(db_gen)
             self._notify_subscribers(updated_gen)

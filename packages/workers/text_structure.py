@@ -17,7 +17,7 @@ class TextStructureWorker(BaseWorker):
         return job.type in [JobType.TEXT_STRUCTURE, JobType.PRESENTATION_STRUCTURE]
     
     def execute(self, job: Job) -> JobResult:
-        logger.info(f"Starting AI-powered pipeline for job {job.id}")
+        logger.info(f"Starting AI-powered pipeline for job {job.id}, generation_id: {job.generation_id}")
         
         generation = generation_store.get(job.generation_id)
         if not generation:
