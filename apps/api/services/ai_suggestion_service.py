@@ -90,6 +90,10 @@ class AISuggestionService:
 
         prompt = prompt_service.construct_sources_prompt(dummy_gen)
         
+        # Логируем промпт для отладки
+        logger.info(f"Sources prompt (first 300 chars): {prompt[:300]}")
+        logger.info(f"Topic: {topic}, Work type: {work_type}, Model: {model_name}")
+        
         # Для Perplexity добавляем явную инструкцию вернуть JSON (они не поддерживают response_format)
         if model_name.startswith("perplexity/"):
             prompt += "\n\n⚠️ КРИТИЧЕСКИ ВАЖНО: Верни ответ СТРОГО в формате JSON. Начни с { и закончи }. Никакого текста до или после JSON."
