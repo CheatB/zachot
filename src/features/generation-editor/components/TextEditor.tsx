@@ -3,7 +3,7 @@
  * Rich-text редактор на базе Lexical с поддержкой AI-ассистента
  */
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
@@ -29,11 +29,12 @@ interface TextEditorProps {
 // Плагин для загрузки начального контента
 function InitialContentPlugin({ content }: { content: string }) {
   const [editor] = useLexicalComposerContext()
+  const prevContentRef = useRef(content) // Track previous content
   
   useEffect(() => {
     console.log('[InitialContentPlugin] content:', content ? content.substring(0, 100) : 'EMPTY')
-    if (!content) {
-      console.log('[InitialContentPlugin] No content, skipping')
+    if (!content || content === prevContentRef.current) { // Only update if content is new
+      console.log('[InitialContentPlugin] No new content or empty, skipping')
       return
     }
     
@@ -54,6 +55,7 @@ function InitialContentPlugin({ content }: { content: string }) {
         root.append(paragraph)
       })
     })
+    prevContentRef.current = content // Update ref after processing
   }, [content, editor])
   
   return null
