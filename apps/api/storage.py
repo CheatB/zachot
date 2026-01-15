@@ -50,6 +50,8 @@ class SQLGenerationStore:
     
     def get(self, generation_id: UUID) -> Optional[Generation]:
         with SessionLocal() as session:
+            # Очищаем кеш сессии, чтобы получить свежие данные из БД
+            session.expire_all()
             db_gen = session.query(GenerationDB).filter(GenerationDB.id == generation_id).first()
             if not db_gen:
                 return None

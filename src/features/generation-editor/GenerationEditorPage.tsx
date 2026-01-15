@@ -39,22 +39,33 @@ function GenerationEditorPage() {
   useEffect(() => {
     if (!id) return
     
-    getGenerationById(id)
-      .then((gen) => {
+    const loadGeneration = async (retryCount = 0) => {
+      try {
+        const gen = await getGenerationById(id)
         console.log('[GenerationEditorPage] Loaded generation:', gen)
         console.log('[GenerationEditorPage] result_content:', gen.result_content)
+        
+        // Если статус GENERATED, но result_content пустой, повторяем запрос
+        if (gen.status === 'GENERATED' && (!gen.result_content || gen.result_content.trim() === '') && retryCount < 3) {
+          console.log(`[GenerationEditorPage] Content is empty, retrying... (attempt ${retryCount + 1}/3)`)
+          setTimeout(() => loadGeneration(retryCount + 1), 1000) // Повторяем через 1 секунду
+          return
+        }
+        
         setGeneration(gen)
         const initialContent = gen.result_content || ''
         console.log('[GenerationEditorPage] Setting content:', initialContent.substring(0, 100))
         setContent(initialContent)
         lastSavedContentRef.current = initialContent
         setLoading(false)
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error('Failed to load generation:', error)
         // НЕ вызываем showToast здесь - это может вызвать перерисовку
         setLoading(false)
-      })
+      }
+    }
+    
+    loadGeneration()
   }, [id])
 
   // Автосохранение каждые 5 секунд (только если контент изменился и генерация в статусе DRAFT)
