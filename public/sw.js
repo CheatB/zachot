@@ -1,5 +1,5 @@
 // Service Worker для автоматического обновления приложения
-const CACHE_NAME = 'zachot-v6'; // Изменена версия для форсированного обновления (fix text selection React #310)
+const CACHE_NAME = 'zachot-v7'; // Изменена версия для форсированного обновления (fix text selection React #310)
 const VERSION_CHECK_INTERVAL = 60000; // Проверять каждую минуту
 
 // При установке Service Worker
