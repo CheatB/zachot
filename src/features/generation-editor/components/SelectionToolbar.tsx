@@ -38,6 +38,20 @@ function SelectionToolbar({ generationId }: SelectionToolbarProps) {
     setSelectedText(selection.toString())
   }, [])
 
+  // Inject styles (ДОЛЖЕН быть ПЕРЕД любыми условными return!)
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const styleId = 'selection-toolbar-styles'
+      let style = document.getElementById(styleId) as HTMLStyleElement
+      if (!style) {
+        style = document.createElement('style')
+        style.id = styleId
+        document.head.appendChild(style)
+      }
+      style.textContent = toolbarStyles
+    }
+  }, [])
+
   useEffect(() => {
     document.addEventListener('selectionchange', updatePosition)
     window.addEventListener('resize', updatePosition)
@@ -77,20 +91,6 @@ function SelectionToolbar({ generationId }: SelectionToolbarProps) {
   }
 
   if (!position) return null
-
-  // Inject styles
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      const styleId = 'selection-toolbar-styles'
-      let style = document.getElementById(styleId) as HTMLStyleElement
-      if (!style) {
-        style = document.createElement('style')
-        style.id = styleId
-        document.head.appendChild(style)
-      }
-      style.textContent = toolbarStyles
-    }
-  }, [])
 
   return (
     <div
