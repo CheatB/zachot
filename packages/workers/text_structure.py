@@ -31,7 +31,7 @@ class TextStructureWorker(BaseWorker):
         asyncio.set_event_loop(loop)
         
         try:
-            # 1. Проверка на минимальный ввод
+            # Базовая проверка на минимальный ввод
             if len(topic.strip()) < 5:
                 error_msg = "Пожалуйста, введите тему работы для начала генерации."
                 generation_store.update(job.generation_id, result_content=error_msg, status="FAILED")
@@ -41,30 +41,12 @@ class TextStructureWorker(BaseWorker):
                     error={"code": "empty_topic", "message": error_msg}, 
                     finished_at=datetime.now()
                 )
-
-            # 2. Быстрая классификация (задача ли это?)
-            # ОТКЛЮЧЕНО: Слишком строгая проверка, которая отклоняет валидные темы
-            # Если пользователь дошёл до генерации со структурой и источниками - тема валидная
-            # classifier_prompt = prompt_service.construct_classifier_prompt(topic)
-            # raw_class = loop.run_until_complete(
-            #     openai_service.chat_completion(
-            #         model="openai/gpt-4o-mini",
-            #         messages=[{"role": "user", "content": classifier_prompt}],
-            #         json_mode=True
-            #     )
-            # )
-            # 
-            # classification = json.loads(raw_class or '{"type": "task"}')
-            # logger.info(f"Topic classification: {classification}")
-            # if classification.get("type") == "chat":
-            #     error_msg = "Этот раздел предназначен для создания академических работ. Пожалуйста, введите тему для реферата, статьи или курсовой."
-            #     generation_store.update(job.generation_id, result_content=error_msg, status="FAILED")
-            #     return JobResult(
-            #         job_id=job.id, 
-            #         success=False, 
-            #         error={"code": "invalid_topic", "message": error_msg}, 
-            #         finished_at=datetime.now()
-            #     )
+            
+            # Семантическая валидация отключена для текстовых работ:
+            # - Интерфейс требует прохождения 5 шагов (естественная защита от спама)
+            # - Пользователь ограничен кредитами (биллинг защищает от абьюза)
+            # - Если создана структура и источники - тема валидна
+            # Классификатор остаётся только в TaskWorker для решения задач
 
             # --- ОСНОВНАЯ ЛОГИКА ГЕНЕРАЦИИ ---
             

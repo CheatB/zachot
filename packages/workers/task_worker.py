@@ -31,7 +31,13 @@ class TaskWorker(BaseWorker):
         asyncio.set_event_loop(loop)
         
         try:
-            # 1. Быстрая проверка на пустой или слишком короткий ввод
+            # --- ВАЛИДАЦИЯ ДЛЯ ЗАДАЧ ---
+            # Для задач валидация НЕОБХОДИМА, т.к.:
+            # 1. Решение происходит в 1 клик (нет промежуточных шагов как в текстовых работах)
+            # 2. Выше риск использования как "доступ к ChatGPT"
+            # 3. Классификатор точнее определяет задачи vs чат
+            
+            # 1. Проверка на минимальную длину
             if len(topic.strip()) < 10:
                 error_msg = "Слишком короткое условие. Пожалуйста, пришлите текст задачи или фото."
                 generation_store.update(job.generation_id, result_content=error_msg, status="FAILED")
@@ -42,7 +48,7 @@ class TaskWorker(BaseWorker):
                     finished_at=datetime.now()
                 )
 
-            # 2. Семантическая классификация через дешевую модель
+            # 2. Семантическая классификация - отсекаем "chat" запросы
             classifier_prompt = prompt_service.construct_classifier_prompt(topic)
             raw_class = loop.run_until_complete(
                 openai_service.chat_completion(
