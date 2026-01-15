@@ -18,7 +18,6 @@ import { CodeNode } from '@lexical/code'
 import { $getRoot, $createParagraphNode, $createTextNode, EditorState } from 'lexical'
 
 import SelectionToolbar from './SelectionToolbar'
-import ContentGeneratorPanel from './ContentGeneratorPanel'
 import EditorToolbar from './EditorToolbar'
 
 interface TextEditorProps {
@@ -32,7 +31,11 @@ function InitialContentPlugin({ content }: { content: string }) {
   const [editor] = useLexicalComposerContext()
   
   useEffect(() => {
-    if (!content) return
+    console.log('[InitialContentPlugin] content:', content ? content.substring(0, 100) : 'EMPTY')
+    if (!content) {
+      console.log('[InitialContentPlugin] No content, skipping')
+      return
+    }
     
     editor.update(() => {
       const root = $getRoot()
@@ -40,6 +43,7 @@ function InitialContentPlugin({ content }: { content: string }) {
       
       // Разбиваем текст на параграфы
       const paragraphs = content.split('\n\n')
+      console.log('[InitialContentPlugin] Inserting', paragraphs.length, 'paragraphs')
       
       paragraphs.forEach((text) => {
         if (!text.trim()) return
@@ -135,7 +139,6 @@ function TextEditor({ initialContent, onChange, generationId }: TextEditorProps)
           <InitialContentPlugin content={initialContent} />
           <SelectionToolbar generationId={generationId} />
         </div>
-        <ContentGeneratorPanel generationId={generationId} />
       </LexicalComposer>
     </div>
   )

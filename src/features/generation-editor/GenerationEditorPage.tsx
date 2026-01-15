@@ -41,8 +41,11 @@ function GenerationEditorPage() {
     
     getGenerationById(id)
       .then((gen) => {
+        console.log('[GenerationEditorPage] Loaded generation:', gen)
+        console.log('[GenerationEditorPage] result_content:', gen.result_content)
         setGeneration(gen)
         const initialContent = gen.result_content || ''
+        console.log('[GenerationEditorPage] Setting content:', initialContent.substring(0, 100))
         setContent(initialContent)
         lastSavedContentRef.current = initialContent
         setLoading(false)
@@ -54,10 +57,11 @@ function GenerationEditorPage() {
       })
   }, [id])
 
-  // Автосохранение каждые 5 секунд (только если контент изменился)
+  // Автосохранение каждые 5 секунд (только если контент изменился и генерация в статусе DRAFT)
   useEffect(() => {
     if (!id || !content || loading) return
     if (content === lastSavedContentRef.current) return // Пропускаем, если контент не изменился
+    if (generation && generation.status !== 'DRAFT') return // Не сохраняем завершённые генерации
     
     const timer = setTimeout(async () => {
       try {
@@ -75,7 +79,7 @@ function GenerationEditorPage() {
     }, 5000)
     
     return () => clearTimeout(timer)
-  }, [content, id, loading])
+  }, [content, id, loading, generation])
 
   const handleSave = async () => {
     if (!id) return
