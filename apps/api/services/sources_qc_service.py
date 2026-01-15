@@ -112,17 +112,19 @@ class SourcesQCService:
             # Используем быструю и дешёвую модель для QC
             model_name = "openai/gpt-4o-mini"
             
-            # Защита: timeout на QC валидацию
+            # Защита: timeout на QC валидацию (Python 3.10 compatible)
             try:
-                async with asyncio.timeout(SourcesQCService.QC_TIMEOUT):
-                    response = await openai_service.chat_completion(
+                response = await asyncio.wait_for(
+                    openai_service.chat_completion(
                         model=model_name,
                         messages=[{"role": "user", "content": prompt}],
                         json_mode=True,
                         step_type="sources_qc",
                         work_type=work_type,
                         temperature=0.3  # Низкая температура для более консистентных оценок
-                    )
+                    ),
+                    timeout=SourcesQCService.QC_TIMEOUT
+                )
             except asyncio.TimeoutError:
                 logger.error(f"[QC] Timeout after {SourcesQCService.QC_TIMEOUT}s, accepting sources as-is")
                 return {

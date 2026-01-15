@@ -46,7 +46,7 @@ function SelectionToolbar({ generationId }: SelectionToolbarProps) {
       document.removeEventListener('selectionchange', updatePosition)
       window.removeEventListener('resize', updatePosition)
     }
-  }, [updatePosition])
+  }, []) // Убрали updatePosition из зависимостей - он стабилен благодаря useCallback
 
   const handleAIAction = async (action: 'rewrite' | 'shorter' | 'longer') => {
     if (!selectedText || isProcessing) return
