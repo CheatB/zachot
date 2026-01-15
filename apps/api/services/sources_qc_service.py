@@ -12,7 +12,7 @@ from typing import List, Dict, Optional
 from datetime import datetime
 
 from apps.api.services.openai_service import openai_service
-from apps.api.services.prompt_service import prompt_service
+from packages.ai_services.src.prompt_manager import prompt_manager
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ class SourcesQCService:
             ])
             
             # Получаем промпт
-            prompt_template = prompt_service.get_prompt("sources_qc")
+            prompt_template = prompt_manager.get_prompt("sources_qc")
             prompt = prompt_template.format(
                 topic=topic,
                 goal=goal,
