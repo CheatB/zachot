@@ -37,7 +37,10 @@ class CacheService:
     async def disconnect(self):
         """Отключение от Redis."""
         if self.redis:
-            await self.redis.close()
+            try:
+                await self.redis.aclose()
+            except Exception as e:
+                logger.error(f"Error disconnecting from Redis: {e}")
     
     def _generate_key(self, prefix: str, *args, **kwargs) -> str:
         """Генерирует уникальный ключ для кэша."""
