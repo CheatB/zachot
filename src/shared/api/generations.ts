@@ -33,6 +33,7 @@ export interface GenerationSettingsPayload {
   structure?: StructureItem[];
   sources?: SourceItem[];
   formatting?: FormattingSettings;
+  formatting_attempts?: number;
   title_page?: {
     universityName: string;
     facultyName: string;
@@ -73,7 +74,7 @@ export interface CreateGenerationData {
   module: string;
   work_type?: string | null;
   complexity_level?: string;
-  humanity_level?: string; // Backend expects string ('low', 'medium', 'high')
+  humanity_level?: string | number; // Backend now accepts number (0, 25, 50, 75, 100) or legacy string ('low', 'medium', 'high')
   input_payload: GenerationInputPayload;
   settings_payload?: GenerationSettingsPayload;
 }

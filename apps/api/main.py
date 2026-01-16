@@ -12,11 +12,15 @@ import logging
 import os
 import sys
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi.errors import RateLimitExceeded
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 from apps.api.database import init_db
 from apps.api.routers import payments, auth, generations, admin, me, health, jobs, ai_editing, sources
+from apps.api.middleware.rate_limiter import limiter, rate_limit_exceeded_handler
+from apps.api.middleware.metrics_middleware import MetricsMiddleware
 
 # Настройка логирования
 logging.basicConfig(
@@ -35,6 +39,13 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+# Rate Limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
+# Metrics Middleware (добавляем первым, чтобы отслеживать все запросы)
+app.add_middleware(MetricsMiddleware)
 
 # CORS
 app.add_middleware(
@@ -100,6 +111,24 @@ async def root():
         "version": "1.0.0",
         "docs": "/docs",
     }
+
+
+@app.get("/metrics")
+async def metrics():
+    """
+    Prometheus metrics endpoint.
+    
+    Возвращает метрики в формате Prometheus для мониторинга:
+    - Количество генераций
+    - Использование AI токенов
+    - Длительность операций
+    - Активные задачи
+    - Ошибки
+    """
+    return Response(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST
+    )
 
 
 if __name__ == "__main__":

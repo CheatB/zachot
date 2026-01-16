@@ -1,9 +1,11 @@
 /**
  * GenerationsPage
  * Страница списка генераций в табличном виде
+ * 
+ * Использует React Query для автоматического кэширования и обновления данных.
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
@@ -12,15 +14,30 @@ import { Container, Stack, Button, EmptyState, Input } from '@/ui'
 import GenerationsList from './GenerationsList'
 import FirstTimeEmptyState from './FirstTimeEmptyState'
 import { type Generation } from '@/shared/api/generations'
+import { useGenerations } from '@/shared/api/queries/generations'
 import styles from './GenerationsPage.module.css'
 
 function GenerationsPage() {
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
-  
-  const [hasGenerations, setHasGenerations] = useState<boolean | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  
+  // React Query автоматически управляет загрузкой, кэшированием и ошибками
+  const { data, isLoading, error } = useGenerations()
+  
+  // Фильтруем генерации по поисковому запросу
+  const filteredGenerations = useMemo(() => {
+    if (!data?.items) return []
+    if (!searchQuery.trim()) return data.items
+    
+    const query = searchQuery.toLowerCase()
+    return data.items.filter(gen => 
+      gen.title?.toLowerCase().includes(query) ||
+      gen.work_type?.toLowerCase().includes(query)
+    )
+  }, [data?.items, searchQuery])
+  
+  const hasGenerations = data?.items && data.items.length > 0
 
   const handleGenerationClick = useCallback((generation: Generation) => {
     const status = (generation.status as string).toUpperCase()
@@ -29,18 +46,18 @@ function GenerationsPage() {
     } else if (status === 'RUNNING') {
       navigate(`/generations/${generation.id}`)
     } else {
+      // Для TEXT генераций открываем редактор, для остальных - результат
+      if (generation.module === 'TEXT') {
+        navigate(`/generations/${generation.id}/editor`)
+      } else {
       navigate(`/generations/${generation.id}/result`)
+      }
     }
   }, [navigate])
 
   const handleNewGeneration = useCallback(() => {
     navigate('/')
   }, [navigate])
-
-  const handleDataLoaded = useCallback((hasData: boolean) => {
-    setHasGenerations(hasData)
-    setIsLoading(false)
-  }, [])
 
   if (!isAuthenticated) {
     return (
@@ -53,10 +70,24 @@ function GenerationsPage() {
     )
   }
 
+  // Обработка ошибки загрузки
+  if (error) {
+    return (
+      <Container size="full">
+        <div style={{ padding: 'var(--spacing-48)' }}>
+          <EmptyState
+            title="Ошибка загрузки"
+            description="Не удалось загрузить список генераций. Попробуйте обновить страницу."
+          />
+        </div>
+      </Container>
+    )
+  }
+
   return (
     <Container size="full">
       <Stack gap="xl" className={styles.container}>
-        {(isLoading || hasGenerations !== false) && (
+        {(isLoading || hasGenerations) && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -86,23 +117,24 @@ function GenerationsPage() {
           </motion.div>
         )}
 
-        {isLoading && hasGenerations === null && (
+        {isLoading && (
           <div style={{ padding: '40px 0' }}>
             <h2 style={{ color: 'var(--color-neutral-100)', fontSize: 'var(--font-size-xl)' }}>Загрузка ваших данных...</h2>
           </div>
         )}
 
-        {!isLoading && hasGenerations === false && (
+        {!isLoading && !hasGenerations && (
           <div style={{ paddingTop: 'var(--spacing-48)' }}>
             <FirstTimeEmptyState onCreateFirst={handleNewGeneration} />
           </div>
         )}
 
-        <GenerationsList
-          onGenerationClick={handleGenerationClick}
-          onHasGenerations={handleDataLoaded}
-          searchQuery={searchQuery}
-        />
+        {!isLoading && hasGenerations && (
+          <GenerationsList
+            generations={filteredGenerations}
+            onGenerationClick={handleGenerationClick}
+          />
+        )}
       </Stack>
     </Container>
   )

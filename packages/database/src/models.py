@@ -72,16 +72,16 @@ class Generation(Base):
     __tablename__ = "generations"
     
     id = Column(GUID(), primary_key=True, default=uuid4)
-    user_id = Column(GUID(), ForeignKey("users.id"))
+    user_id = Column(GUID(), ForeignKey("users.id"), index=True)  # Индекс для быстрого поиска по пользователю
     module = Column(String)
-    status = Column(String)
+    status = Column(String, index=True)  # Индекс для фильтрации по статусу
     title = Column(String, nullable=True)
     work_type = Column(String, nullable=True)
     complexity_level = Column(String, default="student")
     humanity_level = Column(String, default="medium")
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)  # Индекс для сортировки
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, index=True)  # Индекс для сортировки
     
     input_payload = Column(JSON)
     settings_payload = Column(JSON)
@@ -106,9 +106,9 @@ class Payment(Base):
     __tablename__ = "payments"
     
     id = Column(GUID(), primary_key=True, default=uuid4)
-    user_id = Column(GUID(), ForeignKey("users.id"))
+    user_id = Column(GUID(), ForeignKey("users.id"), index=True)  # Индекс для поиска платежей пользователя
     amount = Column(Integer) # в копейках
-    status = Column(String, default="NEW")
+    status = Column(String, default="NEW", index=True)  # Индекс для фильтрации по статусу
     payment_id = Column(String, nullable=True, index=True) # PaymentId из Т-Банка
     order_id = Column(String, unique=True, index=True) # Наш уникальный OrderId
     description = Column(String)
@@ -124,7 +124,7 @@ class Payment(Base):
     customer_key = Column(String, nullable=True) # CustomerKey для привязки карты
     
     # Даты
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)  # Индекс для сортировки
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     confirmed_at = Column(DateTime, nullable=True) # Когда платёж подтверждён
     
@@ -136,7 +136,7 @@ class AuthToken(Base):
     __tablename__ = "auth_tokens"
     
     token = Column(String, primary_key=True)
-    user_id = Column(GUID(), ForeignKey("users.id"), nullable=True)
+    user_id = Column(GUID(), ForeignKey("users.id"), nullable=True, index=True)  # Индекс для поиска токенов пользователя
     created_at = Column(DateTime, default=datetime.utcnow)
     is_used = Column(Integer, default=0) # 0 - no, 1 - yes
     
@@ -156,7 +156,7 @@ class CreditTransaction(Base):
     __tablename__ = "credit_transactions"
     
     id = Column(GUID(), primary_key=True, default=uuid4)
-    user_id = Column(GUID(), ForeignKey("users.id"), index=True)
+    user_id = Column(GUID(), ForeignKey("users.id"), index=True)  # Уже есть индекс
     
     amount = Column(Integer)  # Положительное = начисление, отрицательное = списание
     balance_after = Column(Integer)  # Баланс после транзакции
@@ -167,7 +167,7 @@ class CreditTransaction(Base):
     # Связь с генерацией (если списание)
     generation_id = Column(GUID(), ForeignKey("generations.id"), nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)  # Индекс для сортировки
     
     user = relationship("User", back_populates="credit_transactions")
 
@@ -185,10 +185,10 @@ class Subscription(Base):
     __tablename__ = "subscriptions"
     
     id = Column(GUID(), primary_key=True, default=uuid4)
-    user_id = Column(GUID(), ForeignKey("users.id"), unique=True) # Один пользователь = одна активная подписка
+    user_id = Column(GUID(), ForeignKey("users.id"), unique=True, index=True) # Один пользователь = одна активная подписка, индекс для быстрого поиска
     
     plan_name = Column(String, default="FREE") # FREE, MONTH, QUARTER, YEAR
-    status = Column(String, default="ACTIVE") # ACTIVE, PAST_DUE, CANCELED, EXPIRED
+    status = Column(String, default="ACTIVE", index=True) # ACTIVE, PAST_DUE, CANCELED, EXPIRED, индекс для фильтрации
     
     # Период подписки
     period = Column(String, default="month") # month, quarter, year
@@ -219,9 +219,37 @@ class Subscription(Base):
     initial_payment = relationship("Payment")
 
 def create_db_engine(db_url: str):
+    """
+    Создает engine с оптимальными настройками connection pooling.
+    
+    Для PostgreSQL:
+    - pool_size=10: Постоянных соединений в пуле
+    - max_overflow=20: Дополнительных соединений при пиках
+    - pool_timeout=30: Таймаут ожидания свободного соединения
+    - pool_recycle=3600: Пересоздание соединений каждый час
+    - pool_pre_ping=True: Проверка живости соединения перед использованием
+    
+    Для SQLite:
+    - Отключаем check_same_thread для многопоточности
+    """
     engine_args = {}
+    
     if db_url.startswith("sqlite"):
         engine_args["connect_args"] = {"check_same_thread": False}
+    else:
+        # PostgreSQL connection pooling
+        from sqlalchemy.pool import QueuePool
+        
+        engine_args.update({
+            "poolclass": QueuePool,
+            "pool_size": 10,           # Постоянных соединений
+            "max_overflow": 20,        # Дополнительных при пиках (итого до 30)
+            "pool_timeout": 30,        # Таймаут ожидания (секунды)
+            "pool_recycle": 3600,      # Пересоздание каждый час
+            "pool_pre_ping": True,     # Проверка живости соединения
+            "echo_pool": False,        # Логирование пула (для отладки можно включить)
+        })
+    
     return create_engine(db_url, **engine_args)
 
 def get_session_factory(engine):

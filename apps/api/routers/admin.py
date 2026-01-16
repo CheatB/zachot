@@ -1,7 +1,7 @@
 import logging
 logger = logging.getLogger(__name__)
 from uuid import UUID
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from ..schemas import (
     UsersAdminResponse, 
     UserRoleUpdateRequest, 
@@ -19,6 +19,7 @@ from ..services.admin_service import admin_analytics_service
 from ..services.ai_suggestion_service import ai_suggestion_service
 from ..dependencies import get_current_user, require_admin
 from packages.ai_services.src.prompt_manager import prompt_manager
+from ..middleware.rate_limiter import limiter, RateLimits
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -53,7 +54,8 @@ async def get_generations_history(admin: UserDB = Depends(require_admin)):
         return admin_analytics_service.get_generations_history(session)
 
 @router.post("/suggest-structure")
-async def suggest_structure(request: SuggestStructureRequest, user: UserDB = Depends(get_current_user)):
+@limiter.limit(RateLimits.AI_SUGGESTION)
+async def suggest_structure(req: Request, request: SuggestStructureRequest, user: UserDB = Depends(get_current_user)):
     return await ai_suggestion_service.suggest_structure(
         topic=request.topic,
         goal=request.goal,
@@ -67,7 +69,8 @@ async def suggest_structure(request: SuggestStructureRequest, user: UserDB = Dep
     )
 
 @router.post("/suggest-sources")
-async def suggest_sources(request: SuggestSourcesRequest, user: UserDB = Depends(get_current_user)):
+@limiter.limit(RateLimits.AI_SUGGESTION)
+async def suggest_sources(req: Request, request: SuggestSourcesRequest, user: UserDB = Depends(get_current_user)):
     return await ai_suggestion_service.suggest_sources(
         topic=request.topic,
         goal=request.goal,
@@ -80,7 +83,8 @@ async def suggest_sources(request: SuggestSourcesRequest, user: UserDB = Depends
     )
 
 @router.post("/suggest-details")
-async def suggest_details(request: SuggestDetailsRequest, user: UserDB = Depends(get_current_user)):
+@limiter.limit(RateLimits.AI_SUGGESTION)
+async def suggest_details(req: Request, request: SuggestDetailsRequest, user: UserDB = Depends(get_current_user)):
     logger.info(f"Suggest details request: {request.dict()}")
     return await ai_suggestion_service.suggest_details(
         topic=request.topic,
@@ -90,7 +94,8 @@ async def suggest_details(request: SuggestDetailsRequest, user: UserDB = Depends
     )
 
 @router.post("/suggest-title-info")
-async def suggest_title_info(request: SuggestTitleInfoRequest, user: UserDB = Depends(get_current_user)):
+@limiter.limit(RateLimits.AI_SUGGESTION)
+async def suggest_title_info(req: Request, request: SuggestTitleInfoRequest, user: UserDB = Depends(get_current_user)):
     return await ai_suggestion_service.suggest_title_info(university_short=request.university)
 
 @router.get("/users", response_model=UsersAdminResponse)

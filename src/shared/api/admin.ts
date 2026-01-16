@@ -166,7 +166,7 @@ export async function suggestSources(data: {
   workType: string; 
   volume: number; 
   complexity: string;
-  humanity: string;
+  humanity: string | number;
 }): Promise<{ sources: { title: string; url: string; description: string; isAiSelected: boolean }[] }> {
   return apiFetch<{ sources: { title: string; url: string; description: string; isAiSelected: boolean }[] }>('/admin/suggest-sources', {
     method: 'POST',

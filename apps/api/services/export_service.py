@@ -13,24 +13,45 @@ class ExportService:
     def generate_docx(generation: Generation, content: str) -> io.BytesIO:
         doc = Document()
         
-        # --- Настройки страницы по ГОСТ (поля) ---
+        # Получаем настройки форматирования из generation.settings_payload
+        formatting = generation.settings_payload.get('formatting', {})
+        
+        # --- Настройки страницы (поля) ---
         sections = doc.sections
+        margins = formatting.get('margins', {})
         for section in sections:
-            section.top_margin = Mm(20)
-            section.bottom_margin = Mm(20)
-            section.left_margin = Mm(30)
-            section.right_margin = Mm(10)
+            section.top_margin = Mm(margins.get('top', 20))
+            section.bottom_margin = Mm(margins.get('bottom', 20))
+            section.left_margin = Mm(margins.get('left', 30))
+            section.right_margin = Mm(margins.get('right', 10))
 
-        # --- Настройка стиля по умолчанию (Times New Roman 14, 1.5 интервал) ---
+        # --- Настройка стиля по умолчанию ---
         style = doc.styles['Normal']
         font = style.font
-        font.name = 'Times New Roman'
-        font.size = Pt(14)
+        font.name = formatting.get('fontFamily', 'Times New Roman')
+        font.size = Pt(formatting.get('fontSize', 14))
         
         paragraph_format = style.paragraph_format
-        paragraph_format.line_spacing_rule = WD_LINE_SPACING.ONE_POINT_FIVE
-        paragraph_format.first_line_indent = Mm(12.5) # Абзацный отступ
-        paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY # По ширине
+        line_spacing = formatting.get('lineSpacing', 1.5)
+        if line_spacing == 1.0:
+            paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
+        elif line_spacing == 1.5:
+            paragraph_format.line_spacing_rule = WD_LINE_SPACING.ONE_POINT_FIVE
+        elif line_spacing == 2.0:
+            paragraph_format.line_spacing_rule = WD_LINE_SPACING.DOUBLE
+        else:
+            paragraph_format.line_spacing = line_spacing
+            
+        paragraph_indent_cm = formatting.get('paragraphIndent', 1.25)
+        paragraph_format.first_line_indent = Mm(paragraph_indent_cm * 10) # см в мм
+        
+        alignment = formatting.get('alignment', 'justify')
+        if alignment == 'justify':
+            paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        elif alignment == 'left':
+            paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        elif alignment == 'center':
+            paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
         # --- Title Page (ГОСТ-титульник) ---
         # 1. Шапка (Министерство + ВУЗ)

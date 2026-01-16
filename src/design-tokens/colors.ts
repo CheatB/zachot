@@ -23,12 +23,12 @@ export const colors = {
     130: '#000000',
   },
 
-  // Accent: Electric Blue
+  // Accent: Green (Primary brand color - matches tokens.css)
   accent: {
-    light: '#e6f2ff',
-    base: '#0066ff',
-    dark: '#0052cc',
-    darker: '#003d99',
+    light: '#f0fdf4',
+    base: '#16a34a',  // Green 600 (CTA color)
+    dark: '#15803d',  // Green 700
+    darker: '#166534', // Green 800
   },
 
   // Status colors

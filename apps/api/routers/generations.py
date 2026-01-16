@@ -1,5 +1,6 @@
 from uuid import UUID
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi.responses import StreamingResponse
 from ..schemas import (
     GenerationCreateRequest,
     GenerationUpdateRequest,
@@ -9,20 +10,25 @@ from ..schemas import (
 )
 from ..database import User as UserDB
 from ..services.generation_service import generation_service
+from ..services.export_service import export_service
 from ..storage import generation_store
 from ..dependencies import get_current_user
+from ..middleware.rate_limiter import limiter, RateLimits
 
 router = APIRouter(prefix="/generations", tags=["generations"])
 
 
 @router.get("", response_model=GenerationsResponse)
-async def list_generations(user: UserDB = Depends(get_current_user)) -> GenerationsResponse:
+@limiter.limit(RateLimits.READ_OPERATIONS)
+async def list_generations(request: Request, user: UserDB = Depends(get_current_user)) -> GenerationsResponse:
     generations = generation_store.get_all_for_user(user.id)
     return GenerationsResponse(items=[GenerationResponse.model_validate(g) for g in generations])
 
 
 @router.post("", response_model=GenerationResponse, status_code=201)
+@limiter.limit(RateLimits.GENERATION_CREATE)
 async def create_generation(
+    req: Request,
     request: GenerationCreateRequest,
     user: UserDB = Depends(get_current_user)
 ) -> GenerationResponse:
@@ -78,7 +84,8 @@ async def update_generation(
         generation_id=generation_id,
         user_id=user.id,
         input_payload=input_payload,
-        settings_payload=settings_payload
+        settings_payload=settings_payload,
+        result_content=request.result_content
     )
     return GenerationResponse.model_validate(updated_gen)
 
@@ -104,3 +111,52 @@ async def delete_generation(generation_id: UUID, user: UserDB = Depends(get_curr
         raise HTTPException(status_code=404, detail="Generation not found")
     generation_store.delete(generation_id)
     return None
+
+
+@router.get("/{generation_id}/export/{format}")
+async def export_generation(
+    generation_id: UUID,
+    format: str,
+    user: UserDB = Depends(get_current_user)
+):
+    """
+    Экспорт генерации в указанном формате (docx, pdf, pptx).
+    """
+    # Проверяем существование генерации и права доступа
+    generation = generation_store.get(generation_id)
+    if generation is None or generation.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Generation not found")
+    
+    # Проверяем, что генерация завершена
+    if not generation.result_content:
+        raise HTTPException(status_code=400, detail="Generation is not completed yet")
+    
+    # Проверяем формат
+    format_lower = format.lower()
+    if format_lower not in ['docx', 'pdf', 'pptx']:
+        raise HTTPException(status_code=400, detail="Unsupported format. Use: docx, pdf, or pptx")
+    
+    # Генерируем файл
+    try:
+        if format_lower == 'docx':
+            file_stream = export_service.generate_docx(generation, generation.result_content)
+            media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            filename = f"zachet_{generation.title or generation_id}.docx"
+        elif format_lower == 'pdf':
+            file_stream = export_service.generate_pdf(generation, generation.result_content)
+            media_type = "application/pdf"
+            filename = f"zachet_{generation.title or generation_id}.pdf"
+        elif format_lower == 'pptx':
+            file_stream = export_service.generate_pptx(generation, generation.result_content)
+            media_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            filename = f"zachet_{generation.title or generation_id}.pptx"
+        
+        return StreamingResponse(
+            file_stream,
+            media_type=media_type,
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")

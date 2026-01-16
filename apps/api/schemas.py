@@ -3,7 +3,7 @@ Pydantic схемы для API запросов и ответов.
 """
 
 from datetime import datetime
-from typing import Literal, Optional, List, Dict, Any
+from typing import Literal, Optional, List, Dict, Any, Union
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -57,6 +57,7 @@ class GenerationUpdateRequest(BaseModel):
     """
     input_payload: Optional[GenerationInputPayload] = None
     settings_payload: Optional[GenerationSettingsPayload] = None
+    result_content: Optional[str] = None  # Для редактирования готового текста
 
 
 class ActionRequest(BaseModel):
@@ -220,7 +221,7 @@ class SuggestDetailsRequest(BaseModel):
     topic: str
     module: Optional[str] = None
     complexity: str = "student"
-    humanity: str = "medium"
+    humanity: Union[str, int] = 50  # Поддержка старых строк и новых чисел
 
 
 class SuggestStructureRequest(BaseModel):

@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Stack, Button, Badge } from '@/ui';
 import { fetchAdminGenerations, type AdminGenerationHistoryItem } from '@/shared/api/admin';
+import { USD_TO_RUB_RATE, formatCostRub, formatCostUsd } from '@/shared/constants/pricing';
+import CostChart from '../components/CostChart';
+import ModelCostBreakdown from '../components/ModelCostBreakdown';
 import styles from './AdminGenerationsPage.module.css';
 
 const AdminGenerationsPage: React.FC = () => {
@@ -32,12 +35,19 @@ const AdminGenerationsPage: React.FC = () => {
         <p style={{ color: 'var(--color-text-secondary)' }}>Список всех работ, созданных пользователями, с детализацией затрат.</p>
       </header>
 
+      {/* Графики себестоимости */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+        <CostChart generations={generations} />
+        <ModelCostBreakdown generations={generations} />
+      </div>
+
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         <table className={styles.adminTableV2}>
           <thead>
             <tr>
               <th>Название и Модуль</th>
               <th>Токены по моделям</th>
+              <th>Себестоимость</th>
               <th>Дата</th>
               <th>Статус</th>
             </tr>
@@ -65,6 +75,15 @@ const AdminGenerationsPage: React.FC = () => {
                       ))}
                       {Object.keys(modelSummary).length === 0 && <span style={{ color: 'var(--color-text-disabled)', fontSize: '12px' }}>—</span>}
                     </div>
+                  </td>
+                  <td style={{ fontSize: 'var(--font-size-sm)', fontWeight: '600' }}>
+                    {gen.total_cost_rub > 0 ? (
+                      <span style={{ color: 'var(--color-danger-base)' }}>
+                        {gen.total_cost_rub.toFixed(2)} ₽
+                      </span>
+                    ) : (
+                      <span style={{ color: 'var(--color-text-disabled)' }}>—</span>
+                    )}
                   </td>
                   <td style={{ fontSize: 'var(--font-size-sm)' }}>
                     {new Date(gen.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
@@ -120,6 +139,9 @@ const AdminGenerationsPage: React.FC = () => {
               <div className={styles.divider} />
 
               <h4>Детализация токенов</h4>
+              <div style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '8px' }}>
+                Курс: $1 = {USD_TO_RUB_RATE} ₽ (примерный)
+              </div>
               <table className={styles.usageDetailsTable}>
                 <thead>
                   <tr>
@@ -127,6 +149,7 @@ const AdminGenerationsPage: React.FC = () => {
                     <th>Модель</th>
                     <th>Токены</th>
                     <th>Стоимость ($)</th>
+                    <th>Стоимость (₽)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -135,7 +158,8 @@ const AdminGenerationsPage: React.FC = () => {
                       <td>{u.stage}</td>
                       <td>{u.model}</td>
                       <td>{u.tokens.toLocaleString()}</td>
-                      <td>${u.cost_usd.toFixed(4)}</td>
+                      <td>{formatCostUsd(u.cost_usd)}</td>
+                      <td>{formatCostRub(u.cost_usd)}</td>
                     </tr>
                   ))}
                 </tbody>

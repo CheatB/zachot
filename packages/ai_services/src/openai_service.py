@@ -1,6 +1,6 @@
 import httpx
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +28,16 @@ class OpenAIService:
         temperature: float = 0.7,
         is_fallback: bool = False,
         step_type: Optional[str] = None,
-        work_type: str = "other"
-    ) -> Optional[str]:
+        work_type: str = "other",
+        return_usage: bool = False
+    ) -> Optional[str] | Optional[Tuple[str, Dict[str, Any]]]:
         """
         Отправляет запрос в Chat Completion API.
         С поддержкой автоматического переключения на резервные модели из конфига.
+        
+        Args:
+            return_usage: Если True, возвращает tuple (content, usage_info)
+                         где usage_info содержит tokens, cost_usd, model
         """
         if not self.api_key:
             logger.error("API_KEY is not set")
@@ -64,7 +69,8 @@ class OpenAIService:
                         temperature=temperature,
                         is_fallback=True,
                         step_type=step_type,
-                        work_type=work_type
+                        work_type=work_type,
+                        return_usage=return_usage
                     )
 
                 response.raise_for_status()
@@ -76,7 +82,20 @@ class OpenAIService:
                 usage = data.get("usage", {})
                 tokens = usage.get('total_tokens', 0)
                 content_length = len(content) if content else 0
-                logger.info(f"OpenAI Usage [{model}]: {tokens} tokens, response length: {content_length} chars")
+                
+                # Примерная стоимость (в USD)
+                # OpenRouter возвращает стоимость в usage, если нет - считаем примерно
+                cost_usd = usage.get('cost', tokens * 0.00001)  # ~$0.01 за 1k токенов как fallback
+                
+                logger.info(f"OpenAI Usage [{model}]: {tokens} tokens, ${cost_usd:.6f}, response length: {content_length} chars")
+                
+                if return_usage:
+                    usage_info = {
+                        "tokens": tokens,
+                        "cost_usd": cost_usd,
+                        "model": model
+                    }
+                    return (content, usage_info)
                 
                 return content
         except httpx.HTTPStatusError as e:
@@ -94,9 +113,14 @@ class OpenAIService:
                     temperature=temperature,
                     is_fallback=True,
                     step_type=step_type,
-                    work_type=work_type
+                    work_type=work_type,
+                    return_usage=return_usage
                 )
+            if return_usage:
+                return (None, {"tokens": 0, "cost_usd": 0.0, "model": model})
             return None
         except Exception as e:
             logger.error(f"Unexpected error calling OpenAI: {str(e)}")
+            if return_usage:
+                return (None, {"tokens": 0, "cost_usd": 0.0, "model": model})
             return None

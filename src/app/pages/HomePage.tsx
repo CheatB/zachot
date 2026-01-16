@@ -12,6 +12,7 @@ import { ApiError } from '@/shared/api/http'
 function HomePage() {
   const { isAuthenticated } = useAuth()
 
+  // Hook MUST be before any conditional returns
   useEffect(() => {
     fetchHealth()
       .then(() => {
@@ -26,6 +27,7 @@ function HomePage() {
       })
   }, [])
 
+  // Conditional returns AFTER all hooks
   if (!isAuthenticated) {
     return (
       <EmptyState

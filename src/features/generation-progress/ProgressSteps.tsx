@@ -138,7 +138,7 @@ const progressStepsStyles = `
 
 .progress-steps__item {
   display: flex;
-  gap: var(--spacing-20);
+  gap: 40px;
   align-items: flex-start;
 }
 

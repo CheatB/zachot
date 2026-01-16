@@ -8,12 +8,14 @@ from .base import BaseWorker
 from apps.api.storage import generation_store
 from apps.api.services.openai_service import openai_service
 from apps.api.services.prompt_service import prompt_service
+from apps.api.services.formatting_service import formatting_service
 
 logger = logging.getLogger(__name__)
 
 class GostFixWorker(BaseWorker):
     """
     Worker for fixing document formatting (GOST) and grammar/punctuation.
+    Использует гибридный подход: базовое форматирование (бесплатно) + опциональная ИИ-корректура
     """
     def can_handle(self, job: Job) -> bool:
         return job.type == JobType.GOST_FIX
@@ -27,7 +29,10 @@ class GostFixWorker(BaseWorker):
 
         # In GOST_FORMAT, the input is usually in taskFiles or a topic/text
         content = job.input_payload.get("input", "") or job.input_payload.get("topic", "")
-        formatting = generation.settings_payload.get("formatting", {})
+        formatting_settings = generation.settings_payload.get("formatting", {})
+        
+        # Проверяем, нужна ли ИИ-корректура (опциональная, за кредиты)
+        use_ai_proofreading = generation.settings_payload.get("use_ai_proofreading", False)
         
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -43,36 +48,38 @@ class GostFixWorker(BaseWorker):
                     finished_at=datetime.now()
                 )
 
-            # 1. Grammar and Punctuation Fix
-            logger.info("Step 1: Fixing grammar and punctuation...")
-            grammar_prompt = f"""
-            Исправь все орфографические и пунктуационные ошибки в следующем тексте. 
-            Сохрани структуру и смысл полностью. Верни ТОЛЬКО исправленный текст.
+            # Шаг 1: Базовое форматирование (ВСЕГДА, бесплатно)
+            logger.info("Step 1: Applying basic formatting (free)...")
+            formatted_text = formatting_service.apply_basic_formatting(content, formatting_settings)
             
-            Текст:
-            {content}
-            """
-            
-            fixed_text = loop.run_until_complete(
-                openai_service.chat_completion(
-                    model="openai/gpt-4o-mini",
-                    messages=[{"role": "user", "content": grammar_prompt}]
-                )
-            ) or content
-
-            # 2. Apply GOST Formatting Instructions (Simulation)
-            # In a real app, this would involve creating a DOCX with specific styles.
-            # Here we provide the "formatted" text and metadata.
-            logger.info("Step 2: Applying GOST formatting rules...")
+            # Шаг 2: ИИ-корректура (ОПЦИОНАЛЬНО, за кредиты)
+            if use_ai_proofreading:
+                logger.info("Step 2: AI proofreading (paid)...")
+                proofreading_prompt = prompt_service.construct_formatting_prompt(formatted_text)
+                
+                formatted_text = loop.run_until_complete(
+                    openai_service.chat_completion(
+                        model="openai/gpt-4o-mini",
+                        messages=[{"role": "user", "content": proofreading_prompt}],
+                        step_type="formatting"
+                    )
+                ) or formatted_text
+                logger.info("AI proofreading completed")
+            else:
+                logger.info("Step 2: Skipping AI proofreading (not requested)")
             
             # Final saving
-            generation_store.update(job.generation_id, result_content=fixed_text, status="GENERATED")
+            generation_store.update(job.generation_id, result_content=formatted_text, status="GENERATED")
             logger.info("GOST Fix pipeline completed successfully")
 
             return JobResult(
                 job_id=job.id,
                 success=True,
-                output_payload={"status": "completed", "formatting_applied": True},
+                output_payload={
+                    "status": "completed", 
+                    "formatting_applied": True,
+                    "ai_proofreading_used": use_ai_proofreading
+                },
                 finished_at=datetime.now(),
             )
             

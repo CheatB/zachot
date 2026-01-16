@@ -2,10 +2,11 @@ import { motion } from 'framer-motion'
 import { motion as motionTokens } from '@/design-tokens'
 
 interface GenerationInfoProps {
-  isReturning?: boolean
+  volume?: number
+  estimatedTime?: number
 }
 
-function GenerationInfo({ isReturning = false }: GenerationInfoProps) {
+function GenerationInfo({ volume = 10, estimatedTime = 3 }: GenerationInfoProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -17,60 +18,44 @@ function GenerationInfo({ isReturning = false }: GenerationInfoProps) {
       }}
     >
       <div className="generation-info-no-container">
-        {isReturning ? (
-          <>
-            <h3
-              style={{
-                fontSize: 'var(--font-size-lg)',
-                fontWeight: 'var(--font-weight-semibold)',
-                color: 'var(--color-text-primary)',
-                marginBottom: 'var(--spacing-12)',
-              }}
-            >
-              Мы продолжаем работу с вашим запросом
-            </h3>
-            <p
-              style={{
-                fontSize: 'var(--font-size-base)',
-                color: 'var(--color-text-secondary)',
-                lineHeight: 'var(--line-height-relaxed)',
-                marginBottom: 'var(--spacing-16)',
-              }}
-            >
-              Генерация выполняется в фоновом режиме. Вы можете закрыть эту страницу — результат сохранится и будет доступен позже.
-            </p>
-          </>
-        ) : (
-          <>
-            <h3
-              style={{
-                fontSize: 'var(--font-size-lg)',
-                fontWeight: 'var(--font-weight-semibold)',
-                color: 'var(--color-text-primary)',
-                marginBottom: 'var(--spacing-12)',
-              }}
-            >
-              Что происходит сейчас?
-            </h3>
-            <ul className="generation-info__list">
-              <li className="generation-info__item">
-                <span style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
-                  Генерация может занять несколько минут
-                </span>
-              </li>
-              <li className="generation-info__item">
-                <span style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
-                  Вы можете закрыть страницу — результат сохранится
-                </span>
-              </li>
-              <li className="generation-info__item">
-                <span style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
-                  Когда всё будет готово, статус обновится автоматически
-                </span>
-              </li>
-            </ul>
-          </>
-        )}
+        <h3
+          style={{
+            fontSize: 'var(--font-size-lg)',
+            fontWeight: 'var(--font-weight-semibold)',
+            color: 'var(--color-text-primary)',
+            marginBottom: 'var(--spacing-12)',
+          }}
+        >
+          Что происходит сейчас?
+        </h3>
+        <ul className="generation-info__list">
+          <li className="generation-info__item">
+            <span style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
+              Ваша работа имеет объем {volume} {volume === 1 ? 'страница' : volume < 5 ? 'страницы' : 'страниц'}. Генерация такого объема текста может занять ~{estimatedTime} {estimatedTime === 1 ? 'минуту' : estimatedTime < 5 ? 'минуты' : 'минут'}
+            </span>
+          </li>
+          <li className="generation-info__item">
+            <span style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
+              Текст генерируется в фоновом режиме. Вы можете закрыть страницу — результат сохранится и будет доступен на странице "Мои работы"
+            </span>
+          </li>
+          <li className="generation-info__item">
+            <span style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
+              Когда всё будет готово, статус обновится автоматически
+            </span>
+          </li>
+        </ul>
+        <p
+          style={{
+            fontSize: 'var(--font-size-sm)',
+            color: 'var(--color-text-muted)',
+            lineHeight: 'var(--line-height-relaxed)',
+            marginTop: 'var(--spacing-16)',
+            fontStyle: 'italic',
+          }}
+        >
+          Вы можете не ждать окончания и вернуться к работе позже — мы пришлем уведомление.
+        </p>
       </div>
     </motion.div>
   )

@@ -100,10 +100,12 @@ function CreateGenerationPage() {
       getGenerationById(draftId).then((gen) => {
         activeGenerationRef.current = gen.id
         
-        // Convert string humanity level back to numeric for frontend
-        const humanityLevelNumeric = typeof gen.humanity_level === 'string' 
-          ? (gen.humanity_level === 'low' ? 0 : gen.humanity_level === 'high' ? 100 : 50)
-          : (gen.humanity_level || 50)
+        // Convert humanity level back to numeric for frontend
+        const humanityLevelNumeric = typeof gen.humanity_level === 'number'
+          ? gen.humanity_level
+          : (typeof gen.humanity_level === 'string'
+            ? (gen.humanity_level === 'low' ? 0 : gen.humanity_level === 'high' ? 100 : 50)
+            : 50)
         
         setForm({
           type: gen.module.toLowerCase() as GenerationType,
@@ -205,11 +207,13 @@ function CreateGenerationPage() {
 
   const isCreatingRef = useRef(false)
 
-  // Convert numeric humanity level to string format expected by backend
-  const convertHumanityLevel = (numericLevel: number): string => {
-    if (numericLevel < 20) return 'low'
-    if (numericLevel <= 70) return 'medium'
-    return 'high'
+  // Convert numeric humanity level to integer format expected by backend (0, 25, 50, 75, 100)
+  const convertHumanityLevel = (numericLevel: number): number => {
+    if (numericLevel < 12.5) return 0      // 0-12.5 → Строгий AI-стиль
+    if (numericLevel < 37.5) return 25     // 12.5-37.5 → Легкое сглаживание
+    if (numericLevel < 62.5) return 50     // 37.5-62.5 → Естественный стиль
+    if (numericLevel < 87.5) return 75     // 62.5-87.5 → Авторский почерк
+    return 100                              // 87.5-100 → Anti-AI Maximum
   }
 
   const saveDraft = useCallback(async (currentForm: CreateGenerationForm, stepOverride?: number) => {

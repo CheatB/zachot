@@ -14,19 +14,19 @@ class AIModelProvider(str, Enum):
 
 DEFAULT_CONFIG = {
     "main": {
-        "referat": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o", "refine": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
-        "kursach": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o", "refine": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
-        "essay": { "structure": "openai/gpt-4o-mini", "suggest_details": "openai/gpt-4o-mini", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o-mini", "refine": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
-        "doklad": { "structure": "openai/gpt-4o-mini", "suggest_details": "openai/gpt-4o-mini", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o-mini", "refine": "openai/gpt-4o-mini", "editor": "openai/gpt-4o-mini" },
-        "article": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o", "refine": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o" },
-        "composition": { "structure": "openai/gpt-4o-mini", "suggest_details": "openai/gpt-4o-mini", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o-mini", "refine": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
-        "other": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o", "refine": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
-        "presentation": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o-mini", "refine": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
+        "referat": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
+        "kursach": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
+        "essay": { "structure": "openai/gpt-4o-mini", "suggest_details": "openai/gpt-4o-mini", "sources": "perplexity/sonar-pro", "generation": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
+        "doklad": { "structure": "openai/gpt-4o-mini", "suggest_details": "openai/gpt-4o-mini", "sources": "perplexity/sonar-pro", "generation": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
+        "article": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o" },
+        "composition": { "structure": "openai/gpt-4o-mini", "suggest_details": "openai/gpt-4o-mini", "sources": "perplexity/sonar-pro", "generation": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
+        "other": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "anthropic/claude-3.5-sonnet", "editor": "openai/gpt-4o-mini" },
+        "presentation": { "structure": "openai/gpt-4o", "suggest_details": "openai/gpt-4o", "sources": "perplexity/sonar-pro", "generation": "openai/gpt-4o-mini", "editor": "openai/gpt-4o-mini" },
         "task": { "task_solve": "deepseek/deepseek-r1" }
     },
     "fallback": {
-        "text": { "structure": "mistralai/mistral-7b-instruct:free", "suggest_details": "mistralai/mistral-7b-instruct:free", "sources": "openai/gpt-4o-mini", "generation": "openai/gpt-4o-mini", "refine": "mistralai/mistral-7b-instruct:free" },
-        "presentation": { "structure": "mistralai/mistral-7b-instruct:free", "suggest_details": "mistralai/mistral-7b-instruct:free", "sources": "openai/gpt-4o-mini", "generation": "openai/gpt-4o-mini", "refine": "mistralai/mistral-7b-instruct:free" },
+        "text": { "structure": "mistralai/mistral-7b-instruct:free", "suggest_details": "mistralai/mistral-7b-instruct:free", "sources": "openai/gpt-4o-mini", "generation": "openai/gpt-4o-mini" },
+        "presentation": { "structure": "mistralai/mistral-7b-instruct:free", "suggest_details": "mistralai/mistral-7b-instruct:free", "sources": "openai/gpt-4o-mini", "generation": "openai/gpt-4o-mini" },
         "task": { "task_solve": "deepseek/deepseek-chat" }
     }
 }

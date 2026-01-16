@@ -67,8 +67,8 @@ function GenerationResultPage() {
     if (!id) return;
     
     try {
-      const token = localStorage.getItem('token');
-      const url = `${API_BASE_URL}/generations/${id}/export/${format}`;
+      const token = localStorage.getItem('auth_token');
+      const url = `${API_BASE_URL}/api/generations/${id}/export/${format}`;
       
       const response = await fetch(url, {
         headers: {

@@ -3,7 +3,7 @@ import logging
 import re
 from uuid import UUID
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from packages.core_domain import Generation
 from packages.core_domain.enums import GenerationStatus, GenerationModule
@@ -13,6 +13,12 @@ from ..services.prompt_service import prompt_service
 from ..services.url_validator_service import url_validator_service
 from ..services.sources_qc_service import sources_qc_service
 from packages.ai_services.src.prompt_manager import prompt_manager
+from ..utils.humanity import convert_humanity_to_numeric
+from ..types.ai_responses import (
+    SuggestDetailsResponse,
+    SuggestStructureResponse,
+    SuggestSourcesResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +35,22 @@ def extract_json_from_markdown(text: str) -> str:
 
 class AISuggestionService:
     @staticmethod
-    async def suggest_structure(topic: str, goal: str, idea: str, module: str, work_type: str, volume: int, complexity: str, humanity: str, user_id: UUID) -> Dict:
+    async def suggest_structure(
+        topic: str, 
+        goal: str, 
+        idea: str, 
+        module: str, 
+        work_type: str, 
+        volume: int, 
+        complexity: str, 
+        humanity: Union[str, int, None], 
+        user_id: UUID
+    ) -> SuggestStructureResponse:
         """Предлагает структуру работы на основе темы, цели и идеи."""
         model_name = model_router.get_model_for_step("structure", work_type or "other")
+
+        # Конвертируем humanity в числовое значение
+        humanity_numeric = convert_humanity_to_numeric(humanity)
 
         dummy_gen = Generation(
             id=UUID("00000000-0000-0000-0000-000000000000"),
@@ -40,7 +59,7 @@ class AISuggestionService:
             status=GenerationStatus.DRAFT,
             work_type=work_type,
             complexity_level=complexity or "student",
-            humanity_level=humanity or "medium",
+            humanity_level=humanity_numeric,
             input_payload={"topic": topic or "", "goal": goal or "", "idea": idea or "", "volume": volume or 10},
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
@@ -72,9 +91,21 @@ class AISuggestionService:
             ]}
 
     @staticmethod
-    async def suggest_sources(topic: str, goal: str, idea: str, module: str, work_type: str, complexity: str, humanity: str, user_id: UUID) -> Dict:
+    async def suggest_sources(
+        topic: str, 
+        goal: str, 
+        idea: str, 
+        module: str, 
+        work_type: str, 
+        complexity: str, 
+        humanity: Union[str, int, None], 
+        user_id: UUID
+    ) -> SuggestSourcesResponse:
         """Предлагает источники литературы."""
         model_name = model_router.get_model_for_step("sources", work_type or "other")
+
+        # Конвертируем humanity в числовое значение
+        humanity_numeric = convert_humanity_to_numeric(humanity)
 
         dummy_gen = Generation(
             id=UUID("00000000-0000-0000-0000-000000000000"),
@@ -83,7 +114,7 @@ class AISuggestionService:
             status=GenerationStatus.DRAFT,
             work_type=work_type,
             complexity_level=complexity or "student",
-            humanity_level=humanity or "medium",
+            humanity_level=humanity_numeric,
             input_payload={"topic": topic or "", "goal": goal or "", "idea": idea or ""},
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
@@ -306,10 +337,18 @@ class AISuggestionService:
             return {"sources": []}
 
     @staticmethod
-    async def suggest_details(topic: str, module: str, complexity: str, humanity: str) -> Dict:
+    async def suggest_details(
+        topic: str, 
+        module: str, 
+        complexity: str, 
+        humanity: Union[str, int, None]
+    ) -> SuggestDetailsResponse:
         """Предлагает цель и идею работы."""
         model_name = model_router.get_model_for_step("suggest_details")
         prompt_template = prompt_manager.get_prompt("suggest_details")
+        
+        # Конвертируем humanity в числовое значение
+        humanity_numeric = convert_humanity_to_numeric(humanity)
         
         safe_module = (module or "TEXT").upper()
         dummy_gen = Generation(
@@ -318,7 +357,7 @@ class AISuggestionService:
             module=GenerationModule(safe_module),
             status=GenerationStatus.DRAFT,
             complexity_level=complexity or "student",
-            humanity_level=humanity or "medium",
+            humanity_level=humanity_numeric,
             input_payload={"topic": topic or ""},
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()

@@ -5,6 +5,7 @@
 
 import { Input } from '@/ui'
 import type { FormattingSettings } from '@/features/create-generation/types'
+import { sharedTabStyles } from './shared-tab-styles'
 
 interface GeneralFormattingTabProps {
   formatting: FormattingSettings
@@ -52,6 +53,7 @@ function GeneralFormattingTab({ formatting, onChange }: GeneralFormattingTabProp
             onChange={(e) => handleChange('fontSize', parseInt(e.target.value) || 14)}
             min={10}
             max={18}
+            className="form-input"
           />
         </div>
       </div>
@@ -68,6 +70,7 @@ function GeneralFormattingTab({ formatting, onChange }: GeneralFormattingTabProp
             onChange={(e) => handleChange('lineSpacing', parseFloat(e.target.value) || 1.5)}
             min={1}
             max={3}
+            className="form-input"
           />
         </div>
         
@@ -80,6 +83,7 @@ function GeneralFormattingTab({ formatting, onChange }: GeneralFormattingTabProp
             onChange={(e) => handleChange('paragraphIndent', parseFloat(e.target.value) || 1.25)}
             min={0}
             max={3}
+            className="form-input"
           />
         </div>
       </div>
@@ -95,6 +99,7 @@ function GeneralFormattingTab({ formatting, onChange }: GeneralFormattingTabProp
             onChange={(e) => handleMarginChange('top', parseInt(e.target.value) || 20)}
             min={10}
             max={50}
+            className="form-input"
           />
         </div>
         
@@ -106,6 +111,7 @@ function GeneralFormattingTab({ formatting, onChange }: GeneralFormattingTabProp
             onChange={(e) => handleMarginChange('bottom', parseInt(e.target.value) || 20)}
             min={10}
             max={50}
+            className="form-input"
           />
         </div>
         
@@ -117,6 +123,7 @@ function GeneralFormattingTab({ formatting, onChange }: GeneralFormattingTabProp
             onChange={(e) => handleMarginChange('left', parseInt(e.target.value) || 30)}
             min={10}
             max={50}
+            className="form-input"
           />
         </div>
         
@@ -128,6 +135,7 @@ function GeneralFormattingTab({ formatting, onChange }: GeneralFormattingTabProp
             onChange={(e) => handleMarginChange('right', parseInt(e.target.value) || 10)}
             min={10}
             max={50}
+            className="form-input"
           />
         </div>
       </div>
@@ -146,86 +154,10 @@ function GeneralFormattingTab({ formatting, onChange }: GeneralFormattingTabProp
         </select>
       </div>
 
-      <style>{tabStyles}</style>
+      <style>{sharedTabStyles}</style>
     </div>
   )
 }
-
-const tabStyles = `
-.formatting-tab {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.tab-section-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-neutral-100);
-  margin: var(--spacing-32) 0 var(--spacing-16) 0;
-  padding-bottom: var(--spacing-12);
-  border-bottom: 2px solid var(--color-border-light);
-}
-
-.tab-section-title:first-child {
-  margin-top: 0;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-20);
-  margin-bottom: var(--spacing-20);
-}
-
-.form-row--quad {
-  grid-template-columns: repeat(4, 1fr);
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-8);
-}
-
-.form-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-neutral-90);
-}
-
-.form-select {
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--color-border-base);
-  background: white;
-  font-size: 14px;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' viewBox='0 0 24 24' stroke='currentColor' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 16px center;
-  padding-right: 40px;
-  transition: all 0.2s ease;
-}
-
-.form-select:focus {
-  outline: none;
-  border-color: var(--color-accent-base);
-  box-shadow: 0 0 0 3px var(--color-accent-light);
-}
-
-@media (max-width: 768px) {
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .form-row--quad {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-`
 
 export default GeneralFormattingTab
 

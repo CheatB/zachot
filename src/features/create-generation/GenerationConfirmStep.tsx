@@ -114,7 +114,17 @@ function GenerationConfirmStep({
               ) : (
                 <>
                   <SummaryItem label="Сложность:" value={complexityLevel === 'student' ? 'Студенческая' : complexityLevel === 'research' ? 'Научная публикация' : 'Школьная'} step={1.7} />
-                  <SummaryItem label="Очеловечивание:" value={`${humanityLevel}%`} step={1.7} />
+                  <SummaryItem 
+                    label="Очеловечивание:" 
+                    value={
+                      humanityLevel < 12.5 ? '🤖 Строгий AI-стиль' :
+                      humanityLevel < 37.5 ? '📝 Легкое сглаживание' :
+                      humanityLevel < 62.5 ? '✍️ Естественный стиль' :
+                      humanityLevel < 87.5 ? '🎭 Авторский почерк' :
+                      '🔥 Anti-AI Maximum'
+                    } 
+                    step={1.7} 
+                  />
                   <SummaryItem label="Объём:" value={`${volume} стр.`} step={3} />
                   {type === 'presentation' && (
                     <SummaryItem 

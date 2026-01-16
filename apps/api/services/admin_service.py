@@ -4,6 +4,7 @@ from sqlalchemy import func, cast, Date, desc
 from ..database import User as UserDB, PaymentDB, GenerationDB
 from ..schemas import AdminAnalyticsResponse, DailyStat, AdminGenerationHistoryResponse, AdminGenerationHistoryItem, AdminGenerationUsage
 from packages.billing.credits import get_credit_cost
+from ..config import USD_TO_RUB_RATE
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class AdminAnalyticsService:
         api_costs_usd = (total_tokens / 1000) * 0.01
         
         # 4. Маржа
-        costs_rub = api_costs_usd * 100
+        costs_rub = api_costs_usd * USD_TO_RUB_RATE
         margin_percent = int(((revenue_rub - costs_rub) / revenue_rub * 100)) if revenue_rub > 0 else 0
         
         # 5. Статистика по дням
@@ -70,7 +71,7 @@ class AdminAnalyticsService:
             usage = db_gen.usage_metadata or []
             total_tokens = sum(u.get('tokens', 0) for u in usage)
             total_cost_usd = sum(u.get('cost_usd', 0.0) for u in usage)
-            total_cost_rub = total_cost_usd * 100
+            total_cost_rub = total_cost_usd * USD_TO_RUB_RATE
             
             credit_cost = get_credit_cost(db_gen.work_type or "other")
             estimated_revenue_rub = credit_cost * 100

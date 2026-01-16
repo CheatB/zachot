@@ -64,7 +64,11 @@ class SQLGenerationStore:
 
     def get_all_for_user(self, user_id: UUID) -> List[Generation]:
         with SessionLocal() as session:
-            db_gens = session.query(GenerationDB).filter(GenerationDB.user_id == user_id).all()
+            db_gens = session.query(GenerationDB).filter(
+                GenerationDB.user_id == user_id
+            ).order_by(
+                GenerationDB.updated_at.desc()  # Сортировка от новых к старым
+            ).all()
             return [self._map_to_domain(g) for g in db_gens]
     
     def update(self, generation_id: UUID, **updates) -> Generation:

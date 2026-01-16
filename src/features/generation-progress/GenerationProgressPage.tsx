@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/app/auth/useAuth'
-import { Container, Stack, Button, Badge, Card, Tooltip } from '@/ui'
+import { Container, Stack, Badge } from '@/ui'
 import ProgressSteps from './ProgressSteps'
 import GenerationInfo from './GenerationInfo'
 import type { ProgressStep } from './types'
@@ -49,9 +49,33 @@ function GenerationProgressPage() {
   
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [elapsedTime, setElapsedTime] = useState(0)
-  const [isReturning] = useState(() => {
-    return localStorage.getItem(`generation_${id}_visited`) === 'true'
-  })
+  const [generationProgress, setGenerationProgress] = useState(0) // Процент прогресса генерации
+  
+  // Расчёт примерного времени генерации
+  const estimatedTime = generation ? (() => {
+    const volume = generation.input_payload?.volume || 10
+    const structureItems = generation.settings_payload?.structure?.length || 0
+    
+    // Более точный расчёт с учётом количества разделов:
+    // - Структура + источники: ~60 сек
+    // - Генерация по разделам: ~25 сек на раздел (Claude 3.5 Sonnet медленнее)
+    // - QC: ~20 сек
+    
+    let totalSeconds = 60 // Структура + источники
+    
+    if (structureItems > 0) {
+      // Если известно количество разделов - используем его
+      totalSeconds += structureItems * 25
+    } else {
+      // Иначе оцениваем по объёму: ~1.5 раздела на страницу
+      const estimatedSections = Math.ceil(volume * 1.5)
+      totalSeconds += estimatedSections * 25
+    }
+    
+    totalSeconds += 20 // QC
+    
+    return Math.ceil(totalSeconds / 60) // В минутах
+  })() : 3
 
   useEffect(() => {
     if (!id || !isAuthenticated) return
@@ -61,7 +85,18 @@ function GenerationProgressPage() {
         const data = await getGenerationById(id)
         setGeneration(data)
 
+        // Рассчитываем процент прогресса на основе времени
+        if (data.module === 'TEXT') {
+          // Используем elapsed time для примерной оценки прогресса
+          const estimatedTotalTime = estimatedTime * 60 // в секундах
+          const progress = estimatedTotalTime > 0 
+            ? Math.min(Math.round((elapsedTime / estimatedTotalTime) * 100), 99) 
+            : 0
+          setGenerationProgress(progress)
+        }
+
         if (data.status === 'COMPLETED' || data.status === 'GENERATED' || data.status === 'EXPORTED') {
+          setGenerationProgress(100) // Завершено
           // Перенаправить на страницу редактора для текстовых работ
           if (data.module === 'TEXT') {
             navigate(`/generations/${id}/editor`)
@@ -78,7 +113,7 @@ function GenerationProgressPage() {
     checkStatus()
     const pollInterval = setInterval(checkStatus, 3000)
     return () => clearInterval(pollInterval)
-  }, [id, isAuthenticated, navigate])
+  }, [id, isAuthenticated, navigate, elapsedTime, estimatedTime])
 
   useEffect(() => {
     if (id && isAuthenticated) {
@@ -126,45 +161,50 @@ function GenerationProgressPage() {
               <h1 className="status-header__title">
                 {generation?.title && generation.title !== 'Без названия' ? generation.title : 'Генерация глав'}
               </h1>
+              {/* Процент прогресса */}
+              {generationProgress > 0 && (
+                <div className="progress-percentage">
+                  <div className="progress-percentage__bar">
+                    <motion.div 
+                      className="progress-percentage__fill"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${generationProgress}%` }}
+                      transition={{ duration: 0.5, ease: 'easeOut' }}
+                    />
+                  </div>
+                  <span className="progress-percentage__text">{generationProgress}% завершено</span>
+                </div>
+              )}
             </div>
             <div className="status-header__right">
               <div className="timer">
                 <span className="timer__label">Прошло времени:</span>
                 <span className="timer__value">{formatTime(elapsedTime)}</span>
+                {elapsedTime >= estimatedTime * 60 && (
+                  <span className="timer__overtime">
+                    Осталось совсем немного, потерпите, скоро всё будет!
+                  </span>
+                )}
               </div>
             </div>
           </motion.div>
 
-          {/* Central Progress Card */}
+          {/* Central Progress - БЕЗ Card контейнера */}
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
+            style={{ padding: 'var(--spacing-24) 0' }}
           >
-            <Card variant="default" style={{ padding: 'var(--spacing-40)', border: '1px solid var(--color-border-base)', boxShadow: '0 10px 40px rgba(0,0,0,0.04)', borderRadius: '24px' }}>
-              <ProgressSteps steps={steps} currentStepIndex={currentStepIndex} />
-            </Card>
+            <ProgressSteps steps={steps} currentStepIndex={currentStepIndex} />
           </motion.div>
 
           {/* Info & Actions */}
           <Stack gap="xl" style={{ marginTop: 'var(--spacing-12)' }}>
-            <GenerationInfo isReturning={isReturning} />
-            
-            <div className="progress-actions-no-container">
-              <Stack gap="xl" align="start">
-                <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.8, textAlign: 'left', marginTop: 'var(--spacing-16)' }}>
-                  Вы можете не ждать окончания и вернуться к работе позже — мы пришлем уведомление.
-                </p>
-                <div style={{ display: 'flex', gap: 'var(--spacing-16)', alignItems: 'center', width: '100%', marginTop: 'var(--spacing-8)' }}>
-                  <Button variant="secondary" onClick={() => navigate('/generations')} style={{ minWidth: '200px' }}>
-                    Вернуться к списку
-                  </Button>
-                  <Tooltip content="Генерация происходит на удаленных серверах. Ваш компьютер не нагружается.">
-                    <button className="help-link">Как это работает?</button>
-                  </Tooltip>
-                </div>
-              </Stack>
-            </div>
+            <GenerationInfo 
+              volume={generation?.input_payload?.volume || 10}
+              estimatedTime={estimatedTime}
+            />
           </Stack>
 
         </Stack>
@@ -189,6 +229,35 @@ function GenerationProgressPage() {
           color: var(--color-neutral-110);
           margin: 12px 0 0 0;
           letter-spacing: -0.02em;
+        }
+        
+        .progress-percentage {
+          margin-top: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        
+        .progress-percentage__bar {
+          width: 100%;
+          max-width: 400px;
+          height: 8px;
+          background-color: var(--color-neutral-20);
+          border-radius: var(--radius-full);
+          overflow: hidden;
+        }
+        
+        .progress-percentage__fill {
+          height: 100%;
+          background: linear-gradient(90deg, var(--color-accent-base) 0%, var(--color-success-base) 100%);
+          border-radius: var(--radius-full);
+          transition: width 0.5s ease-out;
+        }
+        
+        .progress-percentage__text {
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--color-accent-base);
         }
         
         .status-badge {
@@ -217,6 +286,16 @@ function GenerationProgressPage() {
           font-weight: 700;
           color: var(--color-accent-base);
           font-variant-numeric: tabular-nums;
+        }
+        
+        .timer__overtime {
+          font-size: 11px;
+          color: var(--color-warn-base);
+          font-weight: 600;
+          margin-top: 4px;
+          text-align: right;
+          max-width: 200px;
+          line-height: 1.3;
         }
         
         .progress-grid {

@@ -75,7 +75,7 @@ def create_on_job_complete_callback():
     return on_job_complete
 
 
-@dramatiq.actor
+@dramatiq.actor(time_limit=1200000)  # 20 минут (в миллисекундах)
 def execute_job_impl(job_dict: Dict[str, Any]) -> Dict[str, Any]:
     """
     Dramatiq actor для выполнения Job (runtime реализация).

@@ -19,6 +19,7 @@ import TitlePageFormattingTab from './components/TitlePageFormattingTab'
 import HeadingsFormattingTab from './components/HeadingsFormattingTab'
 import BibliographyFormattingTab from './components/BibliographyFormattingTab'
 import ContentFormattingTab from './components/ContentFormattingTab'
+import DownloadModal from './components/DownloadModal'
 
 function GenerationFormattingPage() {
   const { id } = useParams<{ id: string }>()
@@ -30,7 +31,9 @@ function GenerationFormattingPage() {
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('general')
   const [formattingAttempts, setFormattingAttempts] = useState(0)
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
 
+  // Hook 1: Load generation data (MUST be before conditional returns)
   useEffect(() => {
     if (!id) return
     
@@ -40,8 +43,8 @@ function GenerationFormattingPage() {
         if (gen.settings_payload?.formatting) {
           setFormatting(gen.settings_payload.formatting)
         }
-        // Получить количество попыток форматирования из метаданных
-        setFormattingAttempts((gen.input_payload as any)?.formatting_attempts || 0)
+        // Получить количество попыток форматирования из settings_payload
+        setFormattingAttempts((gen.settings_payload as any)?.formatting_attempts || 0)
         setLoading(false)
       })
       .catch((error) => {
@@ -49,6 +52,20 @@ function GenerationFormattingPage() {
         setLoading(false)
       })
   }, [id])
+
+  // Hook 2: Inject styles (MUST be before conditional returns)
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const styleId = 'formatting-page-styles'
+      let style = document.getElementById(styleId) as HTMLStyleElement
+      if (!style) {
+        style = document.createElement('style')
+        style.id = styleId
+        document.head.appendChild(style)
+      }
+      style.textContent = pageStyles
+    }
+  }, [])
 
   const handleResetToGOST = () => {
     setFormatting(DEFAULT_GOST_FORMATTING)
@@ -71,28 +88,20 @@ function GenerationFormattingPage() {
         settings_payload: {
           ...generation.settings_payload,
           formatting,
-        },
-        input_payload: {
-          ...generation.input_payload,
           formatting_attempts: formattingAttempts + 1,
-        } as any,
+        },
       })
       
       setFormattingAttempts(formattingAttempts + 1)
       
-      // Перейти к экспорту
-      navigate(`/generations/${id}/result`)
+      // Открыть модалку для скачивания
+      setShowDownloadModal(true)
     } catch (error) {
       console.error('Failed to apply formatting:', error)
       alert('Не удалось применить форматирование. Попробуйте снова.')
     } finally {
       setSaving(false)
     }
-  }
-
-  const handleSkip = () => {
-    if (!id) return
-    navigate(`/generations/${id}/result`)
   }
 
   if (loading) {
@@ -124,20 +133,6 @@ function GenerationFormattingPage() {
     { id: 'content', label: '✍️ Содержание' },
   ]
 
-  // Inject styles
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      const styleId = 'formatting-page-styles'
-      let style = document.getElementById(styleId) as HTMLStyleElement
-      if (!style) {
-        style = document.createElement('style')
-        style.id = styleId
-        document.head.appendChild(style)
-      }
-      style.textContent = pageStyles
-    }
-  }, [])
-
   return (
     <div className="formatting-page">
       <Container>
@@ -163,20 +158,10 @@ function GenerationFormattingPage() {
             {/* Quick Actions */}
             <div className="formatting-actions">
               <Button 
-                variant="primary" 
-                size="lg" 
+                variant="secondary" 
                 onClick={handleResetToGOST}
-                style={{ flex: 1 }}
               >
                 📄 Сбросить на ГОСТ
-              </Button>
-              <Button 
-                variant="secondary" 
-                size="lg" 
-                onClick={handleSkip}
-                style={{ flex: 1 }}
-              >
-                Пропустить
               </Button>
             </div>
 
@@ -246,6 +231,18 @@ function GenerationFormattingPage() {
           </Stack>
         </motion.div>
       </Container>
+
+      {/* Download Modal */}
+      {id && (
+        <DownloadModal
+          isOpen={showDownloadModal}
+          onClose={() => {
+            setShowDownloadModal(false)
+            navigate('/generations')
+          }}
+          generationId={id}
+        />
+      )}
     </div>
   )
 }

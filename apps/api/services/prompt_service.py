@@ -3,6 +3,7 @@ from typing import List, Dict, Any, Optional
 from packages.core_domain import Generation
 from packages.ai_services.src.prompt_manager import prompt_manager
 from packages.billing.credits import get_work_type_label
+from ..constants.humanity import HUMANITY_LABELS, get_humanity_prompt_key
 
 logger = logging.getLogger(__name__)
 
@@ -32,17 +33,30 @@ class PromptService:
         }
         complexity_label = complexity_guide.get(generation.complexity_level, complexity_guide["student"])
         
-        # New 3-level humanity system
-        humanity_level = str(generation.humanity_level).lower()
-        if humanity_level in ['none', '0']:
-            humanity_label = "Отключено (строгий ИИ-стиль)"
-        elif humanity_level in ['high', '100']:
-            humanity_label = "Anti-AI режим (максимальная имитация живого автора)"
-        else: # 'medium', '50'
-            humanity_label = "Базовое (удаление канцеляризмов, естественный ритм)"
+        # Используем новую систему с константами
+        humanity_level_int = int(generation.humanity_level) if generation.humanity_level else 50
+        
+        # Получаем метку из констант
+        if humanity_level_int < 12.5:
+            humanity_label = HUMANITY_LABELS[0]
+        elif humanity_level_int < 37.5:
+            humanity_label = HUMANITY_LABELS[25]
+        elif humanity_level_int < 62.5:
+            humanity_label = HUMANITY_LABELS[50]
+        elif humanity_level_int < 87.5:
+            humanity_label = HUMANITY_LABELS[75]
+        else:
+            humanity_label = HUMANITY_LABELS[100]
             
+        # Расчёт объёма: конвертируем страницы в слова и символы
+        # 1 страница A4 (Times New Roman 14pt, интервал 1.5) ≈ 280 слов ≈ 1800 символов
         volume = generation.input_payload.get('volume', 10)
-        volume_label = f"{volume} страниц"
+        volume_words = volume * 280  # Минимальное количество слов
+        volume_chars = volume * 1800  # Минимальное количество символов
+        
+        volume_pages = f"{volume} страниц"
+        volume_words_str = f"{volume_words} слов"
+        volume_chars_str = f"{volume_chars} символов"
 
         return {
             "module": module_label,
@@ -50,7 +64,11 @@ class PromptService:
             "topic": generation.input_payload.get('topic') or "",
             "goal": generation.input_payload.get('goal') or "",
             "idea": generation.input_payload.get('idea') or "",
-            "volume": volume_label,
+            "volume": volume_pages,  # Для обратной совместимости
+            "volume_pages": volume_pages,
+            "volume_words": volume_words_str,
+            "volume_chars": volume_chars_str,
+            "volume_words_min": volume_words,  # Числовое значение для проверок
             "complexity": complexity_label,
             "humanity": humanity_label,
             "style": complexity_label # For backward compatibility
@@ -112,45 +130,58 @@ class PromptService:
         ).strip()
 
     @staticmethod
-    def construct_formatting_prompt(text: str, formatting: Dict[str, Any]) -> str:
-        """Промпт для технического оформления по ГОСТ."""
+    def construct_content_prompt(generation: Generation, section_title: str, previous_context: str = "", 
+                                  sources: List[Dict[str, Any]] = None, target_words: int = None) -> str:
+        """Промпт для генерации контента ОДНОГО раздела (поглавная генерация)."""
+        ctx = PromptService._get_context_vars(generation)
+        
+        # Источники для цитирования
+        sources_context = ""
+        if sources:
+            sources_list = "\n".join([f"- {s.get('title')}: {s.get('description')} (URL: {s.get('url')})" for s in sources[:5]])  # Топ-5 источников
+            sources_context = f"\n\nИСПОЛЬЗУЙ СЛЕДУЮЩИЕ ИСТОЧНИКИ:\n{sources_list}"
+        
+        # Контекст предыдущей главы для связности
+        previous_context_instruction = ""
+        if previous_context:
+            previous_context_instruction = f"\n\nПРЕДЫДУЩАЯ ГЛАВА (для связности):\n...{previous_context}"
+        
+        # Целевой объём для этого раздела
+        target_words_instruction = ""
+        if target_words:
+            target_words_instruction = f"\n\n⚠️ ЦЕЛЕВОЙ ОБЪЁМ ЭТОГО РАЗДЕЛА: МИНИМУМ {target_words} слов. Пиши подробно, развёрнуто, с примерами и пояснениями."
+        
+        prompt_template = prompt_manager.get_prompt("content")
+        
+        return PromptService._safe_format(
+            prompt_template,
+            section_title=section_title,
+            layout_instruction=sources_context + target_words_instruction,
+            previous_context_instruction=previous_context_instruction,
+            **ctx
+        ).strip()
+
+    @staticmethod
+    def construct_formatting_prompt(text: str) -> str:
+        """Промпт для ИИ-корректуры (орфография и грамматика)."""
         prompt_template = prompt_manager.get_prompt("formatting")
         return PromptService._safe_format(
             prompt_template,
-            fontFamily=formatting.get("fontFamily", "Times New Roman"),
-            fontSize=formatting.get("fontSize", 14),
-            lineSpacing=formatting.get("lineSpacing", 1.5),
-            margins=formatting.get("margins", "стандартные (20мм)"),
             text=text
         ).strip()
 
     @staticmethod
-    def construct_humanize_prompt(text: str, humanity_level: str) -> str:
-        """Промпт для финального очеловечивания текста."""
-        h_level = str(humanity_level).lower()
-        if h_level in ['none', '0']:
-            return text
-            
-        instructions = ""
-        if h_level in ['high', '100']:
-            instructions = """
-            - Максимально разнообразь синтаксис: смешивай очень длинные и очень короткие предложения.
-            - Используй живые академические обороты.
-            - Удали типичные ИИ-маркеры.
-            - Добавь легкие стилистические неровности.
-            """
-        else:
-            instructions = """
-            - Сделай текст более естественным, убери монотонность.
-            - Используй синонимы.
-            - Соблюдай правила русского языка, но избегай канцелярщины.
-            """
-
-        prompt_template = prompt_manager.get_prompt("humanize")
+    def construct_humanize_prompt(text: str, humanity_level: int) -> str:
+        """Промпт для финального очеловечивания текста с поддержкой 5 уровней."""
+        h_level = int(humanity_level) if humanity_level else 50
+        
+        # Используем функцию из констант для получения ключа промпта
+        prompt_key = get_humanity_prompt_key(h_level)
+        
+        prompt_template = prompt_manager.get_prompt(prompt_key)
         return PromptService._safe_format(
             prompt_template,
-            text=text,
-            instructions=instructions
+            text=text
         ).strip()
 
     @staticmethod

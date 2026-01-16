@@ -1,6 +1,7 @@
 import json
 import os
 import logging
+import time
 from typing import Optional, Dict
 
 logger = logging.getLogger(__name__)
@@ -17,33 +18,83 @@ DEFAULT_PROMPTS = {
 }
 
 class PromptManager:
-    def __init__(self, config_path: Optional[str] = None):
+    """
+    Менеджер промптов с кэшированием.
+    
+    Кэширует промпты в памяти на 5 минут для уменьшения I/O операций.
+    """
+    
+    def __init__(self, config_path: Optional[str] = None, cache_ttl: int = 300):
         self.config_path = config_path
+        self.cache_ttl = cache_ttl  # Время жизни кэша в секундах (по умолчанию 5 минут)
+        self._cache = None
+        self._cache_timestamp = 0
         self.prompts = self._load_config()
 
     def _load_config(self):
-        if self.config_path and os.path.exists(self.config_path):
-            try:
-                with open(self.config_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except Exception as e:
-                logger.error(f"Failed to load prompts config: {e}")
-        return DEFAULT_PROMPTS
+        """
+        Загружает конфигурацию промптов с кэшированием.
+        
+        Кэш обновляется автоматически, если:
+        - Прошло больше cache_ttl секунд с последней загрузки
+        - Кэш еще не инициализирован
+        """
+        current_time = time.time()
+        
+        # Проверяем, нужно ли обновить кэш
+        if self._cache is None or (current_time - self._cache_timestamp) > self.cache_ttl:
+            if self.config_path and os.path.exists(self.config_path):
+                try:
+                    with open(self.config_path, "r", encoding="utf-8") as f:
+                        self._cache = json.load(f)
+                    self._cache_timestamp = current_time
+                    logger.debug(f"Prompts loaded from {self.config_path} and cached")
+                except Exception as e:
+                    logger.error(f"Failed to load prompts config: {e}")
+                    self._cache = DEFAULT_PROMPTS
+                    self._cache_timestamp = current_time
+            else:
+                self._cache = DEFAULT_PROMPTS
+                self._cache_timestamp = current_time
+        
+        return self._cache
 
     def save_config(self, new_config: dict):
+        """
+        Сохраняет новую конфигурацию промптов и инвалидирует кэш.
+        """
         if not self.config_path:
             logger.error("Cannot save config: no config_path set")
             return False
         try:
             with open(self.config_path, "w", encoding="utf-8") as f:
                 json.dump(new_config, f, indent=2, ensure_ascii=False)
+            
+            # Инвалидируем кэш, чтобы при следующем обращении загрузились новые промпты
+            self._cache = new_config
+            self._cache_timestamp = time.time()
             self.prompts = new_config
+            
+            logger.info(f"Prompts config saved and cache updated")
             return True
         except Exception as e:
             logger.error(f"Failed to save prompts config: {e}")
             return False
 
     def get_prompt(self, name: str) -> str:
+        """
+        Получает промпт по имени из кэша.
+        
+        Автоматически обновляет кэш, если он устарел.
+        """
+        # Обновляем кэш, если нужно
+        self.prompts = self._load_config()
         return self.prompts.get(name, DEFAULT_PROMPTS.get(name, ""))
+    
+    def invalidate_cache(self):
+        """Принудительно инвалидирует кэш промптов."""
+        self._cache = None
+        self._cache_timestamp = 0
+        logger.info("Prompts cache invalidated")
 
 prompt_manager = PromptManager(os.path.join(os.path.dirname(__file__), "../../../apps/api/data/prompts.json"))

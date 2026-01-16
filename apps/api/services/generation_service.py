@@ -66,12 +66,19 @@ class GenerationService:
 
     @staticmethod
     async def update_draft(generation_id: UUID, user_id: UUID, 
-                           input_payload: dict = None, settings_payload: dict = None) -> Generation:
+                           input_payload: dict = None, settings_payload: dict = None, 
+                           result_content: str = None) -> Generation:
         generation = generation_store.get(generation_id)
         if generation is None or generation.user_id != user_id:
             raise HTTPException(status_code=404, detail="Generation not found")
+        
+        # Для GENERATED генераций:
+        # - Разрешаем обновление result_content (редактор текста)
+        # - Разрешаем обновление settings_payload (форматирование, экспорт)
+        # - Запрещаем изменение input_payload (основные параметры генерации)
         if generation.status != GenerationStatus.DRAFT:
-            raise HTTPException(status_code=409, detail="Only DRAFT generations can be updated.")
+            if input_payload is not None:
+                raise HTTPException(status_code=409, detail="Cannot update generation parameters after completion.")
         
         update_data = {}
         if input_payload is not None: 
@@ -79,7 +86,10 @@ class GenerationService:
             # Обновляем title, если в input_payload есть topic
             if "topic" in input_payload and input_payload["topic"]:
                 update_data["title"] = input_payload["topic"]
-        if settings_payload is not None: update_data["settings_payload"] = settings_payload
+        if settings_payload is not None: 
+            update_data["settings_payload"] = settings_payload
+        if result_content is not None:
+            update_data["result_content"] = result_content
         
         if not update_data:
             return generation

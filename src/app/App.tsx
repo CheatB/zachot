@@ -21,6 +21,7 @@ import GenerationFormattingPage from '@/features/generation-formatting/Generatio
 import GenerationEditorPage from '@/features/generation-editor/GenerationEditorPage'
 import { ToastProvider } from '@/ui/primitives/Toast'
 import { AuthProvider, useAuthContext } from './auth/authContext'
+import { QueryProvider } from './providers/QueryProvider'
 import AppBoundary from './AppBoundary'
 
 // Admin features
@@ -96,13 +97,15 @@ function AppRoutes() {
 function App() {
   return (
     <BrowserRouter>
-      <ToastProvider>
-        <AuthProvider>
-          <AppBoundary>
-            <AppRoutes />
-          </AppBoundary>
-        </AuthProvider>
-      </ToastProvider>
+      <QueryProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <AppBoundary>
+              <AppRoutes />
+            </AppBoundary>
+          </AuthProvider>
+        </ToastProvider>
+      </QueryProvider>
     </BrowserRouter>
   )
 }
