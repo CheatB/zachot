@@ -19,6 +19,7 @@ import GenerationResultPage from '@/features/generation-result/GenerationResultP
 import GenerationRecoveryPage from '@/features/generation-recovery/GenerationRecoveryPage'
 import GenerationFormattingPage from '@/features/generation-formatting/GenerationFormattingPage'
 import GenerationEditorPage from '@/features/generation-editor/GenerationEditorPage'
+import ReferralsPage from '@/features/referrals/ReferralsPage'
 import { ToastProvider } from '@/ui/primitives/Toast'
 import { AuthProvider, useAuthContext } from './auth/authContext'
 import { QueryProvider } from './providers/QueryProvider'
@@ -63,6 +64,7 @@ function AppRoutes() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/billing" element={<BillingPage />} />
         <Route path="/billing/checkout" element={<CheckoutPage />} />
+        <Route path="/referrals" element={<ReferralsPage />} />
         <Route path="/generations" element={<GenerationsPage />} />
         <Route path="/generations/new" element={<CreateGenerationPage />} />
         <Route path="/generations/:id/recovery" element={<GenerationRecoveryPage />} />

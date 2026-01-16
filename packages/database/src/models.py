@@ -65,6 +65,11 @@ class User(Base):
     telegram_username = Column(String, nullable=True)
     hashed_password = Column(String, nullable=True)
     
+    # Реферальная система
+    referral_code = Column(String, unique=True, index=True, nullable=True)  # Уникальный код пользователя
+    referred_by = Column(GUID(), ForeignKey("users.id"), nullable=True, index=True)  # Кто пригласил
+    referrals_count = Column(Integer, default=0)  # Количество приглашённых
+    
     generations = relationship("Generation", back_populates="user")
     credit_transactions = relationship("CreditTransaction", back_populates="user")
 

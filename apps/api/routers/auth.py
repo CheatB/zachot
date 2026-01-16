@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from ..database import SessionLocal, AuthTokenDB, User as UserDB
 import secrets
 import hashlib
+from uuid import uuid4
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -13,6 +15,7 @@ class TelegramAuthLink(BaseModel):
 class EmailAuthRequest(BaseModel):
     email: EmailStr
     password: str
+    referral_code: Optional[str] = None  # Реферальный код при регистрации
 
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
@@ -21,6 +24,7 @@ def hash_password(password: str) -> str:
 async def email_login(auth_req: EmailAuthRequest):
     """
     Авторизация или регистрация по e-mail.
+    Поддерживает реферальные коды при регистрации.
     """
     with SessionLocal() as session:
         user = session.query(UserDB).filter(UserDB.email == auth_req.email).first()
@@ -29,9 +33,25 @@ async def email_login(auth_req: EmailAuthRequest):
         
         if not user:
             # Регистрация нового пользователя
+            referrer_id = None
+            
+            # Проверяем реферальный код
+            if auth_req.referral_code:
+                referrer = session.query(UserDB).filter(UserDB.referral_code == auth_req.referral_code).first()
+                if referrer:
+                    referrer_id = referrer.id
+                    # Начисляем кредит рефереру
+                    referrer.credits_balance += 1
+                    referrer.referrals_count += 1
+            
+            # Генерируем уникальный реферальный код для нового пользователя
+            new_ref_code = str(uuid4())[:8].upper()
+            
             user = UserDB(
                 email=auth_req.email,
-                hashed_password=hashed
+                hashed_password=hashed,
+                referral_code=new_ref_code,
+                referred_by=referrer_id
             )
             session.add(user)
             session.commit()

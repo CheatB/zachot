@@ -118,6 +118,9 @@ function Header({ user, onMenuClick }: HeaderProps) {
                     <Link to="/profile" className="app-header__dropdown-item" onClick={() => setIsMenuOpen(false)}>
                       ⚙️ Профиль
                     </Link>
+                    <Link to="/referrals" className="app-header__dropdown-item" onClick={() => setIsMenuOpen(false)}>
+                      🎁 Реферальная программа
+                    </Link>
                     {user.role === 'admin' && (
                       <Link to="/admin" className="app-header__dropdown-item" onClick={() => setIsMenuOpen(false)}>
                         🛡️ Админ-панель
