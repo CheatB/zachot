@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '@/shared/config'
 import { refreshSession } from './auth'
+import { useAuthStore, useUIStore } from '@/shared/store'
 
 export class ApiError extends Error {
   status: number
@@ -11,15 +12,15 @@ export class ApiError extends Error {
 }
 
 function getAuthToken(): string | null {
-  return localStorage.getItem('zachot_auth_token')
+  // Используем Zustand store вместо прямого доступа к localStorage
+  return useAuthStore.getState().token
 }
 
 let refreshPromise: Promise<void> | null = null
 
 function performLogout() {
-  localStorage.removeItem('zachot_auth_token')
-  localStorage.removeItem('zachot_auth_user_id')
-  localStorage.removeItem('zachot_refresh_token')
+  // Используем Zustand store для очистки состояния
+  useAuthStore.getState().logout()
   window.dispatchEvent(new CustomEvent('auth:logout'))
   window.location.href = '/login'
 }
@@ -54,9 +55,10 @@ async function performFetch<T>(
         refreshPromise = (async () => {
           try {
             const tokens = await refreshSession()
-            localStorage.setItem('zachot_auth_token', tokens.accessToken)
-            if (tokens.refreshToken) {
-              localStorage.setItem('zachot_refresh_token', tokens.refreshToken)
+            // Обновляем токен через Zustand (автоматически сохраняется в localStorage)
+            const currentUser = useAuthStore.getState().user
+            if (currentUser) {
+              useAuthStore.getState().setAuth(tokens.accessToken, currentUser)
             }
           } catch (error) {
             performLogout()
@@ -75,14 +77,13 @@ async function performFetch<T>(
       performLogout()
     }
 
-    // Centralized error notification
+    // Centralized error notification через Zustand
     if (res.status !== 401) {
-      window.dispatchEvent(new CustomEvent('ui:toast', {
-        detail: {
-          text: message,
-          type: 'error'
-        }
-      }))
+      useUIStore.getState().addToast({
+        type: 'error',
+        message: message,
+        duration: 5000
+      })
     }
 
     throw new ApiError(res.status, message)
