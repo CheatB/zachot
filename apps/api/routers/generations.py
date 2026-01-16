@@ -28,23 +28,23 @@ async def list_generations(request: Request, user: UserDB = Depends(get_current_
 @router.post("", response_model=GenerationResponse, status_code=201)
 @limiter.limit(RateLimits.GENERATION_CREATE)
 async def create_generation(
-    req: Request,
-    request: GenerationCreateRequest,
+    request: Request,
+    gen_request: GenerationCreateRequest,
     user: UserDB = Depends(get_current_user)
 ) -> GenerationResponse:
     # Since we changed schemas to use dict for payloads, we use them directly
-    input_payload = request.input_payload if isinstance(request.input_payload, dict) else request.input_payload.model_dump()
+    input_payload = gen_request.input_payload if isinstance(gen_request.input_payload, dict) else gen_request.input_payload.model_dump()
     settings_payload = {}
-    if request.settings_payload:
-        settings_payload = request.settings_payload if isinstance(request.settings_payload, dict) else request.settings_payload.model_dump()
+    if gen_request.settings_payload:
+        settings_payload = gen_request.settings_payload if isinstance(gen_request.settings_payload, dict) else gen_request.settings_payload.model_dump()
 
     saved_generation = await generation_service.create_draft(
         user=user,
-        module=request.module,
+        module=gen_request.module,
         input_payload=input_payload,
-        work_type=request.work_type,
-        complexity=request.complexity_level,
-        humanity=request.humanity_level,
+        work_type=gen_request.work_type,
+        complexity=gen_request.complexity_level,
+        humanity=gen_request.humanity_level,
         settings=settings_payload
     )
     return GenerationResponse.model_validate(saved_generation)

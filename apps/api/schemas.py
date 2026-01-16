@@ -46,7 +46,7 @@ class GenerationCreateRequest(BaseModel):
     module: GenerationModule = Field(..., description="Тип модуля генерации")
     work_type: Optional[str] = Field(None, description="Тип академической работы")
     complexity_level: str = Field("student", description="Уровень сложности")
-    humanity_level: str = Field("medium", description="Уровень очеловечивания")
+    humanity_level: Union[str, int] = Field("medium", description="Уровень очеловечивания (строка или число 0-100)")
     input_payload: GenerationInputPayload = Field(..., description="Входные данные для генерации")
     settings_payload: Optional[GenerationSettingsPayload] = Field(None, description="Настройки генерации")
 

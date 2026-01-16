@@ -3,7 +3,7 @@
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -27,7 +27,7 @@ class Generation(BaseModel):
     title: Optional[str] = Field(None, description="Заголовок/тема генерации")
     work_type: Optional[str] = Field(None, description="Тип академической работы")
     complexity_level: str = Field("student", description="Уровень сложности")
-    humanity_level: str = Field("medium", description="Уровень очеловечивания")
+    humanity_level: Union[str, int] = Field("medium", description="Уровень очеловечивания (строка или число 0-100)")
     
     created_at: datetime = Field(..., description="Время создания генерации")
     updated_at: datetime = Field(..., description="Время последнего обновления")
