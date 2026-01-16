@@ -4,8 +4,11 @@
  * Использует react-window для рендеринга только видимых элементов.
  */
 
-import { FixedSizeList as List } from 'react-window'
-import { AutoSizer } from 'react-virtualized-auto-sizer'
+import * as ReactWindow from 'react-window'
+import * as AutoSizerModule from 'react-virtualized-auto-sizer'
+
+const { FixedSizeList } = ReactWindow
+const { AutoSizer } = AutoSizerModule
 
 interface VirtualListProps<T> {
   items: T[]
@@ -32,7 +35,7 @@ export function VirtualList<T>({
     <div className={className} style={{ height: '100%', width: '100%' }}>
       <AutoSizer>
         {({ height, width }: { height: number; width: number }) => (
-          <List
+          <FixedSizeList
             height={height}
             itemCount={items.length}
             itemSize={itemHeight}
@@ -40,7 +43,7 @@ export function VirtualList<T>({
             overscanCount={overscanCount}
           >
             {Row}
-          </List>
+          </FixedSizeList>
         )}
       </AutoSizer>
     </div>
