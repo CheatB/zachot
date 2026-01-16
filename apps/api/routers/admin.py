@@ -55,48 +55,48 @@ async def get_generations_history(admin: UserDB = Depends(require_admin)):
 
 @router.post("/suggest-structure")
 @limiter.limit(RateLimits.AI_SUGGESTION)
-async def suggest_structure(req: Request, request: SuggestStructureRequest, user: UserDB = Depends(get_current_user)):
+async def suggest_structure(request: Request, req_data: SuggestStructureRequest, user: UserDB = Depends(get_current_user)):
     return await ai_suggestion_service.suggest_structure(
-        topic=request.topic,
-        goal=request.goal,
-        idea=request.idea,
-        module=request.module,
-        work_type=request.workType,
-        volume=request.volume,
-        complexity=request.complexity,
-        humanity=request.humanity,
+        topic=req_data.topic,
+        goal=req_data.goal,
+        idea=req_data.idea,
+        module=req_data.module,
+        work_type=req_data.workType,
+        volume=req_data.volume,
+        complexity=req_data.complexity,
+        humanity=req_data.humanity,
         user_id=user.id
     )
 
 @router.post("/suggest-sources")
 @limiter.limit(RateLimits.AI_SUGGESTION)
-async def suggest_sources(req: Request, request: SuggestSourcesRequest, user: UserDB = Depends(get_current_user)):
+async def suggest_sources(request: Request, req_data: SuggestSourcesRequest, user: UserDB = Depends(get_current_user)):
     return await ai_suggestion_service.suggest_sources(
-        topic=request.topic,
-        goal=request.goal,
-        idea=request.idea,
-        module=request.module,
-        work_type=request.workType,
-        complexity=request.complexity,
-        humanity=request.humanity,
+        topic=req_data.topic,
+        goal=req_data.goal,
+        idea=req_data.idea,
+        module=req_data.module,
+        work_type=req_data.workType,
+        complexity=req_data.complexity,
+        humanity=req_data.humanity,
         user_id=user.id
     )
 
 @router.post("/suggest-details")
 @limiter.limit(RateLimits.AI_SUGGESTION)
-async def suggest_details(req: Request, request: SuggestDetailsRequest, user: UserDB = Depends(get_current_user)):
-    logger.info(f"Suggest details request: {request.dict()}")
+async def suggest_details(request: Request, req_data: SuggestDetailsRequest, user: UserDB = Depends(get_current_user)):
+    logger.info(f"Suggest details request: {req_data.dict()}")
     return await ai_suggestion_service.suggest_details(
-        topic=request.topic,
-        module=request.module,
-        complexity=request.complexity,
-        humanity=request.humanity
+        topic=req_data.topic,
+        module=req_data.module,
+        complexity=req_data.complexity,
+        humanity=req_data.humanity
     )
 
 @router.post("/suggest-title-info")
 @limiter.limit(RateLimits.AI_SUGGESTION)
-async def suggest_title_info(req: Request, request: SuggestTitleInfoRequest, user: UserDB = Depends(get_current_user)):
-    return await ai_suggestion_service.suggest_title_info(university_short=request.university)
+async def suggest_title_info(request: Request, req_data: SuggestTitleInfoRequest, user: UserDB = Depends(get_current_user)):
+    return await ai_suggestion_service.suggest_title_info(university_short=req_data.university)
 
 @router.get("/users", response_model=UsersAdminResponse)
 async def list_users(admin: UserDB = Depends(require_admin)):
