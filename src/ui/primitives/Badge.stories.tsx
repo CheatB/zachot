@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { Badge } from './Badge'
+import Badge from './Badge'
 
 const meta: Meta<typeof Badge> = {
   title: 'UI/Badge',
@@ -8,7 +8,7 @@ const meta: Meta<typeof Badge> = {
   argTypes: {
     status: {
       control: 'select',
-      options: ['success', 'warning', 'error', 'info', 'default'],
+      options: ['neutral', 'success', 'warn', 'danger'],
     },
   },
 }
@@ -26,27 +26,20 @@ export const Success: Story = {
 export const Warning: Story = {
   args: {
     children: 'Ожидание',
-    status: 'warning',
+    status: 'warn',
   },
 }
 
-export const Error: Story = {
+export const Danger: Story = {
   args: {
     children: 'Ошибка',
-    status: 'error',
+    status: 'danger',
   },
 }
 
-export const Info: Story = {
-  args: {
-    children: 'Информация',
-    status: 'info',
-  },
-}
-
-export const Default: Story = {
+export const Neutral: Story = {
   args: {
     children: 'По умолчанию',
-    status: 'default',
+    status: 'neutral',
   },
 }

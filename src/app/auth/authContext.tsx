@@ -14,6 +14,7 @@ import {
 
 import type { AuthContextValue, AuthState } from './authTypes'
 import { fetchMe } from '@/shared/api/me'
+import { useAuthStore } from '@/shared/store'
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
@@ -39,20 +40,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const loadProfile = async (token: string) => {
     try {
       const response = await fetchMe()
+      const user = { 
+        id: response.id, 
+        role: response.role,
+        email: response.email,
+        telegram_username: response.telegram_username,
+        subscription: response.subscription ? {
+          ...response.subscription,
+          status: response.subscription.status || 'none',
+        } : undefined,
+        usage: response.usage,
+      }
+      
+      // Синхронизируем с Zustand store
+      useAuthStore.getState().setAuth(token, {
+        id: response.id,
+        email: response.email || '',
+        name: response.telegram_username,
+        role: response.role,
+      })
+      
       setAuthState({
         isAuthenticated: true,
         isAuthResolved: true,
-        user: { 
-          id: response.id, 
-          role: response.role,
-          email: response.email,
-          telegram_username: response.telegram_username,
-          subscription: response.subscription ? {
-            ...response.subscription,
-            status: response.subscription.status || 'none',
-          } : undefined,
-          usage: response.usage,
-        },
+        user,
         token: token,
       })
     } catch (error) {
@@ -92,6 +103,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const loginFromLanding = (token: string, userId: string) => {
     localStorage.setItem(TOKEN_KEY, token)
     localStorage.setItem(USER_ID_KEY, userId)
+    
+    // Временно сохраняем токен в Zustand для немедленного использования
+    useAuthStore.getState().setAuth(token, {
+      id: userId,
+      email: '',
+      role: 'user',
+    })
+    
     setAuthState(prev => ({ ...prev, isAuthResolved: false }))
     loadProfile(token)
   }
@@ -100,6 +119,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_ID_KEY)
     localStorage.removeItem(REFRESH_TOKEN_KEY)
+    
+    // Синхронизируем с Zustand store
+    useAuthStore.getState().logout()
 
     setAuthState({
       isAuthenticated: false,
