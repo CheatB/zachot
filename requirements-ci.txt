@@ -21,3 +21,5 @@ slowapi
 prometheus-client
 uvicorn
 starlette
+redis
+hiredis

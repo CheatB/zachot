@@ -21,6 +21,7 @@ from apps.api.database import init_db
 from apps.api.routers import payments, auth, generations, admin, me, health, jobs, ai_editing, sources
 from apps.api.middleware.rate_limiter import limiter, rate_limit_exceeded_handler
 from apps.api.middleware.metrics_middleware import MetricsMiddleware
+from apps.api.services.cache_service import cache_service
 
 # Настройка логирования
 logging.basicConfig(
@@ -79,12 +80,16 @@ async def startup():
     logger.info("Starting Зачёт API...")
     init_db()
     logger.info("Database initialized")
+    await cache_service.connect()
+    logger.info("Cache service initialized")
 
 
 @app.on_event("shutdown")
 async def shutdown():
     """Очистка при остановке."""
     logger.info("Shutting down Зачёт API...")
+    await cache_service.disconnect()
+    logger.info("Cache service disconnected")
     
     # Закрываем провайдер платежей
     try:

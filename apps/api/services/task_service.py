@@ -11,6 +11,7 @@ from packages.core_domain import Generation
 from .openai_service import openai_service
 from .prompt_service import prompt_service
 from .model_router import model_router
+from .cache_service import cache_service
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +29,23 @@ class TaskService:
         """
         Классифицирует входной текст: задача или чат.
         
+        Результат кэшируется на 30 минут (1800 сек).
+        
         Args:
             text: Текст для классификации
             
         Returns:
             dict: {"type": "task" | "chat", "reason": "..."}
         """
+        # Генерируем ключ кэша
+        cache_key = cache_service._generate_key("ai:classify", text=text)
+        
+        # Проверяем кэш
+        cached = await cache_service.get(cache_key)
+        if cached:
+            logger.info(f"✅ Classification from cache: {cached.get('type')}")
+            return cached
+        
         logger.info(f"Classifying input text (length: {len(text)})")
         
         classifier_prompt = prompt_service.construct_classifier_prompt(text)
@@ -47,6 +59,9 @@ class TaskService:
         classification = json.loads(raw_class or '{"type": "task"}')
         
         logger.info(f"Classification result: {classification.get('type')}")
+        
+        # Сохраняем в кэш на 30 минут
+        await cache_service.set(cache_key, classification, ttl=1800)
         
         return classification
     
