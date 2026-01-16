@@ -80,7 +80,7 @@ class GenerationResponse(BaseModel):
     title: Optional[str] = Field(None, description="Заголовок/тема генерации")
     work_type: Optional[str] = Field(None, description="Тип академической работы")
     complexity_level: str = Field("student", description="Уровень сложности")
-    humanity_level: str = Field("medium", description="Уровень очеловечивания")
+    humanity_level: Union[str, int] = Field("medium", description="Уровень очеловечивания (строка или число)")
     created_at: datetime = Field(..., description="Время создания генерации")
     updated_at: datetime = Field(..., description="Время последнего обновления")
     input_payload: GenerationInputPayload = Field(..., description="Входные данные для генерации")
