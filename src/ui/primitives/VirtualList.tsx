@@ -4,17 +4,14 @@
  * Использует react-window для рендеринга только видимых элементов.
  */
 
-import * as ReactWindow from 'react-window'
-import * as AutoSizerModule from 'react-virtualized-auto-sizer'
-
-const { FixedSizeList } = ReactWindow
-const { AutoSizer } = AutoSizerModule
+import { FixedSizeList, ListChildComponentProps } from 'react-window'
 
 interface VirtualListProps<T> {
   items: T[]
   itemHeight: number
   renderItem: (item: T, index: number) => React.ReactNode
   className?: string
+  height?: number
   overscanCount?: number
 }
 
@@ -23,29 +20,26 @@ export function VirtualList<T>({
   itemHeight,
   renderItem,
   className,
+  height = 600,
   overscanCount = 3,
 }: VirtualListProps<T>) {
-  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => (
+  const Row = ({ index, style }: ListChildComponentProps) => (
     <div style={style}>
       {renderItem(items[index], index)}
     </div>
   )
 
   return (
-    <div className={className} style={{ height: '100%', width: '100%' }}>
-      <AutoSizer>
-        {({ height, width }: { height: number; width: number }) => (
-          <FixedSizeList
-            height={height}
-            itemCount={items.length}
-            itemSize={itemHeight}
-            width={width}
-            overscanCount={overscanCount}
-          >
-            {Row}
-          </FixedSizeList>
-        )}
-      </AutoSizer>
+    <div className={className}>
+      <FixedSizeList
+        height={height}
+        itemCount={items.length}
+        itemSize={itemHeight}
+        width="100%"
+        overscanCount={overscanCount}
+      >
+        {Row}
+      </FixedSizeList>
     </div>
   )
 }
