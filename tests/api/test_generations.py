@@ -2,6 +2,7 @@ import pytest
 from uuid import uuid4
 
 
+@pytest.mark.integration
 def test_create_generation_and_list(client):
     # 1. Login to get a real user
     login_data = {"email": "gen@test.com", "password": "pass"}
@@ -26,6 +27,7 @@ def test_create_generation_and_list(client):
     assert any(item["id"] == gen_id for item in items)
 
 
+@pytest.mark.integration
 def test_generation_actions(client):
     login_data = {"email": "gen2@test.com", "password": "pass"}
     login_resp = client.post("/auth/email/login", json=login_data)

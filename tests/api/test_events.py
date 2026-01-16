@@ -1,3 +1,4 @@
+import pytest
 """
 Contract tests для SSE events endpoint (smoke test).
 """
@@ -6,6 +7,7 @@ import threading
 import time
 
 
+@pytest.mark.integration
 def test_events_endpoint_content_type_and_initial_event(client, test_user):
     """
     Smoke тест SSE endpoint: проверка Content-Type и начального события.

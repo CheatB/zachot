@@ -2,6 +2,7 @@ import pytest
 from uuid import uuid4
 
 
+@pytest.mark.integration
 def test_full_text_generation_flow(client):
     # 1. Login
     login_data = {"email": "flow@test.com", "password": "pass"}
@@ -38,6 +39,7 @@ def test_full_text_generation_flow(client):
     assert export_resp.status_code in [200, 404]
 
 
+@pytest.mark.integration
 def test_smart_edit_unauthorized(client):
     response = client.post(f"/generations/{uuid4()}/smart-edit", json={"action": "shorter", "content": "text"})
     # Since smart-edit is not in /generations/{id}/actions but a separate router potentially

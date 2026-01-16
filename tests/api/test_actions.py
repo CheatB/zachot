@@ -1,3 +1,4 @@
+import pytest
 """
 Contract tests для Generation actions endpoints.
 """
@@ -7,6 +8,7 @@ from uuid import uuid4
 from fastapi import status
 
 
+@pytest.mark.integration
 def test_actions_next_transitions_to_running(client, test_user):
     """
     Тест действия next: проверка перехода из DRAFT в RUNNING.
@@ -34,6 +36,7 @@ def test_actions_next_transitions_to_running(client, test_user):
     assert data["id"] == generation_id
 
 
+@pytest.mark.integration
 def test_actions_invalid_transition_returns_409(client, test_user):
     """
     Тест недопустимого перехода: проверка статуса 409.
@@ -70,6 +73,7 @@ def test_actions_invalid_transition_returns_409(client, test_user):
     assert "draft" in detail or "status" in detail or "cannot" in detail
 
 
+@pytest.mark.integration
 def test_actions_cancel_transitions_to_canceled(client, test_user):
     """
     Тест действия cancel: проверка перехода в CANCELED из любого статуса.

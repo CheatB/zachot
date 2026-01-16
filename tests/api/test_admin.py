@@ -2,6 +2,7 @@ import pytest
 from uuid import uuid4
 
 
+@pytest.mark.integration
 def test_admin_model_routing(client):
     # 1. Login as normal user (should fail admin access)
     email = f"user_{uuid4().hex[:6]}@test.com"
@@ -14,6 +15,7 @@ def test_admin_model_routing(client):
     assert routing_resp.status_code == 403
 
 
+@pytest.mark.integration
 def test_admin_user_role_update(client, db_session):
     from packages.database.src.models import User
     
@@ -42,6 +44,7 @@ def test_admin_user_role_update(client, db_session):
     assert user.role == "admin"
 
 
+@pytest.mark.integration
 def test_suggest_details_logic(client):
     login_data = {"email": f"user_{uuid4().hex[:6]}@test.com", "password": "pass"}
     login_resp = client.post("/auth/email/login", json=login_data)

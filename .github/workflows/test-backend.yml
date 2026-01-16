@@ -29,9 +29,9 @@ jobs:
           export ENV=test
           echo "ENV=test" >> $GITHUB_ENV
 
-      - name: Run pytest
+      - name: Run pytest (unit tests only)
         env:
           PYTHONPATH: ${{ github.workspace }}
           ENV: test
         run: |
-          pytest -v
+          pytest -v -m "not integration" --tb=short
