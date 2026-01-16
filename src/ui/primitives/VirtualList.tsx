@@ -4,8 +4,8 @@
  * Использует react-window для рендеринга только видимых элементов.
  */
 
-import { FixedSizeList, ListChildComponentProps } from 'react-window'
-import AutoSizer from 'react-virtualized-auto-sizer'
+import { FixedSizeList as List } from 'react-window'
+import { AutoSizer } from 'react-virtualized-auto-sizer'
 
 interface VirtualListProps<T> {
   items: T[]
@@ -22,7 +22,7 @@ export function VirtualList<T>({
   className,
   overscanCount = 3,
 }: VirtualListProps<T>) {
-  const Row = ({ index, style }: ListChildComponentProps) => (
+  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => (
     <div style={style}>
       {renderItem(items[index], index)}
     </div>
@@ -31,8 +31,8 @@ export function VirtualList<T>({
   return (
     <div className={className} style={{ height: '100%', width: '100%' }}>
       <AutoSizer>
-        {({ height, width }) => (
-          <FixedSizeList
+        {({ height, width }: { height: number; width: number }) => (
+          <List
             height={height}
             itemCount={items.length}
             itemSize={itemHeight}
@@ -40,7 +40,7 @@ export function VirtualList<T>({
             overscanCount={overscanCount}
           >
             {Row}
-          </FixedSizeList>
+          </List>
         )}
       </AutoSizer>
     </div>

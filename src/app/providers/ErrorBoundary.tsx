@@ -4,7 +4,7 @@
  * Предотвращает падение всего приложения при ошибках в компонентах.
  */
 
-import React, { Component, ErrorInfo, ReactNode } from 'react'
+import { Component, ErrorInfo, ReactNode } from 'react'
 import { useUIStore } from '@/shared/store'
 
 interface Props {
