@@ -17,3 +17,5 @@ aiohttp
 chardet
 PyPDF2
 python-multipart
+slowapi
+prometheus-client
