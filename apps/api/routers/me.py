@@ -3,24 +3,29 @@
 """
 
 from uuid import UUID
-from fastapi import APIRouter, HTTPException, Header, Depends
+from fastapi import APIRouter, HTTPException, Header
 from sqlalchemy import select
 from ..schemas import MeResponse
-from ..database import SessionLocal, User as UserDB, get_db
-from ..dependencies import get_current_user
-from packages.database.src.models import AuthToken
-from sqlalchemy.orm import Session
+from ..database import SessionLocal, User as UserDB
 
 router = APIRouter(prefix="/me", tags=["user"])
 
 @router.get("", response_model=MeResponse)
-async def get_me(user: UserDB = Depends(get_current_user)):
+async def get_me(authorization: str = Header(None)):
     """
     Возвращает информацию о текущем пользователе, его подписке и лимитах.
     """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+        
+    token = authorization.split(" ")[1]
+    try:
+        user_id = UUID(token)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid token format")
+
     with SessionLocal() as session:
-        # Перезагружаем пользователя из сессии
-        user = session.execute(select(UserDB).where(UserDB.id == user.id)).scalar_one_or_none()
+        user = session.execute(select(UserDB).where(UserDB.id == user_id)).scalar_one_or_none()
         
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
@@ -55,13 +60,21 @@ async def get_me(user: UserDB = Depends(get_current_user)):
 
 
 @router.get("/referral-info")
-async def get_referral_info(user: UserDB = Depends(get_current_user)):
+async def get_referral_info(authorization: str = Header(None)):
     """
     Возвращает реферальную информацию пользователя.
     """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+        
+    token = authorization.split(" ")[1]
+    try:
+        user_id = UUID(token)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid token format")
+
     with SessionLocal() as session:
-        # Перезагружаем пользователя из сессии
-        user = session.execute(select(UserDB).where(UserDB.id == user.id)).scalar_one_or_none()
+        user = session.execute(select(UserDB).where(UserDB.id == user_id)).scalar_one_or_none()
         
         if not user:
             raise HTTPException(status_code=401, detail="User not found")

@@ -184,6 +184,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                   )}
                 </ul>
 
+                {/* Temporarily hidden: Referral block
                 {!isAdminRoute && (
                   <div className="app-sidebar__referral-top">
                     <button className="referral-block" onClick={() => navigate('/referrals')}>
@@ -195,6 +196,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
                     </button>
                   </div>
                 )}
+                */}
 
                 {isAuthenticated && user && !isAdminRoute && (
                   <div className="app-sidebar__credits-top">
