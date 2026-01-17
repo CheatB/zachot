@@ -188,7 +188,6 @@ export async function uploadFileSource(generationId: string, file: File): Promis
   }>('/sources/upload-file', {
     method: 'POST',
     body: formData,
-    // Don't set Content-Type header for FormData, browser will set it automatically with boundary
-    headers: {},
+    // Content-Type will be set automatically by browser for FormData with boundary
   });
 }
