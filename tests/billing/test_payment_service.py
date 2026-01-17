@@ -172,23 +172,23 @@ class TestPlans:
     def test_month_plan(self):
         """Проверка месячного плана."""
         plan = PLANS["month"]
-        assert plan["amount"] == 49900
+        assert plan["amount"] == 79900  # 799 руб
         assert plan["period_months"] == 1
-        assert plan["generations_limit"] == 5
+        assert plan["credits"] == 500  # 500 кредитов в месяц
     
     def test_quarter_plan(self):
         """Проверка квартального плана."""
         plan = PLANS["quarter"]
-        assert plan["amount"] == 134700
+        assert plan["amount"] == 215700  # 2157 руб (скидка 10%)
         assert plan["period_months"] == 3
-        assert plan["generations_limit"] == 15
+        assert plan["credits"] == 1500  # 1500 кредитов (500 × 3)
     
     def test_year_plan(self):
         """Проверка годового плана."""
         plan = PLANS["year"]
-        assert plan["amount"] == 508800
+        assert plan["amount"] == 815200  # 8152 руб (скидка 15%)
         assert plan["period_months"] == 12
-        assert plan["generations_limit"] == 60
+        assert plan["credits"] == 6000  # 6000 кредитов (500 × 12)
     
     def test_all_plans_have_required_fields(self):
         """Все планы имеют обязательные поля."""

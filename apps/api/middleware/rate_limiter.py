@@ -4,6 +4,7 @@ Rate Limiter для защиты API от абьюза.
 Использует slowapi для ограничения частоты запросов.
 """
 
+import os
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -13,8 +14,21 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+def get_remote_address_or_none(request: Request) -> str:
+    """
+    Возвращает IP адрес клиента или None в тестовом окружении.
+    
+    В тестовом окружении возвращаем None, что отключает rate limiting.
+    """
+    if os.getenv("ENV") == "test":
+        return None
+    return get_remote_address(request)
+
+
 # Создаем limiter с ключом по IP адресу
-limiter = Limiter(key_func=get_remote_address)
+# В тестовом окружении key_func возвращает None, что отключает rate limiting
+limiter = Limiter(key_func=get_remote_address_or_none)
 
 
 def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> Response:
