@@ -127,6 +127,29 @@ export async function createJob(id: string): Promise<{ job_id: string; status: s
   });
 }
 
+export interface GenerationCostInfo {
+  required_credits: number
+  available_credits: number
+  can_generate: boolean
+  work_type: string
+}
+
+/**
+ * Получает информацию о стоимости генерации и балансе пользователя
+ */
+export async function getGenerationCost(id: string): Promise<GenerationCostInfo> {
+  return apiFetch<GenerationCostInfo>(`/generations/${id}/cost`)
+}
+
+/**
+ * Подтверждает генерацию и списывает кредиты
+ */
+export async function confirmGeneration(id: string): Promise<Generation> {
+  return apiFetch<Generation>(`/generations/${id}/confirm`, {
+    method: 'POST'
+  })
+}
+
 export async function searchMoreSources(generationId: string, currentSourcesCount: number): Promise<{
   success: boolean;
   message: string;

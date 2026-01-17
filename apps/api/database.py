@@ -4,7 +4,10 @@ from packages.database.src.models import (
     User, 
     Generation as GenerationDB, 
     Payment as PaymentDB, 
-    AuthToken as AuthTokenDB, 
+    AuthToken as AuthTokenDB,
+    CreditTransaction,
+    Subscription,
+    AuditLog,
     create_db_engine, 
     get_session_factory, 
     GUID
