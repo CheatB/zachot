@@ -3,7 +3,7 @@ import logging
 import re
 from uuid import UUID
 from datetime import datetime
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any
 
 from packages.core_domain import Generation
 from packages.core_domain.enums import GenerationStatus, GenerationModule
@@ -307,6 +307,19 @@ class AISuggestionService:
             
             if len(final_sources) == 0:
                 logger.error("No valid sources found even after retry and QC!")
+                logger.info("Generating fallback sources for non-academic topic...")
+                
+                # Генерируем fallback источники для фантастических/игровых/нестандартных тем
+                fallback_sources = AISuggestionService._generate_fallback_sources(topic, work_type)
+                
+                if fallback_sources:
+                    logger.info(f"Generated {len(fallback_sources)} fallback sources")
+                    return {
+                        "sources": fallback_sources,
+                        "is_fallback": True,
+                        "message": "Для данной темы подобраны базовые источники. Вы можете добавить свои источники вручную."
+                    }
+                
                 return {
                     "sources": [], 
                     "error": "Не удалось найти релевантные источники. Попробуйте изменить тему или сформулировать её более конкретно."
@@ -398,35 +411,99 @@ class AISuggestionService:
         except Exception as e:
             logger.error(f"Error suggesting title info: {e}")
             return {"university_full": university_short or "", "city": "Москва"}
-
-ai_suggestion_service = AISuggestionService()
-
-
-
-
-
-ai_suggestion_service = AISuggestionService()
-
-ai_suggestion_service = AISuggestionService()
-
-
-
-
-
-ai_suggestion_service = AISuggestionService()
-
-ai_suggestion_service = AISuggestionService()
-
-
-
-
-
-ai_suggestion_service = AISuggestionService()
-
-ai_suggestion_service = AISuggestionService()
-
-
-
+    
+    @staticmethod
+    def _generate_fallback_sources(topic: str, work_type: str = None) -> List[Dict[str, Any]]:
+        """
+        Генерирует базовые fallback источники для тем, где AI не смог найти академические источники.
+        Полезно для фантастических, игровых, нестандартных тем.
+        """
+        fallback_sources = []
+        
+        # Определяем ключевые слова для разных типов тем
+        topic_lower = topic.lower()
+        
+        # Warhammer 40k
+        if any(keyword in topic_lower for keyword in ['warhammer', '40k', '40000', 'тау', 'империум', 'примарх', 'космодесант']):
+            fallback_sources = [
+                {
+                    "title": "Warhammer 40,000 Codex",
+                    "author": "Games Workshop",
+                    "year": "2023",
+                    "url": "https://warhammer40000.com/",
+                    "type": "website",
+                    "description": "Официальный кодекс вселенной Warhammer 40,000",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                },
+                {
+                    "title": "Lexicanum - Warhammer 40k Wiki",
+                    "author": "Lexicanum Community",
+                    "year": "2024",
+                    "url": "https://wh40k.lexicanum.com/",
+                    "type": "website",
+                    "description": "Энциклопедия по вселенной Warhammer 40,000",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                },
+                {
+                    "title": "Warhammer 40k Fandom Wiki",
+                    "author": "Fandom Community",
+                    "year": "2024",
+                    "url": "https://warhammer40k.fandom.com/",
+                    "type": "website",
+                    "description": "Подробная вики по Warhammer 40,000",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                }
+            ]
+        # Другие игры/фантастика
+        elif any(keyword in topic_lower for keyword in ['игра', 'game', 'фантастика', 'sci-fi', 'фэнтези', 'fantasy']):
+            fallback_sources = [
+                {
+                    "title": f"Энциклопедия по теме: {topic}",
+                    "author": "Интернет-сообщество",
+                    "year": "2024",
+                    "url": "https://wikipedia.org/",
+                    "type": "website",
+                    "description": "Общая энциклопедическая информация",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                },
+                {
+                    "title": f"Fandom Wiki: {topic}",
+                    "author": "Fandom Community",
+                    "year": "2024",
+                    "url": "https://fandom.com/",
+                    "type": "website",
+                    "description": "Вики-ресурс по теме",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                }
+            ]
+        # Общий fallback
+        else:
+            fallback_sources = [
+                {
+                    "title": f"Материалы по теме: {topic}",
+                    "author": "Различные авторы",
+                    "year": "2024",
+                    "url": "https://scholar.google.com/",
+                    "type": "website",
+                    "description": "Рекомендуется добавить источники вручную",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                }
+            ]
+        
+        logger.info(f"Generated {len(fallback_sources)} fallback sources for topic: {topic}")
+        return fallback_sources
 
 
 ai_suggestion_service = AISuggestionService()
