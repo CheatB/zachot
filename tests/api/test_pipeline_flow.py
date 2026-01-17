@@ -35,8 +35,9 @@ def test_full_text_generation_flow(client):
     # Note: We can't easily test the actual background generation here without real AI or heavy mocking,
     # but we can test that the export endpoint is reachable.
     export_resp = client.get(f"/generations/{gen_id}/export/docx", headers=headers)
-    # It might return 404 if not yet generated, but we test the route exists
-    assert export_resp.status_code in [200, 404]
+    # It returns 400 if generation is not completed yet (no result_content),
+    # 404 if not found, or 200 if successfully exported
+    assert export_resp.status_code in [200, 400, 404]
 
 
 @pytest.mark.integration
