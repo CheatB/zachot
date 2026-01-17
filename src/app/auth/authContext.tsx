@@ -113,6 +113,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     setAuthState(prev => ({ ...prev, isAuthResolved: false }))
     loadProfile(token)
+    
+    // Восстанавливаем URL после входа, если он был сохранён
+    const returnUrl = sessionStorage.getItem('zachot_return_url')
+    if (returnUrl) {
+      sessionStorage.removeItem('zachot_return_url')
+      // Небольшая задержка, чтобы профиль успел загрузиться
+      setTimeout(() => {
+        window.location.href = returnUrl
+      }, 500)
+    }
   }
 
   const logout = () => {

@@ -65,6 +65,18 @@ async function performFetch<T>(
               useAuthStore.getState().setAuth(tokens.accessToken, currentUser)
             }
           } catch (error) {
+            // Сохраняем текущий URL перед логаутом для восстановления после входа
+            if (typeof window !== 'undefined') {
+              sessionStorage.setItem('zachot_return_url', window.location.pathname + window.location.search)
+            }
+            
+            // Показываем уведомление пользователю
+            useUIStore.getState().addToast({
+              type: 'warning',
+              message: 'Сессия истекла. Пожалуйста, войдите снова.',
+              duration: 7000
+            })
+            
             performLogout()
             throw error
           } finally {
@@ -78,6 +90,18 @@ async function performFetch<T>(
     }
 
     if (res.status === 401) {
+      // Сохраняем текущий URL перед логаутом
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('zachot_return_url', window.location.pathname + window.location.search)
+      }
+      
+      // Показываем уведомление
+      useUIStore.getState().addToast({
+        type: 'warning',
+        message: 'Сессия истекла. Пожалуйста, войдите снова.',
+        duration: 7000
+      })
+      
       performLogout()
     }
 
