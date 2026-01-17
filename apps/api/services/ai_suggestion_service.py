@@ -460,6 +460,117 @@ class AISuggestionService:
                     "isFallback": True
                 }
             ]
+        # Игры и киберспорт
+        elif any(keyword in topic_lower for keyword in ['dota', 'доту', 'cs:go', 'counter-strike', 'valorant', 'league of legends', 'lol', 'киберспорт', 'esports']):
+            fallback_sources = [
+                {
+                    "title": f"Игровая вики: {topic}",
+                    "author": "Игровое сообщество",
+                    "year": "2024",
+                    "url": "https://liquipedia.net/",
+                    "type": "website",
+                    "description": "Энциклопедия по киберспорту и играм",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                },
+                {
+                    "title": f"Fandom Gaming Wiki: {topic}",
+                    "author": "Fandom Community",
+                    "year": "2024",
+                    "url": "https://fandom.com/",
+                    "type": "website",
+                    "description": "Подробная вики по играм",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                },
+                {
+                    "title": f"Reddit Gaming: {topic}",
+                    "author": "Reddit Community",
+                    "year": "2024",
+                    "url": "https://reddit.com/",
+                    "type": "website",
+                    "description": "Обсуждения и материалы сообщества",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                }
+            ]
+        # Аниме и манга
+        elif any(keyword in topic_lower for keyword in ['аниме', 'anime', 'манга', 'manga', 'наруто', 'naruto', 'one piece', 'ван пис']):
+            fallback_sources = [
+                {
+                    "title": f"MyAnimeList: {topic}",
+                    "author": "MyAnimeList Community",
+                    "year": "2024",
+                    "url": "https://myanimelist.net/",
+                    "type": "website",
+                    "description": "База данных аниме и манги",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                },
+                {
+                    "title": f"Anime Wiki: {topic}",
+                    "author": "Fandom Community",
+                    "year": "2024",
+                    "url": "https://anime.fandom.com/",
+                    "type": "website",
+                    "description": "Энциклопедия аниме",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                },
+                {
+                    "title": f"AniDB: {topic}",
+                    "author": "AniDB Community",
+                    "year": "2024",
+                    "url": "https://anidb.net/",
+                    "type": "website",
+                    "description": "Подробная база данных аниме",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                }
+            ]
+        # Фильмы и сериалы
+        elif any(keyword in topic_lower for keyword in ['фильм', 'movie', 'сериал', 'series', 'кино', 'cinema', 'marvel', 'марвел', 'dc comics']):
+            fallback_sources = [
+                {
+                    "title": f"IMDb: {topic}",
+                    "author": "IMDb",
+                    "year": "2024",
+                    "url": "https://www.imdb.com/",
+                    "type": "website",
+                    "description": "Международная база данных фильмов",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                },
+                {
+                    "title": f"Кинопоиск: {topic}",
+                    "author": "Кинопоиск",
+                    "year": "2024",
+                    "url": "https://www.kinopoisk.ru/",
+                    "type": "website",
+                    "description": "Российская база данных фильмов и сериалов",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                },
+                {
+                    "title": f"Fandom Movies: {topic}",
+                    "author": "Fandom Community",
+                    "year": "2024",
+                    "url": "https://fandom.com/",
+                    "type": "website",
+                    "description": "Вики по фильмам и сериалам",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                }
+            ]
         # Другие игры/фантастика
         elif any(keyword in topic_lower for keyword in ['игра', 'game', 'фантастика', 'sci-fi', 'фэнтези', 'fantasy']):
             fallback_sources = [
@@ -486,16 +597,50 @@ class AISuggestionService:
                     "isFallback": True
                 }
             ]
-        # Общий fallback
+        # Общий fallback - для ЛЮБОЙ темы
         else:
+            # Создаем универсальные источники, которые подойдут для любой темы
             fallback_sources = [
                 {
+                    "title": f"Википедия: {topic}",
+                    "author": "Сообщество Википедии",
+                    "year": "2024",
+                    "url": "https://ru.wikipedia.org/",
+                    "type": "website",
+                    "description": "Энциклопедическая статья по теме",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                },
+                {
                     "title": f"Материалы по теме: {topic}",
-                    "author": "Различные авторы",
+                    "author": "Интернет-ресурсы",
                     "year": "2024",
                     "url": "https://scholar.google.com/",
                     "type": "website",
-                    "description": "Рекомендуется добавить источники вручную",
+                    "description": "Академические источники и публикации",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                },
+                {
+                    "title": f"Онлайн-библиотека: {topic}",
+                    "author": "Электронные библиотеки",
+                    "year": "2024",
+                    "url": "https://cyberleninka.ru/",
+                    "type": "website",
+                    "description": "Научные статьи и публикации",
+                    "isAiSelected": True,
+                    "isVerified": False,
+                    "isFallback": True
+                },
+                {
+                    "title": f"Тематические ресурсы: {topic}",
+                    "author": "Специализированные сайты",
+                    "year": "2024",
+                    "url": "https://www.google.com/search?q=" + topic.replace(" ", "+"),
+                    "type": "website",
+                    "description": "Рекомендуется заменить на конкретные источники",
                     "isAiSelected": True,
                     "isVerified": False,
                     "isFallback": True
