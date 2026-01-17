@@ -44,7 +44,7 @@ class HumanizationService:
             return_usage=True
         )
         
-        if not result or not result[0]:
+        if not result or not isinstance(result, tuple) or len(result) != 2 or not isinstance(result[0], str) or not result[0]:
             logger.warning("Humanization failed, returning original text")
             return text, {}
         

@@ -114,7 +114,7 @@ class TaskService:
             return_usage=True
         )
         
-        if not result or not result[0]:
+        if not result or not isinstance(result, tuple) or len(result) != 2 or not isinstance(result[0], str) or not result[0]:
             raise ValueError("Failed to get solution from AI")
         
         result_text, usage_info = result

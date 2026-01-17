@@ -33,7 +33,7 @@ class QualityControlService:
             return_usage=True
         )
         
-        if result and result[0]:
+        if result and isinstance(result, tuple) and len(result) == 2 and isinstance(result[0], str) and result[0]:
             final_content, usage_info = result
             logger.info(f"QC applied, final length: {len(final_content)}")
             return final_content, usage_info
