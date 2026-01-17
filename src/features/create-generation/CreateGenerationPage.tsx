@@ -249,12 +249,28 @@ function CreateGenerationPage() {
     
     isSavingRef.current = true // Устанавливаем флаг сохранения
 
-    const draftData = {
+    const currentStep = stepOverride ?? currentStepRef.current
+    
+    // Если генерация уже запущена (шаг >= 6), не отправляем input_payload
+    // так как бэкенд не позволяет изменять параметры после запуска
+    const isGenerationRunning = currentStep >= 6
+    
+    const draftData: any = {
       module: currentForm.type.toUpperCase(),
       work_type: currentForm.workType,
       complexity_level: currentForm.complexityLevel,
       humanity_level: convertHumanityLevel(currentForm.humanityLevel),
-      input_payload: {
+      settings_payload: {
+        structure: currentForm.structure,
+        sources: currentForm.sources,
+        formatting: currentForm.formatting,
+        title_page: currentForm.titlePage,
+      }
+    }
+    
+    // Добавляем input_payload только если генерация ещё не запущена
+    if (!isGenerationRunning) {
+      draftData.input_payload = {
         topic: currentForm.input,
         goal: currentForm.goal,
         idea: currentForm.idea,
@@ -264,13 +280,7 @@ function CreateGenerationPage() {
         use_ai_images: currentForm.useAiImages,
         has_files: currentForm.taskFiles.length > 0,
         use_smart_processing: currentForm.useSmartProcessing,
-        current_step: stepOverride ?? currentStepRef.current
-      },
-      settings_payload: {
-        structure: currentForm.structure,
-        sources: currentForm.sources,
-        formatting: currentForm.formatting,
-        title_page: currentForm.titlePage,
+        current_step: currentStep
       }
     }
 
@@ -283,6 +293,9 @@ function CreateGenerationPage() {
             console.warn('[SaveDraft] Generation not found on server, clearing ref')
             activeGenerationRef.current = null
             // We'll create it on next attempt or when isCreatingRef is false
+          } else if (error instanceof ApiError && error.status === 409) {
+            // Игнорируем ошибку 409 (генерация уже запущена) - это нормально
+            console.warn('[SaveDraft] Generation already running, skipping update')
           } else {
             throw error
           }
