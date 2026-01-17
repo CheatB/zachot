@@ -9,12 +9,13 @@ from ..schemas import (
     GenerationCostResponse,
     ActionRequest,
 )
-from ..database import User as UserDB
+from ..database import SessionLocal, User as UserDB
 from ..services.generation_service import generation_service
 from ..services.export_service import export_service
 from ..storage import generation_store
 from ..dependencies import get_current_user
 from ..middleware.rate_limiter import limiter, RateLimits
+from packages.billing.credits import get_credit_cost
 
 router = APIRouter(prefix="/generations", tags=["generations"])
 
