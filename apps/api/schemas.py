@@ -99,6 +99,14 @@ class GenerationsResponse(BaseModel):
     items: list[GenerationResponse]
 
 
+class GenerationCostResponse(BaseModel):
+    """Информация о стоимости генерации"""
+    required_credits: int
+    available_credits: int
+    can_generate: bool
+    work_type: str
+
+
 class UserSubscriptionInfo(BaseModel):
     planName: str
     status: Literal["active", "expiring", "paused"]

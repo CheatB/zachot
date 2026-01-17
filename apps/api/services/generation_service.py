@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 from datetime import datetime
 from fastapi import HTTPException, status
 
-from ..database import SessionLocal, User as UserDB
+from ..database import SessionLocal, User as UserDB, CreditTransaction
 from ..storage import generation_store
 from packages.core_domain import Generation, GenerationStateMachine
 from packages.core_domain.enums import GenerationStatus
@@ -16,7 +16,9 @@ class GenerationService:
     async def create_draft(user: UserDB, module: str, input_payload: dict, 
                            work_type: str = None, complexity: str = "student", 
                            humanity: str = "medium", settings: dict = None) -> Generation:
-        # 1. Проверяем баланс кредитов
+        """Создает черновик БЕЗ списания кредитов"""
+        
+        # 1. Только ПРОВЕРЯЕМ баланс (не списываем)
         work_type_val = work_type or "other"
         required_credits = get_credit_cost(work_type_val)
         
@@ -27,14 +29,14 @@ class GenerationService:
                 
             credits_balance = db_user.credits_balance or 0
             
+            # Просто логируем предупреждение, но НЕ блокируем создание черновика
             if credits_balance < required_credits:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Недостаточно кредитов. Требуется {format_credits_text(required_credits)}, "
-                           f"доступно: {format_credits_text(credits_balance)}."
+                logger.warning(
+                    f"User {user.id} has insufficient credits ({credits_balance}) "
+                    f"for {work_type} (requires {required_credits})"
                 )
 
-            # 2. Создаем объект генерации
+            # 2. Создаем черновик
             generation_id = uuid4()
             now = datetime.now()
             generation = Generation(
@@ -55,13 +57,8 @@ class GenerationService:
             
             saved_generation = generation_store.create(generation)
             
-            # 3. Списываем кредиты
-            db_user.credits_balance -= required_credits
-            db_user.credits_used = (db_user.credits_used or 0) + required_credits
-            db_user.generations_used = (db_user.generations_used or 0) + 1
-            session.commit()
-            
-            logger.info(f"Created generation {generation_id} for user {user.id}. Credits deducted: {required_credits}")
+            # НЕ списываем кредиты!
+            logger.info(f"Created draft {generation_id} for user {user.id} (no credits charged yet)")
             return saved_generation
 
     @staticmethod
@@ -95,6 +92,71 @@ class GenerationService:
             return generation
             
         return generation_store.update(generation_id, **update_data)
+
+    @staticmethod
+    async def confirm_and_charge(generation_id: UUID, user: UserDB) -> Generation:
+        """Подтверждает генерацию и списывает кредиты"""
+        
+        generation = generation_store.get(generation_id)
+        if not generation:
+            raise HTTPException(status_code=404, detail="Generation not found")
+        
+        if generation.user_id != user.id:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        if generation.status != GenerationStatus.DRAFT:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Generation must be in DRAFT status, current: {generation.status}"
+            )
+        
+        # Проверяем и списываем кредиты
+        work_type_val = generation.work_type or "other"
+        required_credits = get_credit_cost(work_type_val)
+        
+        with SessionLocal() as session:
+            db_user = session.query(UserDB).filter(UserDB.id == user.id).first()
+            if not db_user:
+                raise HTTPException(status_code=404, detail="User not found")
+            
+            credits_balance = db_user.credits_balance or 0
+            
+            if credits_balance < required_credits:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Недостаточно кредитов. Требуется {format_credits_text(required_credits)}, "
+                           f"доступно: {format_credits_text(credits_balance)}."
+                )
+            
+            # Списываем кредиты
+            db_user.credits_balance -= required_credits
+            db_user.credits_used = (db_user.credits_used or 0) + required_credits
+            db_user.generations_used = (db_user.generations_used or 0) + 1
+            
+            # Создаём транзакцию
+            transaction = CreditTransaction(
+                user_id=user.id,
+                amount=-required_credits,
+                balance_after=db_user.credits_balance,
+                transaction_type="DEBIT",
+                reason=work_type_val,
+                generation_id=generation_id,
+            )
+            session.add(transaction)
+            session.commit()
+            
+            logger.info(
+                f"Charged {required_credits} credits for generation {generation_id}. "
+                f"New balance: {db_user.credits_balance}"
+            )
+        
+        # Переводим генерацию в статус RUNNING
+        updated_generation = generation_store.update(
+            generation_id, 
+            status=GenerationStatus.RUNNING
+        )
+        
+        return updated_generation
 
     @staticmethod
     async def perform_action(generation_id: UUID, user_id: UUID, action: str) -> Generation:

@@ -54,6 +54,37 @@ async def get_me(authorization: str = Header(None)):
                 "streamingAvailable": True,
                 "maxTokensPerRequest": 8000 if (user.plan_name or "").startswith("BASE") else 16000,
                 "priority": "normal" if (user.plan_name or "").startswith("BASE") else "high",
-                "resultPersistence": True
-            }
-        )
+            "resultPersistence": True
+        }
+    )
+
+
+@router.get("/referral-info")
+async def get_referral_info(authorization: str = Header(None)):
+    """
+    Возвращает реферальную информацию пользователя.
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+        
+    token = authorization.split(" ")[1]
+    try:
+        user_id = UUID(token)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid token format")
+
+    with SessionLocal() as session:
+        user = session.execute(select(UserDB).where(UserDB.id == user_id)).scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+
+        # Считаем заработанные кредиты через реферальную программу
+        # Предполагаем, что за каждого приглашенного друга = 1 кредит
+        credits_earned = user.referrals_count or 0
+
+        return {
+            "referral_code": user.referral_code or "",
+            "referrals_count": user.referrals_count or 0,
+            "credits_earned": credits_earned
+        }

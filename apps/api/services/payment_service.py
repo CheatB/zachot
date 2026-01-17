@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from packages.billing.tbank_provider import get_tbank_provider, TBankPaymentProvider, TBankConfig
 from packages.billing.fake_provider import FakePaymentProvider
-from packages.database.src.models import Payment, Subscription, User
+from packages.database.src.models import Payment, Subscription, User, CreditTransaction
 
 logger = logging.getLogger(__name__)
 
@@ -213,10 +213,13 @@ class PaymentService:
             payment.rebill_id = rebill_id
             logger.info(f"[PaymentService] Saved RebillId: {rebill_id[:8]}...")
         
-        # Если платёж подтверждён - активируем подписку
+        # Если платёж подтверждён - активируем подписку или начисляем кредиты
         if status == "CONFIRMED":
             payment.confirmed_at = datetime.utcnow()
-            await self._activate_subscription(payment)
+            if payment.payment_type == "SUBSCRIPTION":
+                await self._activate_subscription(payment)
+            elif payment.payment_type == "CREDITS":
+                await self._add_credits(payment)
         
         self.db.commit()
         logger.info(f"[PaymentService] Notification processed: status={status}")
@@ -293,6 +296,49 @@ class PaymentService:
             logger.info(f"[PaymentService] Updated user limits: generations={plan['generations_limit']}")
         
         self.db.commit()
+    
+    async def _add_credits(self, payment: Payment) -> None:
+        """
+        Начисляет кредиты пользователю после оплаты.
+        
+        Args:
+            payment: Объект платежа
+        """
+        user_id = payment.user_id
+        metadata = payment.metadata or {}
+        credits_to_add = metadata.get("credits", 0)
+        package_id = metadata.get("package_id", "unknown")
+        
+        if credits_to_add <= 0:
+            logger.error(f"[PaymentService] Invalid credits amount: {credits_to_add}")
+            return
+        
+        # Начисляем кредиты
+        user = self.db.query(User).filter(User.id == user_id).first()
+        if not user:
+            logger.error(f"[PaymentService] User {user_id} not found")
+            return
+        
+        old_balance = user.credits_balance or 0
+        new_balance = old_balance + credits_to_add
+        user.credits_balance = new_balance
+        
+        # Создаём транзакцию
+        transaction = CreditTransaction(
+            user_id=user_id,
+            amount=credits_to_add,
+            balance_after=new_balance,
+            transaction_type="CREDIT",
+            reason=f"Покупка пакета: {package_id}",
+            payment_id=payment.id,
+        )
+        self.db.add(transaction)
+        self.db.commit()
+        
+        logger.info(
+            f"[PaymentService] Added {credits_to_add} credits to user {user_id}. "
+            f"Balance: {old_balance} → {new_balance}"
+        )
     
     async def process_recurring_payments(self) -> dict:
         """

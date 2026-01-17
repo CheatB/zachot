@@ -6,6 +6,7 @@ from ..schemas import (
     GenerationUpdateRequest,
     GenerationResponse,
     GenerationsResponse,
+    GenerationCostResponse,
     ActionRequest,
 )
 from ..database import User as UserDB
@@ -102,6 +103,49 @@ async def execute_action(
         action=request.action
     )
     return GenerationResponse.model_validate(saved_generation)
+
+
+@router.get("/{generation_id}/cost", response_model=GenerationCostResponse)
+async def get_generation_cost(
+    generation_id: UUID,
+    user: UserDB = Depends(get_current_user)
+) -> GenerationCostResponse:
+    """Возвращает стоимость генерации и баланс пользователя"""
+    from packages.billing.credits import get_credit_cost
+    
+    generation = generation_store.get(generation_id)
+    if not generation or generation.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Generation not found")
+    
+    work_type = generation.work_type or "other"
+    required_credits = get_credit_cost(work_type)
+    
+    with SessionLocal() as session:
+        db_user = session.query(UserDB).filter(UserDB.id == user.id).first()
+        available_credits = db_user.credits_balance or 0
+    
+    return GenerationCostResponse(
+        required_credits=required_credits,
+        available_credits=available_credits,
+        can_generate=available_credits >= required_credits,
+        work_type=work_type
+    )
+
+
+@router.post("/{generation_id}/confirm", response_model=GenerationResponse)
+async def confirm_generation(
+    generation_id: UUID,
+    user: UserDB = Depends(get_current_user)
+) -> GenerationResponse:
+    """
+    Подтверждает генерацию и списывает кредиты.
+    Переводит статус из DRAFT в RUNNING.
+    """
+    confirmed_generation = await generation_service.confirm_and_charge(
+        generation_id=generation_id,
+        user=user
+    )
+    return GenerationResponse.model_validate(confirmed_generation)
 
 
 @router.delete("/{generation_id}", status_code=204)

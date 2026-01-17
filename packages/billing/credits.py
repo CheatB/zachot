@@ -59,6 +59,29 @@ CREDITS_PER_PERIOD: Dict[str, int] = {
 }
 
 
+# Пакеты кредитов для разовой покупки (без подписки)
+CREDIT_PACKAGES: Dict[str, Dict[str, any]] = {
+    "package_5": {
+        "credits": 5,
+        "price_rub": 599,
+        "name": "5 кредитов",
+        "description": "Для небольших работ"
+    },
+    "package_10": {
+        "credits": 10,
+        "price_rub": 1199,
+        "name": "10 кредитов",
+        "description": "Оптимальный выбор"
+    },
+    "package_20": {
+        "credits": 20,
+        "price_rub": 1999,
+        "name": "20 кредитов",
+        "description": "Максимальная выгода"
+    }
+}
+
+
 def get_credit_cost(work_type: str) -> int:
     """
     Возвращает стоимость генерации в кредитах.
@@ -149,4 +172,39 @@ def format_credits_text(credits: int) -> str:
         return f"{credits} кредита"
     else:
         return f"{credits} кредитов"
+
+
+def get_credit_package(package_id: str) -> dict:
+    """
+    Возвращает информацию о пакете кредитов.
+    
+    Args:
+        package_id: ID пакета (package_5, package_10, package_20)
+        
+    Returns:
+        Словарь с информацией о пакете
+        
+    Examples:
+        >>> get_credit_package("package_5")
+        {'credits': 5, 'price_rub': 599, 'name': '5 кредитов', 'description': 'Для небольших работ'}
+    """
+    return CREDIT_PACKAGES.get(package_id, CREDIT_PACKAGES["package_5"])
+
+
+def get_all_credit_packages() -> list:
+    """
+    Возвращает список всех доступных пакетов кредитов.
+    
+    Returns:
+        Список словарей с информацией о пакетах
+        
+    Examples:
+        >>> packages = get_all_credit_packages()
+        >>> len(packages)
+        3
+    """
+    return [
+        {"id": key, **value} 
+        for key, value in CREDIT_PACKAGES.items()
+    ]
 

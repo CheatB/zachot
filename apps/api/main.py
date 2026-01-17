@@ -18,7 +18,7 @@ from slowapi.errors import RateLimitExceeded
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 from apps.api.database import init_db
-from apps.api.routers import payments, auth, generations, admin, me, health, jobs, ai_editing, sources, referrals
+from apps.api.routers import payments, auth, generations, admin, me, health, jobs, ai_editing, sources, referrals, credits
 from apps.api.middleware.rate_limiter import limiter, rate_limit_exceeded_handler
 from apps.api.middleware.metrics_middleware import MetricsMiddleware
 
@@ -72,6 +72,7 @@ app.include_router(admin.router)
 app.include_router(me.router)
 app.include_router(jobs.router)
 app.include_router(referrals.router)
+app.include_router(credits.router)
 
 
 @app.on_event("startup")
