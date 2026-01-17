@@ -156,6 +156,18 @@ class GenerationService:
             status=GenerationStatus.RUNNING
         )
         
+        # Запускаем фоновую задачу генерации
+        from apps.api.tasks.generation_tasks import generate_text_content, solve_task_celery
+        
+        if updated_generation.module == GenerationModule.TEXT:
+            logger.info(f"Starting text generation task for {generation_id}")
+            generate_text_content.delay(str(generation_id))
+        elif updated_generation.module == GenerationModule.TASK:
+            logger.info(f"Starting task solving for {generation_id}")
+            solve_task_celery.delay(str(generation_id))
+        else:
+            logger.warning(f"Unknown module type for generation {generation_id}: {updated_generation.module}")
+        
         return updated_generation
 
     @staticmethod
