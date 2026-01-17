@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 from ..database import SessionLocal, User as UserDB, CreditTransaction
 from ..storage import generation_store
 from packages.core_domain import Generation, GenerationStateMachine
-from packages.core_domain.enums import GenerationStatus
+from packages.core_domain.enums import GenerationStatus, GenerationModule
 from packages.billing.credits import get_credit_cost, format_credits_text
 
 logger = logging.getLogger(__name__)
