@@ -186,7 +186,7 @@ function Sidebar({ isOpen, onClose, isAuthenticated, currentPath }: SidebarProps
 
                 {!isAdminRoute && (
                   <div className="app-sidebar__referral-top">
-                    <button className="referral-block" onClick={() => navigate('/referral')}>
+                    <button className="referral-block" onClick={() => navigate('/referrals')}>
                       <span className="referral-icon">🎁</span>
                       <div className="referral-content">
                         <span className="referral-title">Реферальная ссылка</span>
