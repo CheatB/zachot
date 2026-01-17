@@ -121,12 +121,12 @@ function ConfirmCostModal({
           </button>
           
           <button 
-            className="btn-primary" 
+            className={costInfo.can_generate ? "btn-success" : "btn-primary"}
             onClick={handleConfirm}
             disabled={confirming}
           >
             {costInfo.can_generate 
-              ? (confirming ? 'Подтверждаем...' : 'Подтвердить и создать')
+              ? (confirming ? 'Создаём...' : 'Создать')
               : 'Пополнить баланс'
             }
           </button>

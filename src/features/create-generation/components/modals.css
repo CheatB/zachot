@@ -1,5 +1,33 @@
 /* Стили для модальных окон покупки кредитов */
 
+/* Зелёная кнопка для подтверждения создания */
+.btn-success {
+  background: var(--color-success, #10b981);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: var(--color-success-hover, #059669);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-success:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -10,7 +38,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999; /* Увеличен z-index, чтобы затемнять весь экран включая сайдбар */
   backdrop-filter: blur(4px);
   animation: fadeIn 0.2s ease-out;
 }
@@ -94,16 +122,19 @@
 }
 
 .confirm-cost-modal .credits-amount {
-  color: #0066ff;
+  color: #212529; /* Чёрный цвет для стоимости */
   font-size: 18px;
+  font-weight: 600;
 }
 
 .confirm-cost-modal .balance-ok {
-  color: #28a745;
+  color: #212529; /* Чёрный цвет для баланса */
+  font-weight: 600;
 }
 
 .confirm-cost-modal .balance-low {
-  color: #dc3545;
+  color: #212529; /* Чёрный цвет для баланса */
+  font-weight: 600;
 }
 
 .confirm-cost-modal .balance-after {
