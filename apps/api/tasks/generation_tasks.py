@@ -8,7 +8,7 @@ from apps.api.celery_app import celery_app
 from apps.api.storage import generation_store
 from apps.api.services.text_generation_service import text_generation_service
 from apps.api.services.quality_control_service import quality_control_service
-from apps.api.services.humanization_service import humanization_service
+# humanization_service больше не используется - humanity_level учитывается в промпте генерации
 from apps.api.services.task_service import task_service
 
 logger = logging.getLogger(__name__)
@@ -72,18 +72,11 @@ def generate_text_content(self, generation_id: str):
                     quality_control_service.check_quality(full_text)
                 )
             
-            # 5. Очеловечивание
-            self.update_state(state="PROGRESS", meta={"step": "humanize", "progress": 90})
-            humanity_level = generation.input_payload.get("humanity_level", 50)
-            if isinstance(humanity_level, str):
-                humanity_level = 0 if humanity_level == "low" else (100 if humanity_level == "high" else 50)
+            # Примечание: Этап "Очеловечивания" убран!
+            # humanity_level учитывается на шаге 3 (генерация контента) через промпт.
+            # Claude 3.5 Sonnet генерирует текст сразу в нужном стиле.
             
-            if humanity_level > 0:
-                full_text, _ = loop.run_until_complete(
-                    humanization_service.humanize_text(full_text, humanity_level)
-                )
-            
-            # 6. Сохранение результата
+            # 5. Сохранение результата
             generation_store.update(
                 generation_id,
                 result_content=full_text,

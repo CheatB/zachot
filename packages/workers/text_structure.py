@@ -6,7 +6,7 @@ from .async_base import AsyncBaseWorker
 from apps.api.storage import generation_store
 from apps.api.services.text_generation_service import text_generation_service
 from apps.api.services.quality_control_service import quality_control_service
-from apps.api.services.humanization_service import humanization_service
+# humanization_service больше не используется - humanity_level учитывается в промпте генерации
 
 logger = logging.getLogger(__name__)
 
@@ -93,17 +93,11 @@ class TextStructureWorker(AsyncBaseWorker):
                 full_text, qc_usage = await quality_control_service.check_quality(full_text)
                 usage_metadata.append({"stage": "qc", **qc_usage})
             
-            # 6. Очеловечивание (если требуется)
-            humanity_level = generation.input_payload.get('humanity_level', 50)
-            if isinstance(humanity_level, str):
-                humanity_level = 0 if humanity_level == 'low' else (100 if humanity_level == 'high' else 50)
+            # Примечание: Этап "Очеловечивания" убран!
+            # humanity_level учитывается на Step 3 (генерация контента) через промпт.
+            # Claude 3.5 Sonnet генерирует текст сразу в нужном стиле.
             
-            if humanity_level > 0:
-                logger.info(f"Step 5: Humanizing text (level: {humanity_level})...")
-                full_text, humanize_usage = await humanization_service.humanize_text(full_text, humanity_level)
-                usage_metadata.append({"stage": "humanize", **humanize_usage})
-            
-            # 7. Сохранение результата
+            # 6. Сохранение результата
             generation_store.update(
                 job.generation_id, 
                 result_content=full_text, 

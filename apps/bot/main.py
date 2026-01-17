@@ -46,15 +46,19 @@ async def command_start_handler(message: Message) -> None:
                     tg_id_str = str(message.from_user.id)
                     user = None
                     
+                    # Сначала проверяем по user_id из токена (приоритет)
                     if auth_token.user_id:
                         logging.info(f"Token has user_id: {auth_token.user_id}")
                         user = session.query(User).filter(User.id == auth_token.user_id).first()
-                    else:
-                        logging.info(f"Token has no user_id, looking up by tg_id: {tg_id_str}")
+                    
+                    # Если не нашли по user_id, ищем по telegram_id
+                    if not user:
+                        logging.info(f"Looking up by tg_id: {tg_id_str}")
                         user = session.query(User).filter(User.telegram_id == tg_id_str).first()
                     
                     # 3. Если пользователя нет — создаем его
                     if not user:
+                        logging.info(f"User not found, creating new user")
                         user = User(
                             id=uuid4(),
                             email=f"tg_{message.from_user.id}@zachet.tech",
@@ -64,10 +68,10 @@ async def command_start_handler(message: Message) -> None:
                         session.add(user)
                         logging.info(f"Created new user: {user.id}")
                     else:
-                        # Обновляем данные если нужно
+                        # ВАЖНО: Только обновляем telegram данные, НЕ трогая role, credits и другие поля!
+                        logging.info(f"Using existing user: {user.id} (role: {user.role}, credits: {user.credits_balance})")
                         user.telegram_id = tg_id_str
                         user.telegram_username = message.from_user.username
-                        logging.info(f"Using existing user: {user.id}")
                     
                     # Привязываем пользователя к токену для фронтенда
                     auth_token.user_id = user.id
