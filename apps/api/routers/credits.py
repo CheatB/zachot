@@ -24,6 +24,7 @@ class CreditPackageResponse(BaseModel):
     price_rub: int
     name: str
     description: str
+    is_perpetual: bool = True
 
 
 class PurchaseCreditsRequest(BaseModel):
@@ -39,11 +40,10 @@ class PurchaseCreditsResponse(BaseModel):
 
 
 @router.get("/packages", response_model=List[CreditPackageResponse])
-async def get_credit_packages_endpoint(
-    user: UserDB = Depends(get_current_user)
-) -> List[CreditPackageResponse]:
+async def get_credit_packages_endpoint() -> List[CreditPackageResponse]:
     """
     Возвращает список доступных пакетов кредитов.
+    Публичный endpoint - не требует авторизации.
     """
     packages = get_all_credit_packages()
     return [CreditPackageResponse(**pkg) for pkg in packages]
