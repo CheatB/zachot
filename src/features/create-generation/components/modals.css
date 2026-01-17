@@ -1,22 +1,23 @@
 /* Стили для модальных окон покупки кредитов */
 
-/* Зелёная кнопка для подтверждения создания */
+/* Зелёная кнопка для подтверждения создания - используем дизайн-токены */
 .btn-success {
-  background: var(--color-success, #10b981);
-  color: white;
+  background: var(--color-success-base, #16a34a);
+  color: var(--color-text-inverse, white);
   border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  padding: var(--spacing-12, 0.75rem) var(--spacing-24, 1.5rem);
+  border-radius: var(--radius-md, 10px);
+  font-size: var(--font-size-base, 1rem);
+  font-weight: var(--font-weight-semibold, 600);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--motion-duration-base, 180ms) var(--motion-easing-out, cubic-bezier(0.16, 1, 0.3, 1));
+  box-shadow: var(--elevation-1);
 }
 
 .btn-success:hover:not(:disabled) {
-  background: var(--color-success-hover, #059669);
+  background: var(--color-success-dark, #15803d);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 12px var(--color-accent-shadow, rgba(22, 163, 74, 0.4));
 }
 
 .btn-success:active:not(:disabled) {
@@ -34,13 +35,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--color-surface-overlay, rgba(2, 6, 23, 0.5));
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999; /* Увеличен z-index, чтобы затемнять весь экран включая сайдбар */
+  z-index: var(--z-index-modal, 2000); /* Используем токен z-index для модалок */
   backdrop-filter: blur(4px);
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn var(--motion-duration-base, 180ms) ease-out;
 }
 
 @keyframes fadeIn {
@@ -53,15 +54,15 @@
 }
 
 .modal-content {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
+  background: var(--color-surface-elevated, white);
+  border-radius: var(--radius-lg, 14px);
+  padding: var(--spacing-32, 2rem);
   max-width: 500px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: slideUp 0.3s ease-out;
+  box-shadow: var(--elevation-4);
+  animation: slideUp var(--motion-duration-slow, 220ms) var(--motion-easing-out, cubic-bezier(0.16, 1, 0.3, 1));
   position: relative;
 }
 
@@ -95,26 +96,28 @@
 }
 
 .modal-content h2 {
-  margin: 0 0 16px 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: #212529;
+  margin: 0 0 var(--spacing-16, 1rem) 0;
+  font-size: var(--font-size-2xl, 1.75rem);
+  font-weight: var(--font-weight-heading, 650);
+  color: var(--color-text-primary, #020617);
+  line-height: var(--line-height-tight, 1.05);
 }
 
 /* ConfirmCostModal */
 .confirm-cost-modal .cost-info {
-  margin: 24px 0;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 12px;
+  margin: var(--spacing-24, 1.5rem) 0;
+  padding: var(--spacing-24, 1.5rem);
+  background: var(--color-neutral-10, #f8fafc);
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid var(--color-border-light, #eef0f2);
 }
 
 .confirm-cost-modal .info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #e9ecef;
+  padding: var(--spacing-12, 0.75rem) 0;
+  border-bottom: 1px solid var(--color-border-light, #eef0f2);
 }
 
 .confirm-cost-modal .info-row:last-child {
@@ -122,27 +125,32 @@
 }
 
 .confirm-cost-modal .credits-amount {
-  color: #212529; /* Чёрный цвет для стоимости */
-  font-size: 18px;
-  font-weight: 600;
+  color: var(--color-text-primary, #020617); /* Используем токен для основного текста */
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
 }
 
 .confirm-cost-modal .balance-ok {
-  color: #212529; /* Чёрный цвет для баланса */
-  font-weight: 600;
+  color: var(--color-text-primary, #020617); /* Используем токен для основного текста */
+  font-weight: var(--font-weight-semibold, 600);
 }
 
 .confirm-cost-modal .balance-low {
-  color: #212529; /* Чёрный цвет для баланса */
-  font-weight: 600;
+  color: var(--color-text-primary, #020617); /* Используем токен для основного текста */
+  font-weight: var(--font-weight-semibold, 600);
 }
 
 .confirm-cost-modal .balance-after {
-  margin-top: 8px;
-  padding-top: 16px;
-  border-top: 2px solid #dee2e6;
-  font-size: 14px;
-  color: #6c757d;
+  margin-top: var(--spacing-8, 0.5rem);
+  padding-top: var(--spacing-16, 1rem);
+  border-top: 2px solid var(--color-border-base, #cbd5f5);
+  font-size: var(--font-size-sm, 0.9375rem);
+  color: var(--color-text-secondary, #6b7280);
+}
+
+.confirm-cost-modal .balance-after strong {
+  color: var(--color-text-primary, #020617); /* Чёрный цвет для суммы */
+  font-weight: var(--font-weight-semibold, 600);
 }
 
 .confirm-cost-modal .warning-message {
@@ -307,23 +315,25 @@
 .modal-actions .btn-primary,
 .modal-actions .btn-secondary {
   flex: 1;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  padding: var(--spacing-12, 0.75rem) var(--spacing-24, 1.5rem);
+  border-radius: var(--radius-md, 10px);
+  font-size: var(--font-size-base, 1rem);
+  font-weight: var(--font-weight-semibold, 600);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--motion-duration-base, 180ms) var(--motion-easing-out, cubic-bezier(0.16, 1, 0.3, 1));
   border: none;
 }
 
 .modal-actions .btn-primary {
-  background: #0066ff;
-  color: white;
+  background: var(--color-accent-base, #16a34a);
+  color: var(--color-text-inverse, white);
+  box-shadow: var(--elevation-1);
 }
 
 .modal-actions .btn-primary:hover:not(:disabled) {
-  background: #0052cc;
+  background: var(--color-accent-hover, #15803d);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--color-accent-shadow, rgba(22, 163, 74, 0.4));
 }
 
 .modal-actions .btn-primary:disabled {
@@ -332,19 +342,20 @@
 }
 
 .modal-actions .btn-primary.large {
-  padding: 16px 32px;
-  font-size: 18px;
+  padding: var(--spacing-16, 1rem) var(--spacing-32, 2rem);
+  font-size: var(--font-size-lg, 1.125rem);
 }
 
 .modal-actions .btn-secondary {
-  background: white;
-  color: #6c757d;
-  border: 2px solid #dee2e6;
+  background: var(--color-surface-elevated, white);
+  color: var(--color-text-secondary, #6b7280);
+  border: 2px solid var(--color-border-base, #cbd5f5);
 }
 
 .modal-actions .btn-secondary:hover:not(:disabled) {
-  border-color: #adb5bd;
-  color: #495057;
+  border-color: var(--color-border-dark, #94a3b8);
+  color: var(--color-text-primary, #020617);
+  background: var(--color-neutral-10, #f8fafc);
 }
 
 .modal-actions .btn-text {
