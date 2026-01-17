@@ -20,20 +20,20 @@ type Period = 'month' | 'quarter' | 'year'
 const PLAN_INFO: Record<Period, { name: string; price: number; priceTotal: number; months: number }> = {
   month: {
     name: '1 месяц',
-    price: 499,
-    priceTotal: 499,
+    price: 799,
+    priceTotal: 799,
     months: 1,
   },
   quarter: {
     name: '3 месяца',
-    price: 449,
-    priceTotal: 1347,
+    price: 719,
+    priceTotal: 2157,
     months: 3,
   },
   year: {
     name: '12 месяцев',
-    price: 424,
-    priceTotal: 5088,
+    price: 679,
+    priceTotal: 8148,
     months: 12,
   },
 }

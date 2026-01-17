@@ -76,7 +76,7 @@ class TextStructureWorker(AsyncBaseWorker):
 
             # 4. Генерация контента (поглавно)
             logger.info("Step 3: Generating full text...")
-            full_text, usage_metadata = await text_generation_service.generate_content_by_chapters(
+            full_text = await text_generation_service.generate_content_by_chapters(
                 generation, structure, sources
             )
             
@@ -101,7 +101,7 @@ class TextStructureWorker(AsyncBaseWorker):
             generation_store.update(
                 job.generation_id, 
                 result_content=full_text, 
-                status="completed",
+                status="GENERATED",
                 usage_metadata=usage_metadata
             )
             

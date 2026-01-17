@@ -72,25 +72,21 @@ function BillingPage() {
     }
   }, [])
 
-  const basePrice = 499
-
   const pricingData = useMemo(() => {
     switch (period) {
       case 'quarter': {
-        const quarterMonthly = Math.round(basePrice * 0.9)
         return {
-          monthly: quarterMonthly,
-          total: quarterMonthly * 3,
+          monthly: 719,
+          total: 2157,
           showTotal: true,
           showBadge: true,
           description: 'Подписка "Зачёт" — 3 месяца',
         }
       }
       case 'year': {
-        const yearMonthly = Math.round(basePrice * 0.85)
         return {
-          monthly: yearMonthly,
-          total: yearMonthly * 12,
+          monthly: 679,
+          total: 8148,
           showTotal: true,
           showBadge: false,
           description: 'Подписка "Зачёт" — 12 месяцев',
@@ -98,14 +94,14 @@ function BillingPage() {
       }
       default:
         return {
-          monthly: basePrice,
-          total: basePrice,
+          monthly: 799,
+          total: 799,
           showTotal: false,
           showBadge: false,
           description: 'Подписка "Зачёт" — 1 месяц',
         }
     }
-  }, [period, basePrice])
+  }, [period])
 
   const handleCheckout = () => {
     if (!isAuthenticated) return
@@ -439,12 +435,12 @@ function BillingPage() {
                   <span className="feature-item__text">Онлайн-редактор и выгрузка в файл</span>
                 </div>
                 {period !== 'month' && (
-                  <div className="feature-item feature-item--highlight">
-                    <span className="feature-item__icon">💰</span>
-                    <span className="feature-item__text">
-                      Экономия {period === 'quarter' ? '150' : '900'} ₽
-                    </span>
-                  </div>
+                <div className="feature-item feature-item--highlight">
+                  <span className="feature-item__icon">💰</span>
+                  <span className="feature-item__text">
+                    Экономия {period === 'quarter' ? '240' : '1440'} ₽
+                  </span>
+                </div>
                 )}
               </div>
 
