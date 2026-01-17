@@ -64,7 +64,7 @@ class TaskWorker(AsyncBaseWorker):
             generation_store.update(
                 job.generation_id, 
                 result_content=result_text, 
-                status="completed",
+                status="GENERATED",
                 usage_metadata=[usage_info]
             )
             logger.info("Task solved successfully")
