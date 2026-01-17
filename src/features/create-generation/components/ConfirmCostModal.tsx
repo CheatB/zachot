@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getGenerationCost, confirmGeneration, type GenerationCostInfo } from '@/shared/api/generations'
+import './modals.css'
 
 interface ConfirmCostModalProps {
   generationId: string

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getCreditPackages, purchaseCredits, type CreditPackage } from '@/shared/api/credits'
+import './modals.css'
 
 interface CreditPackagesModalProps {
   onClose: () => void

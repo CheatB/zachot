@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import './modals.css'
 
 interface SubscriptionOfferModalProps {
   onClose: () => void

@@ -1,0 +1,347 @@
+/* Стили для модальных окон покупки кредитов */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+  position: relative;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color 0.2s;
+}
+
+.modal-close:hover {
+  color: #212529;
+}
+
+.modal-content h2 {
+  margin: 0 0 16px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #212529;
+}
+
+/* ConfirmCostModal */
+.confirm-cost-modal .cost-info {
+  margin: 24px 0;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.confirm-cost-modal .info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.confirm-cost-modal .info-row:last-child {
+  border-bottom: none;
+}
+
+.confirm-cost-modal .credits-amount {
+  color: #0066ff;
+  font-size: 18px;
+}
+
+.confirm-cost-modal .balance-ok {
+  color: #28a745;
+}
+
+.confirm-cost-modal .balance-low {
+  color: #dc3545;
+}
+
+.confirm-cost-modal .balance-after {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 2px solid #dee2e6;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.confirm-cost-modal .warning-message {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  color: #856404;
+  text-align: center;
+}
+
+/* SubscriptionOfferModal */
+.subscription-offer {
+  text-align: center;
+  max-width: 480px;
+}
+
+.subscription-offer .offer-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.subscription-offer .offer-subtitle {
+  color: #6c757d;
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+.subscription-offer .subscription-benefits {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 24px 0;
+  text-align: left;
+}
+
+.subscription-offer .benefit-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.subscription-offer .benefit-icon {
+  color: #28a745;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.subscription-offer .price-block {
+  margin: 24px 0;
+}
+
+.subscription-offer .price-main {
+  font-size: 48px;
+  font-weight: bold;
+  color: #0066ff;
+}
+
+.subscription-offer .price-period {
+  color: #6c757d;
+  font-size: 16px;
+}
+
+/* CreditPackagesModal */
+.packages-modal {
+  max-width: 800px;
+}
+
+.packages-modal .modal-subtitle {
+  color: #6c757d;
+  font-size: 14px;
+  margin-top: -8px;
+  margin-bottom: 24px;
+}
+
+.packages-modal .packages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.packages-modal .package-card {
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.packages-modal .package-card:hover {
+  border-color: #0066ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.1);
+}
+
+.packages-modal .package-card.selected {
+  border-color: #0066ff;
+  background: #f0f7ff;
+}
+
+.packages-modal .package-header {
+  margin-bottom: 16px;
+}
+
+.packages-modal .package-credits {
+  font-size: 24px;
+  font-weight: bold;
+  color: #212529;
+  margin-bottom: 4px;
+}
+
+.packages-modal .package-description {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.packages-modal .package-price {
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.packages-modal .price-amount {
+  font-size: 32px;
+  font-weight: bold;
+  color: #0066ff;
+}
+
+.packages-modal .price-per-credit {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.packages-modal .payment-methods {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e9ecef;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.modal-actions.vertical {
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-actions .btn-primary,
+.modal-actions .btn-secondary {
+  flex: 1;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.modal-actions .btn-primary {
+  background: #0066ff;
+  color: white;
+}
+
+.modal-actions .btn-primary:hover:not(:disabled) {
+  background: #0052cc;
+  transform: translateY(-1px);
+}
+
+.modal-actions .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modal-actions .btn-primary.large {
+  padding: 16px 32px;
+  font-size: 18px;
+}
+
+.modal-actions .btn-secondary {
+  background: white;
+  color: #6c757d;
+  border: 2px solid #dee2e6;
+}
+
+.modal-actions .btn-secondary:hover:not(:disabled) {
+  border-color: #adb5bd;
+  color: #495057;
+}
+
+.modal-actions .btn-text {
+  background: none;
+  border: none;
+  color: #6c757d;
+  padding: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: underline;
+}
+
+.modal-actions .btn-text:hover {
+  color: #495057;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .modal-content {
+    padding: 24px;
+    max-width: 95%;
+  }
+  
+  .packages-modal .packages-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .subscription-offer .price-main {
+    font-size: 36px;
+  }
+}

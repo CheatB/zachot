@@ -23,12 +23,16 @@ import GenerationConfirmStep from './GenerationConfirmStep'
 import GenerationVisualsStep from './GenerationVisualsStep'
 import DocUploadStep from './DocUploadStep'
 import StepLoader, { StepLoaderTask } from './components/StepLoader'
+import ConfirmCostModal from './components/ConfirmCostModal'
+import SubscriptionOfferModal from './components/SubscriptionOfferModal'
+import CreditPackagesModal from './components/CreditPackagesModal'
 import type { CreateGenerationForm, GenerationType, WorkType, PresentationStyle, TaskMode, ComplexityLevel } from './types'
 import { workTypeConfigs, DEFAULT_GOST_FORMATTING } from './types'
 import { motion as motionTokens } from '@/design-tokens'
-import { createGeneration, updateGeneration, executeAction, createJob, getGenerationById } from '@/shared/api/generations'
+import { createGeneration, updateGeneration, createJob, getGenerationById } from '@/shared/api/generations'
 import { suggestDetails, suggestStructure, suggestSources } from '@/shared/api/admin'
 import { ApiError } from '@/shared/api/http'
+import { useAuth } from '@/app/auth/useAuth'
 
 type WizardStep = 1 | 1.2 | 1.3 | 1.5 | 1.6 | 1.7 | 1.8 | 2 | 3 | 4 | 5 | 5.7 | 6
 
@@ -55,6 +59,7 @@ const INITIAL_FORM_STATE: CreateGenerationForm = {
 function CreateGenerationPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { user } = useAuth()
   const [currentStep, setCurrentStepState] = useState<WizardStep>(1)
   const currentStepRef = useRef<number>(1)
   
@@ -73,6 +78,11 @@ function CreateGenerationPage() {
   const [form, setForm] = useState<CreateGenerationForm>(INITIAL_FORM_STATE)
   const isMountedRef = useRef(true)
   const isSavingRef = useRef(false) // Флаг для предотвращения параллельных сохранений
+  
+  // Модалки для покупки кредитов
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showSubscriptionOffer, setShowSubscriptionOffer] = useState(false)
+  const [showCreditPackages, setShowCreditPackages] = useState(false)
 
   useEffect(() => {
     isMountedRef.current = true
@@ -132,6 +142,24 @@ function CreateGenerationPage() {
       }).catch(console.error)
     }
   }, [location.search])
+  
+  // Обработка возврата после оплаты
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const paymentStatus = params.get('payment')
+    
+    if (paymentStatus === 'success') {
+      // Показываем уведомление об успешной покупке
+      alert('✅ Кредиты успешно куплены! Теперь вы можете создать работу.')
+      
+      // Обновляем баланс пользователя
+      if (user) {
+        // Здесь можно вызвать refreshUser() если такая функция есть в AuthContext
+        // Или просто перезагрузить страницу
+        window.location.href = window.location.pathname
+      }
+    }
+  }, [location.search, user])
 
   const getStepHeader = (): { title: string; subtitle: string } => {
     if (currentStep === 1) {
@@ -551,14 +579,38 @@ function CreateGenerationPage() {
   const handleConfirm = async () => {
     if (!form.type || !activeGenerationRef.current) return
     
+    await saveDraft(form)
+    setShowConfirmModal(true)
+  }
+  
+  const handleNeedCredits = () => {
+    setShowConfirmModal(false)
+    
+    const subscriptionStatus = user?.subscription?.status || 'none'
+    
+    // Показываем предложение подписки если нет активной подписки
+    if (subscriptionStatus === 'none' || subscriptionStatus === 'paused' || subscriptionStatus === 'canceled') {
+      setShowSubscriptionOffer(true)
+    } else {
+      // У пользователя есть активная подписка, сразу показываем покупку кредитов
+      setShowCreditPackages(true)
+    }
+  }
+  
+  const handleDeclineSubscription = () => {
+    setShowSubscriptionOffer(false)
+    setShowCreditPackages(true)
+  }
+  
+  const handleConfirmWithCredits = async () => {
+    if (!activeGenerationRef.current) return
+    
     setIsSubmitting(true)
     try {
-      await saveDraft(form)
-      await executeAction(activeGenerationRef.current, 'next')
       await createJob(activeGenerationRef.current)
       navigate(`/generations/${activeGenerationRef.current}`)
     } catch (error) {
-      console.error('Failed to create generation:', error)
+      console.error('Failed to create job:', error)
       setIsSubmitting(false)
     }
   }
@@ -590,7 +642,8 @@ function CreateGenerationPage() {
   }, [])
 
   return (
-    <Container size="full">
+    <>
+      <Container size="full">
       <Stack align="start" gap="xl" style={{ paddingTop: '32px', paddingBottom: 'var(--spacing-64)', paddingLeft: 'var(--spacing-8)' }}>
         
         <motion.div
@@ -726,6 +779,29 @@ function CreateGenerationPage() {
           )}
         </Stack>
       </Container>
+      
+      {showConfirmModal && activeGenerationRef.current && (
+        <ConfirmCostModal
+          generationId={activeGenerationRef.current}
+          onConfirm={handleConfirmWithCredits}
+          onCancel={() => setShowConfirmModal(false)}
+          onNeedCredits={handleNeedCredits}
+        />
+      )}
+      
+      {showSubscriptionOffer && (
+        <SubscriptionOfferModal
+          onClose={() => setShowSubscriptionOffer(false)}
+          onDecline={handleDeclineSubscription}
+        />
+      )}
+      
+      {showCreditPackages && (
+        <CreditPackagesModal
+          onClose={() => setShowCreditPackages(false)}
+        />
+      )}
+    </>
   )
 }
 

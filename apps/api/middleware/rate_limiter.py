@@ -60,6 +60,7 @@ class RateLimits:
     
     # Платежи
     PAYMENT_CREATE = "10/minute"            # Создание платежей
+    PAYMENT_INIT = "10/minute"              # Инициализация платежей
     
     # Файлы
     FILE_UPLOAD = "20/minute"               # Загрузка файлов
