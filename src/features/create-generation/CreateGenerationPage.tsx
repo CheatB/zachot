@@ -477,6 +477,7 @@ function CreateGenerationPage() {
         topic: form.input,
         goal: form.goal,
         idea: form.idea,
+        module: form.type?.toUpperCase(),
         workType: form.workType || 'other',
         volume: form.volume,
         complexity: form.complexityLevel,

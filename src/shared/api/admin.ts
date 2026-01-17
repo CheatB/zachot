@@ -163,6 +163,7 @@ export async function suggestSources(data: {
   topic: string;
   goal: string;
   idea: string;
+  module?: string;
   workType: string; 
   volume: number; 
   complexity: string;

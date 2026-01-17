@@ -160,10 +160,14 @@ export async function suggestStructure(data: {
  * Предложить источники литературы на основе темы и параметров
  */
 export async function suggestSources(data: { 
-  topic: string; 
+  topic: string;
+  goal?: string;
+  idea?: string;
+  module?: string;
   workType: string; 
   volume: number; 
   complexity: string;
+  humanity?: string | number;
 }): Promise<{ sources: { title: string; url: string; description: string; isAiSelected: boolean }[] }> {
   return apiFetch<{ sources: { title: string; url: string; description: string; isAiSelected: boolean }[] }>('/admin/suggest-sources', {
     method: 'POST',
