@@ -100,7 +100,8 @@ async def search_more_sources(
 @router.post("/upload-file")
 async def upload_file_source(
     generation_id: str = Form(...),
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    user: UserDB = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     Загрузка файла как источника.
@@ -109,10 +110,14 @@ async def upload_file_source(
     try:
         generation_uuid = UUID(generation_id)
         
-        # Получаем генерацию (без проверки пользователя для упрощения, можно добавить через Depends)
+        # Получаем генерацию и проверяем, что она принадлежит пользователю
         generation = generation_store.get(generation_uuid)
         if not generation:
             raise HTTPException(status_code=404, detail="Generation not found")
+        
+        # Проверяем, что генерация принадлежит текущему пользователю
+        if str(generation.user_id) != str(user.id):
+            raise HTTPException(status_code=403, detail="Access denied")
         
         # Читаем файл
         file_content = await file.read()
