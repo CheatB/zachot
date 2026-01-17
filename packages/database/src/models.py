@@ -223,6 +223,53 @@ class Subscription(Base):
     user = relationship("User", backref="subscription")
     initial_payment = relationship("Payment")
 
+
+class AuditLog(Base):
+    """
+    Audit trail для критичных операций.
+    
+    Типы событий:
+    - USER_ROLE_CHANGE: Изменение роли пользователя
+    - USER_CREDITS_CHANGE: Изменение кредитов пользователя
+    - USER_LOGIN: Вход пользователя
+    - USER_LOGOUT: Выход пользователя
+    - ADMIN_ACTION: Административное действие
+    - GENERATION_CREATE: Создание генерации
+    - GENERATION_DELETE: Удаление генерации
+    - PAYMENT_CREATE: Создание платежа
+    - PAYMENT_CONFIRM: Подтверждение платежа
+    """
+    __tablename__ = "audit_logs"
+    
+    id = Column(GUID(), primary_key=True, default=uuid4)
+    
+    # Кто совершил действие
+    user_id = Column(GUID(), ForeignKey("users.id"), nullable=True, index=True)
+    
+    # Тип события
+    event_type = Column(String, index=True)  # USER_ROLE_CHANGE, USER_CREDITS_CHANGE, etc.
+    
+    # Описание действия
+    action = Column(String)  # "Changed role from user to admin"
+    
+    # Данные до и после изменения (JSON)
+    before_data = Column(String, nullable=True)  # JSON строка
+    after_data = Column(String, nullable=True)   # JSON строка
+    
+    # Метаданные
+    ip_address = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+    
+    # Связанные объекты
+    target_user_id = Column(GUID(), ForeignKey("users.id"), nullable=True)  # Если действие касается другого пользователя
+    target_generation_id = Column(GUID(), ForeignKey("generations.id"), nullable=True)
+    target_payment_id = Column(GUID(), ForeignKey("payments.id"), nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    
+    user = relationship("User", foreign_keys=[user_id])
+    target_user = relationship("User", foreign_keys=[target_user_id])
+
 def create_db_engine(db_url: str):
     """
     Создает engine с оптимальными настройками connection pooling.
