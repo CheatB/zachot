@@ -1,0 +1,46 @@
+{
+  "work_type": "referat",
+  "topic": "Искусственный интеллект в современном мире",
+  "volume": 10,
+  "humanity_level": 50,
+  "apply_qc": true,
+  "timestamp": "2026-01-17T09:45:03.158203",
+  "steps": [
+    {
+      "step": "Step 1: Генерация структуры",
+      "model": "openai/gpt-4o",
+      "tokens": 500,
+      "cost_usd": 0.00275,
+      "cost_rub": 0.26125,
+      "note": "Создано 3 разделов"
+    },
+    {
+      "step": "Step 2: Подбор источников",
+      "model": "perplexity/sonar-pro",
+      "tokens": 1800,
+      "cost_usd": 0.01404,
+      "cost_rub": 1.3338,
+      "note": "Найдено 5 источников"
+    },
+    {
+      "step": "Step 3: Генерация контента",
+      "model": "anthropic/claude-3.5-sonnet",
+      "tokens": 27000,
+      "cost_usd": 0.2106,
+      "cost_rub": 20.007,
+      "note": "Генерация 3 разделов с humanity_level=50"
+    },
+    {
+      "step": "Step 4: Quality Control",
+      "model": "openai/gpt-4o-mini",
+      "tokens": 800,
+      "cost_usd": 0.000264,
+      "cost_rub": 0.02508,
+      "note": ""
+    }
+  ],
+  "total_tokens": 30100,
+  "total_cost_usd": 0.227654,
+  "total_cost_rub": 21.62713,
+  "note": "Примерные оценки на основе статистики. БЕЗ дублирования Claude."
+}

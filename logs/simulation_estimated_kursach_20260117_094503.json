@@ -1,0 +1,46 @@
+{
+  "work_type": "kursach",
+  "topic": "Анализ эффективности маркетинговых стратегий",
+  "volume": 30,
+  "humanity_level": 75,
+  "apply_qc": true,
+  "timestamp": "2026-01-17T09:45:03.158783",
+  "steps": [
+    {
+      "step": "Step 1: Генерация структуры",
+      "model": "openai/gpt-4o",
+      "tokens": 500,
+      "cost_usd": 0.00275,
+      "cost_rub": 0.26125,
+      "note": "Создано 10 разделов"
+    },
+    {
+      "step": "Step 2: Подбор источников",
+      "model": "perplexity/sonar-pro",
+      "tokens": 1800,
+      "cost_usd": 0.01404,
+      "cost_rub": 1.3338,
+      "note": "Найдено 15 источников"
+    },
+    {
+      "step": "Step 3: Генерация контента",
+      "model": "anthropic/claude-3.5-sonnet",
+      "tokens": 90000,
+      "cost_usd": 0.702,
+      "cost_rub": 66.69,
+      "note": "Генерация 10 разделов с humanity_level=75"
+    },
+    {
+      "step": "Step 4: Quality Control",
+      "model": "openai/gpt-4o-mini",
+      "tokens": 800,
+      "cost_usd": 0.000264,
+      "cost_rub": 0.02508,
+      "note": ""
+    }
+  ],
+  "total_tokens": 93100,
+  "total_cost_usd": 0.719054,
+  "total_cost_rub": 68.31013,
+  "note": "Примерные оценки на основе статистики. БЕЗ дублирования Claude."
+}

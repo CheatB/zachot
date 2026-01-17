@@ -1,0 +1,38 @@
+{
+  "work_type": "essay",
+  "topic": "Влияние социальных сетей на общество",
+  "volume": 5,
+  "humanity_level": 100,
+  "apply_qc": false,
+  "timestamp": "2026-01-17T09:45:03.159134",
+  "steps": [
+    {
+      "step": "Step 1: Генерация структуры",
+      "model": "openai/gpt-4o-mini",
+      "tokens": 500,
+      "cost_usd": 0.000165,
+      "cost_rub": 0.015675,
+      "note": "Создано 3 разделов"
+    },
+    {
+      "step": "Step 2: Подбор источников",
+      "model": "perplexity/sonar-pro",
+      "tokens": 1800,
+      "cost_usd": 0.01404,
+      "cost_rub": 1.3338,
+      "note": "Найдено 5 источников"
+    },
+    {
+      "step": "Step 3: Генерация контента",
+      "model": "anthropic/claude-3.5-sonnet",
+      "tokens": 27000,
+      "cost_usd": 0.2106,
+      "cost_rub": 20.007,
+      "note": "Генерация 3 разделов с humanity_level=100"
+    }
+  ],
+  "total_tokens": 29300,
+  "total_cost_usd": 0.224805,
+  "total_cost_rub": 21.356475,
+  "note": "Примерные оценки на основе статистики. БЕЗ дублирования Claude."
+}
