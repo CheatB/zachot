@@ -101,7 +101,11 @@ class AISuggestionService:
         humanity: Union[str, int, None], 
         user_id: UUID
     ) -> SuggestSourcesResponse:
-        """Предлагает источники литературы."""
+        """
+        Предлагает источники литературы в два этапа:
+        1. Сначала ищет академические источники
+        2. Если не находит, ищет любые другие источники и помечает их как "не академические"
+        """
         model_name = model_router.get_model_for_step("sources", work_type or "other")
 
         # Конвертируем humanity в числовое значение
@@ -120,21 +124,23 @@ class AISuggestionService:
             updated_at=datetime.utcnow()
         )
 
-        prompt = prompt_service.construct_sources_prompt(dummy_gen)
+        # ФАЗА 1: Поиск академических источников
+        logger.info(f"[PHASE 1] Searching for ACADEMIC sources for topic: {topic}")
+        academic_prompt = prompt_service.construct_sources_prompt(dummy_gen, is_academic=True)
         
         # Логируем промпт для отладки
-        logger.info(f"Sources prompt (first 300 chars): {prompt[:300]}")
+        logger.info(f"Academic sources prompt (first 300 chars): {academic_prompt[:300]}")
         logger.info(f"Topic: {topic}, Work type: {work_type}, Model: {model_name}")
         
         # Для Perplexity добавляем явную инструкцию вернуть JSON (они не поддерживают response_format)
         if model_name.startswith("perplexity/"):
-            prompt += "\n\n⚠️ КРИТИЧЕСКИ ВАЖНО: Верни ответ СТРОГО в формате JSON. Начни с { и закончи }. Никакого текста до или после JSON."
+            academic_prompt += "\n\n⚠️ КРИТИЧЕСКИ ВАЖНО: Верни ответ СТРОГО в формате JSON. Начни с { и закончи }. Никакого текста до или после JSON."
 
         try:
-            # Первая попытка
+            # ФАЗА 1: Попытка найти академические источники
             raw_response = await openai_service.chat_completion(
                 model=model_name,
-                messages=[{"role": "user", "content": prompt}],
+                messages=[{"role": "user", "content": academic_prompt}],
                 json_mode=True,
                 step_type="sources",
                 work_type=work_type or "other"
@@ -144,7 +150,7 @@ class AISuggestionService:
                 raise ValueError("Failed to get response from AI")
             
             # Логируем ответ для отладки
-            logger.info(f"Raw AI response (first 500 chars): {raw_response[:500]}")
+            logger.info(f"[PHASE 1] Raw AI response (first 500 chars): {raw_response[:500]}")
             
             # Извлекаем JSON из markdown блока (если есть)
             json_content = extract_json_from_markdown(raw_response)
@@ -152,202 +158,119 @@ class AISuggestionService:
             try:
                 data = json.loads(json_content)
             except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse JSON from AI response: {e}")
+                logger.error(f"[PHASE 1] Failed to parse JSON from AI response: {e}")
                 logger.error(f"Extracted JSON content: {json_content[:1000]}")
-                raise ValueError(f"AI returned invalid JSON: {str(e)}")
+                data = {"sources": []}
                 
-            sources = data.get("sources", [])
+            academic_sources = data.get("sources", [])
             
-            if not sources:
-                logger.warning("AI returned no sources")
-                return {"sources": []}
+            logger.info(f"[PHASE 1] AI suggested {len(academic_sources)} academic sources")
             
-            logger.info(f"AI suggested {len(sources)} sources, starting validation...")
-            
-            # Валидация источников
-            validated_sources = await url_validator_service.validate_sources(sources)
-            
-            # Фильтруем и сортируем по валидности (ТОЛЬКО валидные)
-            filtered_sources = url_validator_service.filter_valid_sources(
-                validated_sources,
-                min_valid=5,
-                prefer_trusted=True
-            )
-            
-            valid_count = len(filtered_sources)
-            trusted_count = sum(
-                1 for s in filtered_sources 
-                if s.get('validation', {}).get('is_trusted_domain', False)
-            )
-            
-            logger.info(
-                f"URL validation complete: {valid_count}/{len(sources)} valid, "
-                f"{trusted_count} from trusted domains"
-            )
-            
-            # === НОВЫЙ БЛОК: QC валидация релевантности ===
-            qc_result = None
-            if filtered_sources:
-                logger.info(f"[QC] Starting AI relevance validation of {len(filtered_sources)} sources...")
+            # Валидация академических источников
+            validated_sources = []
+            if academic_sources:
+                validated_sources = await url_validator_service.validate_sources(academic_sources)
                 
-                qc_result = await sources_qc_service.validate_sources_relevance(
-                    sources=filtered_sources,
-                    topic=topic,
-                    goal=goal,
-                    idea=idea,
-                    work_type=work_type or "other"
+                # Фильтруем и сортируем по валидности
+                validated_sources = url_validator_service.filter_valid_sources(
+                    validated_sources,
+                    min_valid=3,
+                    prefer_trusted=True
                 )
                 
-                relevant_count = qc_result["relevant_count"]
-                qc_quality = qc_result["overall_quality"]
-                qc_should_retry = qc_result["should_retry"]
-                qc_failed = qc_result["qc_failed"]
-                
-                logger.info(
-                    f"[QC] Validation complete: {relevant_count}/{len(filtered_sources)} relevant, "
-                    f"quality: {qc_quality}, should_retry: {qc_should_retry}, failed: {qc_failed}"
-                )
-                
-                # Если QC рекомендует retry И валидных источников мало
-                if qc_should_retry and valid_count < 5:
-                    logger.warning(
-                        f"[QC] Recommending retry: only {relevant_count} relevant sources "
-                        f"(quality: {qc_quality})"
-                    )
-                    # Флаг для retry ниже
-                    valid_count = 0  # Форсируем retry
-            # === КОНЕЦ QC БЛОКА ===
+                valid_count = len(validated_sources)
+                logger.info(f"[PHASE 1] {valid_count}/{len(academic_sources)} academic sources are valid")
             
-            # Если валидных источников мало, делаем повторный запрос
-            if valid_count < 3:
-                logger.warning(
-                    f"Only {valid_count} valid sources from first attempt. "
-                    f"Retrying with stricter prompt..."
-                )
+            # Если нашли достаточно академических источников, возвращаем их
+            if len(validated_sources) >= 3:
+                logger.info(f"[PHASE 1] SUCCESS: Found {len(validated_sources)} valid academic sources")
                 
-                retry_prompt = prompt + (
-                    "\n\n⚠️ КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ: Предыдущая попытка вернула мало валидных источников! "
-                    "ОБЯЗАТЕЛЬНО проверяй каждый URL перед возвратом. Используй ТОЛЬКО прямые ссылки на статьи, "
-                    "НЕ поисковые страницы. Если не можешь найти рабочую ссылку - НЕ включай источник!"
-                )
-                
-                try:
-                    retry_response = await openai_service.chat_completion(
-                        model=model_name,
-                        messages=[{"role": "user", "content": retry_prompt}],
-                        json_mode=True,
-                        step_type="sources",
-                        work_type=work_type or "other"
-                    )
-                    
-                    if retry_response:
-                        # Извлекаем JSON из markdown блока
-                        retry_json = extract_json_from_markdown(retry_response)
-                        try:
-                            retry_data = json.loads(retry_json)
-                        except json.JSONDecodeError as e:
-                            logger.error(f"Retry: Failed to parse JSON: {e}")
-                            logger.error(f"Retry extracted JSON: {retry_json[:1000]}")
-                            retry_data = {"sources": []}
-                        retry_sources = retry_data.get("sources", [])
-                        
-                        if retry_sources:
-                            logger.info(f"Retry: AI suggested {len(retry_sources)} sources")
-                            
-                            # Валидация повторных источников
-                            retry_validated = await url_validator_service.validate_sources(retry_sources)
-                            retry_filtered = url_validator_service.filter_valid_sources(
-                                retry_validated,
-                                min_valid=5,
-                                prefer_trusted=True
-                            )
-                            
-                            # Объединяем с первой попыткой, убираем дубликаты по URL
-                            existing_urls = {s.get('url') for s in filtered_sources if s.get('url')}
-                            new_sources = [
-                                s for s in retry_filtered 
-                                if s.get('url') not in existing_urls
-                            ]
-                            
-                            filtered_sources.extend(new_sources)
-                            valid_count = len(filtered_sources)
-                            
-                            logger.info(
-                                f"After retry: {valid_count} total valid sources "
-                                f"({len(new_sources)} new from retry)"
-                            )
-                except Exception as retry_error:
-                    logger.error(f"Retry failed: {retry_error}", exc_info=True)
-            
-            # === ФИНАЛЬНАЯ ФИЛЬТРАЦИЯ: оставляем только релевантные источники ===
-            if qc_result and not qc_result.get("qc_failed", False):
-                # QC прошёл успешно - фильтруем по релевантности
-                final_sources = sources_qc_service.filter_relevant_sources(filtered_sources)
-                logger.info(
-                    f"[QC] Final filtering: {len(final_sources)}/{len(filtered_sources)} sources "
-                    f"passed relevance threshold"
-                )
-            else:
-                # QC не прошёл или упал - принимаем все URL-валидные источники
-                final_sources = filtered_sources
-                logger.info(f"[QC] Skipping relevance filtering (QC failed or not run)")
-            
-            # Помечаем источники
-            for source in final_sources:
-                source["isAiSelected"] = True
-                validation = source.get('validation', {})
-                source["isVerified"] = validation.get('is_valid', False)
-                source["isTrustedDomain"] = validation.get('is_trusted_domain', False)
-                
-                # Добавляем QC метки для фронтенда
-                qc_data = source.get('qc_validation', {})
-                if qc_data:
-                    source["relevanceScore"] = qc_data.get('relevance_score', None)
-                    source["qcReason"] = qc_data.get('reason', '')
-            
-            if len(final_sources) == 0:
-                logger.error("No valid sources found even after retry and QC!")
-                logger.info("Generating fallback sources for non-academic topic...")
-                
-                # Генерируем fallback источники для фантастических/игровых/нестандартных тем
-                fallback_sources = AISuggestionService._generate_fallback_sources(topic, work_type)
-                
-                if fallback_sources:
-                    logger.info(f"Generated {len(fallback_sources)} fallback sources")
-                    return {
-                        "sources": fallback_sources,
-                        "is_fallback": True,
-                        "message": "Для данной темы подобраны базовые источники. Вы можете добавить свои источники вручную."
-                    }
+                # Помечаем источники как академические
+                for source in validated_sources:
+                    source["isAiSelected"] = True
+                    source["isAcademic"] = True
+                    validation = source.get('validation', {})
+                    source["isVerified"] = validation.get('is_valid', False)
+                    source["isTrustedDomain"] = validation.get('is_trusted_domain', False)
                 
                 return {
-                    "sources": [], 
-                    "error": "Не удалось найти релевантные источники. Попробуйте изменить тему или сформулировать её более конкретно."
+                    "sources": validated_sources,
+                    "is_academic": True,
+                    "message": None
                 }
             
-            # Собираем метрики для мониторинга
-            metrics = {
-                "total_found": len(sources),
-                "url_valid": len(filtered_sources),
-                "qc_relevant": qc_result["relevant_count"] if qc_result else len(final_sources),
-                "final_count": len(final_sources),
-                "qc_quality": qc_result.get("overall_quality", "unknown") if qc_result else "not_run",
-                "qc_failed": qc_result.get("qc_failed", False) if qc_result else True
-            }
+            # ФАЗА 2: Поиск неакадемических источников
+            logger.info(f"[PHASE 2] Not enough academic sources ({len(validated_sources)} found). Searching for NON-ACADEMIC sources...")
             
-            logger.info(
-                f"Returning {len(final_sources)} sources to user. "
-                f"Metrics: {metrics}"
+            non_academic_prompt = prompt_service.construct_sources_prompt(dummy_gen, is_academic=False)
+            
+            if model_name.startswith("perplexity/"):
+                non_academic_prompt += "\n\n⚠️ КРИТИЧЕСКИ ВАЖНО: Верни ответ СТРОГО в формате JSON. Начни с { и закончи }. Никакого текста до или после JSON."
+            
+            non_academic_response = await openai_service.chat_completion(
+                model=model_name,
+                messages=[{"role": "user", "content": non_academic_prompt}],
+                json_mode=True,
+                step_type="sources",
+                work_type=work_type or "other"
             )
             
+            if not non_academic_response:
+                logger.error("[PHASE 2] Failed to get response from AI")
+                return {"sources": [], "error": "Не удалось найти источники по данной теме"}
+            
+            logger.info(f"[PHASE 2] Raw AI response (first 500 chars): {non_academic_response[:500]}")
+            
+            # Извлекаем JSON
+            non_academic_json = extract_json_from_markdown(non_academic_response)
+            
+            try:
+                non_academic_data = json.loads(non_academic_json)
+            except json.JSONDecodeError as e:
+                logger.error(f"[PHASE 2] Failed to parse JSON: {e}")
+                logger.error(f"Extracted JSON content: {non_academic_json[:1000]}")
+                return {"sources": [], "error": "Не удалось обработать ответ AI"}
+            
+            non_academic_sources = non_academic_data.get("sources", [])
+            logger.info(f"[PHASE 2] AI suggested {len(non_academic_sources)} non-academic sources")
+            
+            if not non_academic_sources:
+                logger.warning("[PHASE 2] No non-academic sources found")
+                return {"sources": [], "error": "Не удалось найти источники по данной теме"}
+            
+            # Валидация неакадемических источников
+            validated_non_academic = await url_validator_service.validate_sources(non_academic_sources)
+            validated_non_academic = url_validator_service.filter_valid_sources(
+                validated_non_academic,
+                min_valid=3,
+                prefer_trusted=False  # Для неакадемических не требуем trusted domains
+            )
+            
+            logger.info(f"[PHASE 2] {len(validated_non_academic)}/{len(non_academic_sources)} non-academic sources are valid")
+            
+            if len(validated_non_academic) == 0:
+                logger.error("[PHASE 2] No valid non-academic sources found")
+                return {"sources": [], "error": "Не удалось найти доступные источники по данной теме"}
+            
+            # Помечаем источники как неакадемические
+            for source in validated_non_academic:
+                source["isAiSelected"] = True
+                source["isAcademic"] = False
+                validation = source.get('validation', {})
+                source["isVerified"] = validation.get('is_valid', False)
+                source["isTrustedDomain"] = False  # Неакадемические источники не считаются trusted
+            
+            logger.info(f"[PHASE 2] SUCCESS: Returning {len(validated_non_academic)} non-academic sources")
+            
             return {
-                "sources": final_sources,
-                "metrics": metrics  # Для внутреннего мониторинга
+                "sources": validated_non_academic,
+                "is_academic": False,
+                "message": "Для данной темы найдены неакадемические источники. Академические источники не обнаружены."
             }
             
         except Exception as e:
             logger.error(f"Error suggesting sources: {e}", exc_info=True)
-            return {"sources": []}
+            return {"sources": [], "error": f"Ошибка при поиске источников: {str(e)}"}
 
     @staticmethod
     async def suggest_details(
@@ -412,243 +335,6 @@ class AISuggestionService:
             logger.error(f"Error suggesting title info: {e}")
             return {"university_full": university_short or "", "city": "Москва"}
     
-    @staticmethod
-    def _generate_fallback_sources(topic: str, work_type: str = None) -> List[Dict[str, Any]]:
-        """
-        Генерирует базовые fallback источники для тем, где AI не смог найти академические источники.
-        Полезно для фантастических, игровых, нестандартных тем.
-        """
-        fallback_sources = []
-        
-        # Определяем ключевые слова для разных типов тем
-        topic_lower = topic.lower()
-        
-        # Warhammer 40k
-        if any(keyword in topic_lower for keyword in ['warhammer', '40k', '40000', 'тау', 'империум', 'примарх', 'космодесант']):
-            fallback_sources = [
-                {
-                    "title": "Warhammer 40,000 Codex",
-                    "author": "Games Workshop",
-                    "year": "2023",
-                    "url": "https://warhammer40000.com/",
-                    "type": "website",
-                    "description": "Официальный кодекс вселенной Warhammer 40,000",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                },
-                {
-                    "title": "Lexicanum - Warhammer 40k Wiki",
-                    "author": "Lexicanum Community",
-                    "year": "2024",
-                    "url": "https://wh40k.lexicanum.com/",
-                    "type": "website",
-                    "description": "Энциклопедия по вселенной Warhammer 40,000",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                },
-                {
-                    "title": "Warhammer 40k Fandom Wiki",
-                    "author": "Fandom Community",
-                    "year": "2024",
-                    "url": "https://warhammer40k.fandom.com/",
-                    "type": "website",
-                    "description": "Подробная вики по Warhammer 40,000",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                }
-            ]
-        # Игры и киберспорт
-        elif any(keyword in topic_lower for keyword in ['dota', 'доту', 'cs:go', 'counter-strike', 'valorant', 'league of legends', 'lol', 'киберспорт', 'esports']):
-            fallback_sources = [
-                {
-                    "title": f"Игровая вики: {topic}",
-                    "author": "Игровое сообщество",
-                    "year": "2024",
-                    "url": "https://liquipedia.net/",
-                    "type": "website",
-                    "description": "Энциклопедия по киберспорту и играм",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                },
-                {
-                    "title": f"Fandom Gaming Wiki: {topic}",
-                    "author": "Fandom Community",
-                    "year": "2024",
-                    "url": "https://fandom.com/",
-                    "type": "website",
-                    "description": "Подробная вики по играм",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                },
-                {
-                    "title": f"Reddit Gaming: {topic}",
-                    "author": "Reddit Community",
-                    "year": "2024",
-                    "url": "https://reddit.com/",
-                    "type": "website",
-                    "description": "Обсуждения и материалы сообщества",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                }
-            ]
-        # Аниме и манга
-        elif any(keyword in topic_lower for keyword in ['аниме', 'anime', 'манга', 'manga', 'наруто', 'naruto', 'one piece', 'ван пис']):
-            fallback_sources = [
-                {
-                    "title": f"MyAnimeList: {topic}",
-                    "author": "MyAnimeList Community",
-                    "year": "2024",
-                    "url": "https://myanimelist.net/",
-                    "type": "website",
-                    "description": "База данных аниме и манги",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                },
-                {
-                    "title": f"Anime Wiki: {topic}",
-                    "author": "Fandom Community",
-                    "year": "2024",
-                    "url": "https://anime.fandom.com/",
-                    "type": "website",
-                    "description": "Энциклопедия аниме",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                },
-                {
-                    "title": f"AniDB: {topic}",
-                    "author": "AniDB Community",
-                    "year": "2024",
-                    "url": "https://anidb.net/",
-                    "type": "website",
-                    "description": "Подробная база данных аниме",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                }
-            ]
-        # Фильмы и сериалы
-        elif any(keyword in topic_lower for keyword in ['фильм', 'movie', 'сериал', 'series', 'кино', 'cinema', 'marvel', 'марвел', 'dc comics']):
-            fallback_sources = [
-                {
-                    "title": f"IMDb: {topic}",
-                    "author": "IMDb",
-                    "year": "2024",
-                    "url": "https://www.imdb.com/",
-                    "type": "website",
-                    "description": "Международная база данных фильмов",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                },
-                {
-                    "title": f"Кинопоиск: {topic}",
-                    "author": "Кинопоиск",
-                    "year": "2024",
-                    "url": "https://www.kinopoisk.ru/",
-                    "type": "website",
-                    "description": "Российская база данных фильмов и сериалов",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                },
-                {
-                    "title": f"Fandom Movies: {topic}",
-                    "author": "Fandom Community",
-                    "year": "2024",
-                    "url": "https://fandom.com/",
-                    "type": "website",
-                    "description": "Вики по фильмам и сериалам",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                }
-            ]
-        # Другие игры/фантастика
-        elif any(keyword in topic_lower for keyword in ['игра', 'game', 'фантастика', 'sci-fi', 'фэнтези', 'fantasy']):
-            fallback_sources = [
-                {
-                    "title": f"Энциклопедия по теме: {topic}",
-                    "author": "Интернет-сообщество",
-                    "year": "2024",
-                    "url": "https://wikipedia.org/",
-                    "type": "website",
-                    "description": "Общая энциклопедическая информация",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                },
-                {
-                    "title": f"Fandom Wiki: {topic}",
-                    "author": "Fandom Community",
-                    "year": "2024",
-                    "url": "https://fandom.com/",
-                    "type": "website",
-                    "description": "Вики-ресурс по теме",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                }
-            ]
-        # Общий fallback - для ЛЮБОЙ темы
-        else:
-            # Создаем универсальные источники, которые подойдут для любой темы
-            fallback_sources = [
-                {
-                    "title": f"Википедия: {topic}",
-                    "author": "Сообщество Википедии",
-                    "year": "2024",
-                    "url": "https://ru.wikipedia.org/",
-                    "type": "website",
-                    "description": "Энциклопедическая статья по теме",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                },
-                {
-                    "title": f"Материалы по теме: {topic}",
-                    "author": "Интернет-ресурсы",
-                    "year": "2024",
-                    "url": "https://scholar.google.com/",
-                    "type": "website",
-                    "description": "Академические источники и публикации",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                },
-                {
-                    "title": f"Онлайн-библиотека: {topic}",
-                    "author": "Электронные библиотеки",
-                    "year": "2024",
-                    "url": "https://cyberleninka.ru/",
-                    "type": "website",
-                    "description": "Научные статьи и публикации",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                },
-                {
-                    "title": f"Тематические ресурсы: {topic}",
-                    "author": "Специализированные сайты",
-                    "year": "2024",
-                    "url": "https://www.google.com/search?q=" + topic.replace(" ", "+"),
-                    "type": "website",
-                    "description": "Рекомендуется заменить на конкретные источники",
-                    "isAiSelected": True,
-                    "isVerified": False,
-                    "isFallback": True
-                }
-            ]
-        
-        logger.info(f"Generated {len(fallback_sources)} fallback sources for topic: {topic}")
-        return fallback_sources
 
 
 ai_suggestion_service = AISuggestionService()

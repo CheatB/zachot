@@ -181,6 +181,28 @@ function GenerationSourcesStep({ sources, onChange, generationId, isLoading }: G
       <div className="sources-container-v2">
         <h1 className="sources-main-title">Ознакомься с источниками</h1>
         
+        {/* Информация о типах источников */}
+        <div className="sources-info-card">
+          <div className="sources-info-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <h3>Типы источников</h3>
+          </div>
+          <div className="sources-info-content">
+            <div className="source-type-item">
+              <span className="source-badge source-badge--academic">🎓 Академический</span>
+              <p>Научные статьи, монографии, учебники, диссертации из научных баз данных (КиберЛенинка, eLibrary, Google Scholar)</p>
+            </div>
+            <div className="source-type-item">
+              <span className="source-badge source-badge--non-academic">📚 Неакадемический</span>
+              <p>Вики-ресурсы, официальные сайты, форумы, блоги экспертов, базы данных, документация. Подходят для тем, где академические источники недоступны</p>
+            </div>
+          </div>
+        </div>
+        
         <div className="sources-card">
           <div className="sources-grid">
             {/* Header Row */}
@@ -216,6 +238,21 @@ function GenerationSourcesStep({ sources, onChange, generationId, isLoading }: G
                               </a>
                             ) : (
                               <h4 className="source-title">{item.title}</h4>
+                            )}
+                            {/* Индикатор академичности */}
+                            {item.isAcademic === false && (
+                              <Tooltip content="Неакадемический источник (вики, сайт, форум и т.д.)">
+                                <span className="source-badge source-badge--non-academic">
+                                  📚 Неакадемический
+                                </span>
+                              </Tooltip>
+                            )}
+                            {item.isAcademic === true && (
+                              <Tooltip content="Академический источник (статья, книга, диссертация)">
+                                <span className="source-badge source-badge--academic">
+                                  🎓 Академический
+                                </span>
+                              </Tooltip>
                             )}
                             {/* Индикаторы валидности */}
                             {item.isVerified && (
@@ -326,8 +363,55 @@ const stepStyles = `
   font-weight: 800;
   text-align: center;
   color: var(--color-neutral-110);
-  margin-bottom: var(--spacing-48);
+  margin-bottom: var(--spacing-32);
   letter-spacing: -0.02em;
+}
+
+.sources-info-card {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+  border: 1px solid var(--color-border-base);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-24);
+  margin-bottom: var(--spacing-32);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.sources-info-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+  margin-bottom: var(--spacing-16);
+}
+
+.sources-info-header svg {
+  color: var(--color-accent-base);
+}
+
+.sources-info-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-neutral-100);
+}
+
+.sources-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.source-type-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+}
+
+.source-type-item p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  flex: 1;
 }
 
 .sources-card {
@@ -482,6 +566,18 @@ const stepStyles = `
   background: #f3e5f5;
   color: #6a1b9a;
   border: 1px solid #ce93d8;
+}
+
+.source-badge--academic {
+  background: #e8f5e9;
+  color: #1b5e20;
+  border: 1px solid #81c784;
+}
+
+.source-badge--non-academic {
+  background: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ffb74d;
 }
 
 .source-meta {

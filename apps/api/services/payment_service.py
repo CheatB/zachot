@@ -30,25 +30,28 @@ PLANS = {
     "month": {
         "name": "MONTH",
         "description": 'Подписка на интернет-сервис "Зачёт" на 1 месяц',
-        "amount": 49900,  # 499 руб в копейках
+        "amount": 79900,  # 799 руб в копейках
         "period_months": 1,
-        "generations_limit": 5,
+        "credits": 500,  # 500 кредитов
+        "generations_limit": 500,  # Для обратной совместимости
         "tokens_limit": 100000,
     },
     "quarter": {
         "name": "QUARTER", 
         "description": 'Подписка на интернет-сервис "Зачёт" на 3 месяца',
-        "amount": 134700,  # 1347 руб (449 * 3)
+        "amount": 215700,  # 2157 руб (719 * 3, скидка 10%)
         "period_months": 3,
-        "generations_limit": 15,
+        "credits": 1500,  # 1500 кредитов (500 × 3)
+        "generations_limit": 1500,  # Для обратной совместимости
         "tokens_limit": 300000,
     },
     "year": {
         "name": "YEAR",
         "description": 'Подписка на интернет-сервис "Зачёт" на 12 месяцев',
-        "amount": 508800,  # 5088 руб (424 * 12)
+        "amount": 815200,  # 8152 руб (679 * 12, скидка 15%)
         "period_months": 12,
-        "generations_limit": 60,
+        "credits": 6000,  # 6000 кредитов (500 × 12)
+        "generations_limit": 6000,  # Для обратной совместимости
         "tokens_limit": 1200000,
     },
 }
@@ -285,7 +288,7 @@ class PaymentService:
             self.db.add(subscription)
             logger.info(f"[PaymentService] Created subscription: id={subscription.id}")
         
-        # Обновляем лимиты пользователя
+        # Обновляем лимиты пользователя и начисляем кредиты
         user = self.db.query(User).filter(User.id == user_id).first()
         if user:
             user.plan_name = plan["name"]
@@ -293,6 +296,30 @@ class PaymentService:
             user.generations_limit = plan["generations_limit"]
             user.tokens_limit = plan["tokens_limit"]
             user.next_billing_date = expires_at
+            
+            # Начисляем кредиты
+            credits_to_add = plan.get("credits", 0)
+            if credits_to_add > 0:
+                old_balance = user.credits_balance or 0
+                new_balance = old_balance + credits_to_add
+                user.credits_balance = new_balance
+                
+                # Создаём транзакцию
+                transaction = CreditTransaction(
+                    user_id=user_id,
+                    amount=credits_to_add,
+                    balance_after=new_balance,
+                    transaction_type="SUBSCRIPTION",
+                    reason=f"Подписка {plan['name']} на {plan['period_months']} мес.",
+                    payment_id=payment.id,
+                )
+                self.db.add(transaction)
+                
+                logger.info(
+                    f"[PaymentService] Added {credits_to_add} credits. "
+                    f"Balance: {old_balance} → {new_balance}"
+                )
+            
             logger.info(f"[PaymentService] Updated user limits: generations={plan['generations_limit']}")
         
         self.db.commit()

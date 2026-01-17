@@ -88,10 +88,17 @@ class PromptService:
         return PromptService._safe_format(prompt_template, **ctx).strip()
 
     @staticmethod
-    def construct_sources_prompt(generation: Generation) -> str:
-        """Промпт для подбора источников литературы."""
+    def construct_sources_prompt(generation: Generation, is_academic: bool = True) -> str:
+        """
+        Промпт для подбора источников литературы.
+        
+        Args:
+            generation: Объект генерации
+            is_academic: True для поиска академических источников, False для неакадемических
+        """
         ctx = PromptService._get_context_vars(generation)
-        prompt_template = prompt_manager.get_prompt("sources")
+        prompt_key = "sources_academic" if is_academic else "sources_non_academic"
+        prompt_template = prompt_manager.get_prompt(prompt_key)
         return PromptService._safe_format(prompt_template, **ctx).strip()
 
     @staticmethod

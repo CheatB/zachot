@@ -72,7 +72,7 @@ function BillingPage() {
     }
   }, [])
 
-  const basePrice = 499
+  const basePrice = 799
 
   const pricingData = useMemo(() => {
     switch (period) {
@@ -425,9 +425,9 @@ function BillingPage() {
                 <div className="feature-item">
                   <span className="feature-item__icon">✓</span>
                   <span className="feature-item__text">
-                    {period === 'month' && '5 текстовых работ и презентаций'}
-                    {period === 'quarter' && '15 текстовых работ и презентаций'}
-                    {period === 'year' && '60 текстовых работ и презентаций'}
+                    {period === 'month' && '500 кредитов (~7 рефератов или 2 курсовых)'}
+                    {period === 'quarter' && '1500 кредитов (~22 реферата или 7 курсовых)'}
+                    {period === 'year' && '6000 кредитов (~88 рефератов или 28 курсовых)'}
                   </span>
                 </div>
                 <div className="feature-item">
@@ -442,7 +442,7 @@ function BillingPage() {
                   <div className="feature-item feature-item--highlight">
                     <span className="feature-item__icon">💰</span>
                     <span className="feature-item__text">
-                      Экономия {period === 'quarter' ? '150' : '900'} ₽
+                      Экономия {period === 'quarter' ? '240' : '1436'} ₽
                     </span>
                   </div>
                 )}

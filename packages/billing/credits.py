@@ -18,23 +18,24 @@
 from typing import Dict, Literal
 
 
-# Стоимость генерации в кредитах по типу работы
+# Стоимость генерации в кредитах по типу работы (DEPRECATED - используйте calculate_credit_cost_by_pages)
+# Оставлено для обратной совместимости
 CREDIT_COSTS: Dict[str, int] = {
-    # Небольшие работы (до 10-15 страниц) — 1 кредит
-    "referat": 1,       # Реферат
-    "essay": 1,         # Эссе
-    "doklad": 1,        # Доклад
-    "composition": 1,   # Сочинение
+    # Небольшие работы (до 10-15 страниц) — 68 кредитов
+    "referat": 68,       # Реферат (10 стр)
+    "essay": 67,         # Эссе (5 стр)
+    "doklad": 67,        # Доклад (7 стр)
+    "composition": 67,   # Сочинение (5 стр)
     
-    # Средние работы (15-25 страниц) — 2 кредита
-    "article": 2,       # Научная статья
-    "presentation": 1,  # Презентация (меньше текста)
+    # Средние работы (15-25 страниц) — 135 кредитов
+    "article": 135,      # Научная статья (20 стр)
+    "presentation": 68,  # Презентация (меньше текста, ~10 стр)
     
-    # Большие работы (25-40 страниц) — 3 кредита
-    "kursach": 3,       # Курсовая работа
+    # Большие работы (25-40 страниц) — 214 кредитов
+    "kursach": 214,      # Курсовая работа (30 стр)
     
-    # Прочее — 2 кредита (средний расход)
-    "other": 2,
+    # Прочее — 135 кредитов (средний расход)
+    "other": 135,
 }
 
 # Альтернативные названия типов работ (для совместимости)
@@ -53,9 +54,9 @@ WORK_TYPE_ALIASES: Dict[str, str] = {
 
 # Кредиты, выдаваемые при покупке подписки
 CREDITS_PER_PERIOD: Dict[str, int] = {
-    "month": 5,      # 1 месяц = 5 кредитов
-    "quarter": 15,   # 3 месяца = 15 кредитов (5 × 3)
-    "year": 60,      # 12 месяцев = 60 кредитов (5 × 12)
+    "month": 500,      # 1 месяц = 500 кредитов
+    "quarter": 1500,   # 3 месяца = 1500 кредитов (500 × 3)
+    "year": 6000,      # 12 месяцев = 6000 кредитов (500 × 12)
 }
 
 
@@ -82,24 +83,75 @@ CREDIT_PACKAGES: Dict[str, Dict[str, any]] = {
 }
 
 
-def get_credit_cost(work_type: str) -> int:
+def calculate_credit_cost_by_pages(pages: int) -> int:
+    """
+    Рассчитывает стоимость генерации в кредитах на основе количества страниц.
+    Обеспечивает маржу ~80% для бизнеса.
+    
+    Формула:
+    - Средняя себестоимость страницы: 2.14 ₽
+    - Цена одного кредита: 1.598 ₽ (799 ₽ / 500 кредитов)
+    - Целевая маржа: 80%
+    - Максимальная себестоимость на кредит: 0.3196 ₽
+    - Стоимость = (pages * 2.14) / 0.3196
+    
+    Args:
+        pages: Количество страниц работы
+        
+    Returns:
+        Количество кредитов для списания (округлено)
+        
+    Examples:
+        >>> calculate_credit_cost_by_pages(5)   # Эссе
+        67
+        >>> calculate_credit_cost_by_pages(10)  # Реферат
+        68
+        >>> calculate_credit_cost_by_pages(30)  # Курсовая
+        214
+        >>> calculate_credit_cost_by_pages(60)  # Диплом
+        427
+    """
+    # Константы для расчёта
+    COST_PER_PAGE = 2.14  # ₽ - средняя себестоимость страницы
+    CREDIT_PRICE = 1.598  # ₽ - цена одного кредита (799 / 500)
+    TARGET_MARGIN = 0.80  # 80% маржа
+    
+    # Максимальная себестоимость на кредит для достижения целевой маржи
+    max_cost_per_credit = CREDIT_PRICE * (1 - TARGET_MARGIN)  # 0.3196 ₽
+    
+    # Себестоимость работы
+    work_cost = pages * COST_PER_PAGE
+    
+    # Стоимость в кредитах
+    credits = work_cost / max_cost_per_credit
+    
+    return round(credits)
+
+
+def get_credit_cost(work_type: str, pages: int = None) -> int:
     """
     Возвращает стоимость генерации в кредитах.
     
     Args:
         work_type: Тип работы (referat, kursach, etc.)
+        pages: Количество страниц (опционально, если указано - используется точный расчёт)
         
     Returns:
         Количество кредитов для списания
         
     Examples:
-        >>> get_credit_cost("referat")
-        1
-        >>> get_credit_cost("kursach")
-        3
-        >>> get_credit_cost("unknown_type")
-        2
+        >>> get_credit_cost("referat", pages=10)
+        68
+        >>> get_credit_cost("kursach", pages=30)
+        214
+        >>> get_credit_cost("essay")  # Без указания страниц - используется CREDIT_COSTS
+        67
     """
+    # Если указано количество страниц - используем точный расчёт
+    if pages is not None and pages > 0:
+        return calculate_credit_cost_by_pages(pages)
+    
+    # Иначе используем старую систему (для обратной совместимости)
     # Нормализуем тип работы
     normalized = work_type.lower().strip()
     

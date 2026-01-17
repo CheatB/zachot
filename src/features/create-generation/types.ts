@@ -132,7 +132,8 @@ export interface SourceItem {
   isAiSelected: boolean
   isVerified?: boolean // Источник прошёл проверку доступности
   isTrustedDomain?: boolean // Источник из надёжной научной базы
-  isFallback?: boolean // Резервный проверенный источник
+  isAcademic?: boolean // Академический источник (статья, книга, диссертация) vs неакадемический (вики, сайт, форум)
+  isFallback?: boolean // Резервный проверенный источник (deprecated, используется isAcademic)
   relevanceScore?: number // QC оценка релевантности (0-10)
   qcReason?: string // Причина QC оценки
   validation?: {
