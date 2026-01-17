@@ -6,7 +6,7 @@ echo "================================"
 
 # 1. Применяем миграции БД
 echo "📊 Applying database migrations..."
-cd /home/deploy/zachot
+cd /home/deploy/zachot/apps/api
 export PYTHONPATH=/home/deploy/zachot
 alembic upgrade head
 
