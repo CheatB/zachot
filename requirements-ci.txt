@@ -19,8 +19,3 @@ PyPDF2
 python-multipart
 slowapi
 prometheus-client
-uvicorn
-starlette
-redis
-hiredis
-celery[redis]

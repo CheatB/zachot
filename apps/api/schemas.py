@@ -232,7 +232,7 @@ class SuggestStructureRequest(BaseModel):
     workType: Optional[str] = None
     volume: int = 10
     complexity: str = "student"
-    humanity: str = "medium"
+    humanity: Union[str, int] = "medium"  # Поддержка старых строк и новых чисел
 
 class SuggestSourcesRequest(BaseModel):
     topic: str
@@ -242,7 +242,7 @@ class SuggestSourcesRequest(BaseModel):
     workType: Optional[str] = None
     volume: int = 10
     complexity: str = "student"
-    humanity: str = "medium"
+    humanity: Union[str, int] = "medium"  # Поддержка старых строк и новых чисел
 
 class SuggestTitleInfoRequest(BaseModel):
     university: str

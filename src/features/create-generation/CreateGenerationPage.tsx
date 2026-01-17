@@ -682,8 +682,8 @@ function CreateGenerationPage() {
                 {currentStep === 1.7 && <GenerationStyleStep key="step-1-7" complexity={form.complexityLevel} humanity={form.humanityLevel} onChange={(updates) => setForm(prev => ({...prev, ...updates}))} />}
                 {currentStep === 2 && <GenerationVisualsStep key="step-2" useAiImages={form.useAiImages} onSelect={(val) => setForm(prev => ({ ...prev, useAiImages: val }))} />}
                 {currentStep === 3 && <GenerationGoalStep key="step-3" form={form} isLoading={isSuggesting} onChange={(updates) => setForm(prev => ({ ...prev, ...updates }))} />}
-                {currentStep === 4 && <GenerationStructureStep key="step-4" structure={form.structure} onChange={(structure) => setForm(prev => ({ ...prev, structure }))} />}
-                {currentStep === 5 && <GenerationSourcesStep key="step-5" sources={form.sources} onChange={(sources) => setForm(prev => ({ ...prev, sources }))} generationId={activeGenerationRef.current} />}
+                {currentStep === 4 && <GenerationStructureStep key="step-4" structure={form.structure} onChange={(structure) => setForm(prev => ({ ...prev, structure }))} isLoading={isSuggesting} />}
+                {currentStep === 5 && <GenerationSourcesStep key="step-5" sources={form.sources} onChange={(sources) => setForm(prev => ({ ...prev, sources }))} generationId={activeGenerationRef.current} isLoading={isSuggesting} />}
                 {currentStep === 5.7 && (
                   <GenerationTitlePageStep 
                     key="step-5-7" 

@@ -13,9 +13,10 @@ import { useState, useEffect } from 'react'
 interface GenerationStructureStepProps {
   structure: StructureItem[]
   onChange: (structure: StructureItem[]) => void
+  isLoading?: boolean
 }
 
-function GenerationStructureStep({ structure, onChange }: GenerationStructureStepProps) {
+function GenerationStructureStep({ structure, onChange, isLoading }: GenerationStructureStepProps) {
   const [items, setItems] = useState<StructureItem[]>(structure)
 
   useEffect(() => {
@@ -195,11 +196,55 @@ function GenerationStructureStep({ structure, onChange }: GenerationStructureSte
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
+      style={{ position: 'relative' }}
       transition={{
         duration: motionTokens.duration.slow,
         ease: motionTokens.easing.out,
       }}
     >
+      {isLoading && (
+        <div style={{
+          position: 'absolute',
+          top: -20,
+          left: -20,
+          right: -20,
+          bottom: -20,
+          backgroundColor: 'rgba(255,255,255,0.9)',
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: 'var(--radius-lg)'
+        }}>
+          <div style={{ 
+            textAlign: 'center',
+            padding: '40px'
+          }}>
+            <div style={{ 
+              fontSize: '48px', 
+              marginBottom: '16px',
+              animation: 'pulse 2s ease-in-out infinite'
+            }}>
+              📚
+            </div>
+            <div style={{ 
+              color: 'var(--color-accent-base)', 
+              fontWeight: 'bold',
+              fontSize: '18px'
+            }}>
+              Проектирую структуру...
+            </div>
+            <div style={{
+              color: 'var(--color-text-secondary)',
+              fontSize: '14px',
+              marginTop: '8px'
+            }}>
+              Выстраиваю логику глав и разделов
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="wizard-step">
         <Stack gap="lg">
           {chapters.map(({ chapter, subSections }, chapterIdx) => (

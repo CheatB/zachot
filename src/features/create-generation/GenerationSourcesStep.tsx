@@ -16,9 +16,10 @@ interface GenerationSourcesStepProps {
   sources: SourceItem[]
   onChange: (sources: SourceItem[]) => void
   generationId?: string | null
+  isLoading?: boolean
 }
 
-function GenerationSourcesStep({ sources, onChange, generationId }: GenerationSourcesStepProps) {
+function GenerationSourcesStep({ sources, onChange, generationId, isLoading }: GenerationSourcesStepProps) {
   const [items, setItems] = useState<SourceItem[]>(sources)
   const [isSearching, setIsSearching] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -126,6 +127,7 @@ function GenerationSourcesStep({ sources, onChange, generationId }: GenerationSo
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
+      style={{ position: 'relative' }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{
@@ -133,6 +135,49 @@ function GenerationSourcesStep({ sources, onChange, generationId }: GenerationSo
         ease: motionTokens.easing.out,
       }}
     >
+      {isLoading && (
+        <div style={{
+          position: 'absolute',
+          top: -20,
+          left: -20,
+          right: -20,
+          bottom: -20,
+          backgroundColor: 'rgba(255,255,255,0.9)',
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: 'var(--radius-lg)'
+        }}>
+          <div style={{ 
+            textAlign: 'center',
+            padding: '40px'
+          }}>
+            <div style={{ 
+              fontSize: '48px', 
+              marginBottom: '16px',
+              animation: 'pulse 2s ease-in-out infinite'
+            }}>
+              📖
+            </div>
+            <div style={{ 
+              color: 'var(--color-accent-base)', 
+              fontWeight: 'bold',
+              fontSize: '18px'
+            }}>
+              Подбираю литературу...
+            </div>
+            <div style={{
+              color: 'var(--color-text-secondary)',
+              fontSize: '14px',
+              marginTop: '8px'
+            }}>
+              Сканирую научные базы данных
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="sources-container-v2">
         <h1 className="sources-main-title">Ознакомься с источниками</h1>
         
